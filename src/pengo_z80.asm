@@ -836,10 +836,10 @@ diamondblock_string_05AE:  0C 17 98 44 49 41 4D 4F 4E 44 20 42 4C 4F 43 CB   ; .
 05F6: CD 84 06      call $060C
 05F9: 21 11 93      ld   hl,$1B11
 05FC: 22 A0 88      ld   (cursor_x_8800),hl
-05FF: 3E 22         ld   a,$22
+05FF: 3E 22         ld   a,$22		; (R) registered char
 0601: CD B4 01      call set_tile_at_current_pos_293C
-0604: 3C            inc  a
-0605: CD B9 01      call $2919
+0604: 3C            inc  a			; bottom of (R) char
+0605: CD B9 01      call move_cursor_down_by_1_2919
 0608: CD 14 A1      call set_tile_at_current_pos_293C
 060B: C9            ret
 060C: 06 A4         ld   b,$04
@@ -1155,7 +1155,7 @@ table_0822:
 0832: 2E 33         ld   l,$13
 0834: 22 20 88      ld   (cursor_x_8800),hl
 0837: CD 00 81      call put_blank_at_current_pos_2900
-083A: CD B1 29      call $2919
+083A: CD B1 29      call move_cursor_down_by_1_2919
 083D: 3E 4E         ld   a,$4E
 083F: CD B4 01      call set_tile_at_current_pos_293C
 0842: DD 34 AB      inc  (ix+$0b)
@@ -1166,7 +1166,7 @@ table_0822:
 084A: 22 A0 88      ld   (cursor_x_8800),hl
 084D: 3E EE         ld   a,$4E
 084F: CD 3C 81      call set_tile_at_current_pos_293C
-0852: CD B1 29      call $2919
+0852: CD B1 29      call move_cursor_down_by_1_2919
 0855: CD 00 81      call put_blank_at_current_pos_2900
 0858: DD 34 0B      inc  (ix+$0b)
 085B: C9            ret
@@ -1301,9 +1301,9 @@ run_one_life_092D:
 0949: 06 8C         ld   b,$0C
 094B: 78            ld   a,b
 094C: 32 40 85      ld   (total_eggs_to_hatch_8DC0),a
-094F: 32 DD 8D      ld   ($8DDD),a
+094F: 32 DD 8D      ld   (current_nb_eggs_to_hatch_8DDD),a
 0952: 32 98 8D      ld   (remaining_alive_snobees_8D98),a
-0955: 21 05 8D      ld   hl,$8D05
+0955: 21 05 8D      ld   hl,snobee_1_struct_8D00+5
 0958: 11 20 00      ld   de,$0020
 095B: 36 01         ld   (hl),$01
 095D: 19            add  hl,de
@@ -1312,9 +1312,9 @@ run_one_life_092D:
 0961: 36 AB         ld   (hl),$03
 0963: 19            add  hl,de
 0964: 36 84         ld   (hl),$04
-0966: 21 05 85      ld   hl,$8D85
+0966: 21 05 85      ld   hl,pengo_struct_8D80+5
 0969: 36 AD         ld   (hl),$05
-096B: 21 25 25      ld   hl,$8DA5
+096B: 21 25 25      ld   hl,$8DA5		; moving block?
 096E: 36 86         ld   (hl),$06
 0970: CD 6D 28      call clear_screen_and_colors_28E5
 0973: CD B7 31      call $31B7
@@ -1330,7 +1330,7 @@ run_one_life_092D:
 098E: CD 42 31      call init_pengo_structure_31C2
 0991: CD A1 05      call draw_maze_2DA1	;  draw the maze
 0994: 3E 20         ld   a,$20
-0996: 32 A0 80      ld   ($video_tile_memory_8000),a
+0996: 32 A0 80      ld   (video_tile_memory_8000),a
 0999: AF            xor  a
 099A: 32 BA 8D      ld   ($8D92),a
 099D: 32 93 8D      ld   ($8D93),a
@@ -1340,7 +1340,7 @@ run_one_life_092D:
 09A7: CD C6 9B      call display_snobee_sprite_33CE
 09AA: CD 2B 19      call display_pengo_sprite_39AB
 09AD: CD 58 BE      call get_div8_ix_coords_3E78
-09B0: CD 09 43      call $43A9
+09B0: CD 09 43      call clear_2x2_tiles_at_current_pos_43A9
 09B3: 06 FF         ld   b,$FF		; stop sound
 09B5: CD 89 90      call play_sfx_1889
 09B8: 06 A2         ld   b,$02		; start music
@@ -2548,7 +2548,7 @@ draw_horizontal_line_14C6:
 14CA: 32 8A A0      ld   (cursor_color_8802),a
 14CD: 3E 03         ld   a,$03
 14CF: CD 3C 29      call set_tile_at_current_pos_293C
-14D2: CD 19 29      call $2919
+14D2: CD 19 29      call move_cursor_down_by_1_2919
 14D5: 10 F8         djnz $14CF
 14D7: C9            ret
 
@@ -2992,7 +2992,7 @@ draw_horizontal_line_14D8:
 185F: C9            ret
 1860: C5            push bc
 1861: 06 23         ld   b,$0B
-1863: C3 23 01      jp   $290B
+1863: C3 23 01      jp   move_cursor_down_by_b_290B
 1866: 3A E8 90      ld   a,($90C0)
 1869: 2F            cpl
 186A: E6 87         and  $0F
@@ -3331,32 +3331,35 @@ jump_table_19DC:
 1A65: 18 C6         jr   $1A2D
 1A67: F5            push af
 1A68: 3A 36 A4      ld   a,($8CBE)
-1A6B: 11 59 92      ld   de,$1A71
+1A6B: 11 59 92      ld   de,table_1A71
 1A6E: C3 A7 2D      jp   indirect_jump_2D8F
-1A71: 7B            ld   a,e
-1A72: 1A            ld   a,(de)
-1A73: 85            add  a,l
-1A74: 1A            ld   a,(de)
-1A75: 02            ld   (bc),a
-1A76: 1A            ld   a,(de)
-1A77: 07            rlca
-1A78: 1A            ld   a,(de)
-1A79: 94            sub  h
-1A7A: 1A            ld   a,(de)
+table_1A71:
+  dc.w	$1A7B 
+  dc.w	$1A85  
+  dc.w	$1A8A  
+  dc.w	$1A8F 
+  dc.w	$1A94  
+
+
 1A7B: 21 10 07      ld   hl,$8F10
 1A7E: F1            pop  af
 1A7F: E6 07         and  $07
 1A81: 77            ld   (hl),a
 1A82: CB FE         set  7,(hl)
 1A84: C9            ret
+
 1A85: 21 0D A7      ld   hl,$8F25
 1A88: 18 7C         jr   $1A7E
+
 1A8A: 21 1D A7      ld   hl,$8F35
 1A8D: 18 EF         jr   $1A7E
+
 1A8F: 21 2D 07      ld   hl,$8F2D
 1A92: 18 62         jr   $1A7E
+
 1A94: 21 3D 8F      ld   hl,$8F3D
 1A97: 18 E5         jr   $1A7E
+
 1A99: 32 BE 04      ld   ($8CBE),a
 1A9C: DD 7E 00      ld   a,(ix+$00)
 1A9F: A7            and  a
@@ -4129,7 +4132,7 @@ table_1DF9:
 20C4: 06 80         ld   b,$08
 20C6: C5            push bc
 20C7: CD A5 01      call set_attribute_at_current_pos_292D
-20CA: CD 91 A1      call $2919
+20CA: CD 91 A1      call move_cursor_down_by_1_2919
 20CD: C1            pop  bc
 20CE: 10 7E         djnz $20C6
 20D0: C9            ret
@@ -4359,7 +4362,7 @@ table_1DF9:
 2250: CD 94 29      call set_tile_at_current_pos_293C
 2253: 3C            inc  a
 2254: 10 DA         djnz $2250
-2256: CD 03 29      call $2923
+2256: CD 03 29      call move_cursor_down_by_3_2923
 2259: 06 04         ld   b,$04
 225B: CD 3C 81      call set_tile_at_current_pos_293C
 225E: 3C            inc  a
@@ -5197,8 +5200,11 @@ put_blank_at_current_pos_2900:
 2906: F1            pop  af
 2907: C9            ret
 
+; this seems to be never called
 2908: C5            push bc
 2909: 06 AB         ld   b,$03
+
+move_cursor_down_by_b_290B:
 290B: F5            push af
 290C: E5            push hl
 290D: 21 A8 20      ld   hl,cursor_x_8800
@@ -5212,21 +5218,25 @@ put_blank_at_current_pos_2900:
 2917: C1            pop  bc
 2918: C9            ret
 
+move_cursor_down_by_1_2919:
 2919: C5            push bc
 291A: 06 A1         ld   b,$01
-291C: 18 4D         jr   $290B
-	
+291C: 18 4D         jr   move_cursor_down_by_b_290B
+
+move_cursor_down_by_2_291E:
 291E: C5            push bc
 291F: 06 AA         ld   b,$02
-2921: 18 40         jr   $290B
+2921: 18 40         jr   move_cursor_down_by_b_290B
 
+move_cursor_down_by_3_2923:
 2923: C5            push bc
 2924: 06 84         ld   b,$04
-2926: 18 4B         jr   $290B
+2926: 18 4B         jr   move_cursor_down_by_b_290B
 
+move_cursor_down_by_1A_2928:
 2928: C5            push bc
 2929: 06 9A         ld   b,$1A
-292B: 18 D6         jr   $290B
+292B: 18 D6         jr   move_cursor_down_by_b_290B
 
 ; < A: attribute code to put at current screen address
 ; (doesn't write at this address but in attributes at +$400)
@@ -6033,7 +6043,7 @@ set_2x2_tile_2F00: CD BC 09      call set_tile_at_current_pos_293C
 2F03: 3C            inc  a
 2F04: CD BC 09      call set_tile_at_current_pos_293C
 2F07: 3C            inc  a
-2F08: CD B6 09      call $291E
+2F08: CD B6 09      call move_cursor_down_by_2_291E
 2F0B: CD 1C A9      call set_tile_at_current_pos_293C
 2F0E: 3C            inc  a
 2F0F: CD 3C 01      call set_tile_at_current_pos_293C
@@ -6575,6 +6585,7 @@ init_moving_block_3283: DD 21 28 A5   ld   ix,moving_block_struct_8DA0
 32A7: CD AB 11      call display_pengo_sprite_39AB
 32AA: C9            ret
 
+; 5 slots of 5-byte stuff
 32AB: AF            xor  a
 32AC: 21 E8 A4      ld   hl,$8CC0
 32AF: 11 05 88      ld   de,$0005
@@ -7845,7 +7856,7 @@ jump_table_3B2A:
 3C47: 2B            dec  hl
 3C48: 36 80         ld   (hl),$08
 3C4A: C9            ret
-3C4B: 21 F5 A5      ld   hl,$8DDD
+3C4B: 21 F5 A5      ld   hl,current_nb_eggs_to_hatch_8DDD
 3C4E: 7E            ld   a,(hl)
 3C4F: A7            and  a
 3C50: 20 1A         jr   nz,$3C6C
@@ -8636,7 +8647,7 @@ pengo_block_push_41BE: DD 21 20 25   ld   ix,moving_block_struct_8DA0
 420A: FE A8         cp   $80
 420C: D2 BC 6A      jp   nc,$4294
 420F: CD 78 63      call move_snobee_current_direction_4378
-4212: CD 89 43      call $43A9
+4212: CD 89 43      call clear_2x2_tiles_at_current_pos_43A9
 4215: FD CB B0 66   bit  4,(iy+$18)
 4219: C4 F9 62      call nz,$42F9
 421C: CD F6 42      call $425E
@@ -8712,11 +8723,13 @@ pengo_block_push_41BE: DD 21 20 25   ld   ix,moving_block_struct_8DA0
 42B8: CB EE         set  5,(hl)
 42BA: CB 76         bit  6,(hl)
 42BC: C8            ret  z
+; egg broken, decrease nb enemies and eggs
 42BD: 21 98 AD      ld   hl,remaining_alive_snobees_8D98
 42C0: 35            dec  (hl)
-42C1: 21 DD 8D      ld   hl,$8DDD
+42C1: 21 DD 8D      ld   hl,current_nb_eggs_to_hatch_8DDD
 42C4: 35            dec  (hl)
 42C5: C9            ret
+
 42C6: 21 E8 8C      ld   hl,$8CC0
 42C9: 16 2D         ld   d,$05
 42CB: CB 7E         bit  7,(hl)
@@ -8861,13 +8874,15 @@ is_grid_free_jump_table_43A1:
 	dc.w	is_left_grid_free_391B
 	dc.w	is_right_grid_free_391E
 
+clear_2x2_tiles_at_current_pos_43A9:
 43A9: ED 43 80 80   ld   (cursor_x_8800),bc
 43AD: CD A8 A9      call put_blank_at_current_pos_2900
 43B0: CD A0 29      call put_blank_at_current_pos_2900
-43B3: CD 1E 01      call $291E
+43B3: CD 1E 01      call move_cursor_down_by_2_291E
 43B6: CD A0 29      call put_blank_at_current_pos_2900
 43B9: CD 00 01      call put_blank_at_current_pos_2900
 43BC: C9            ret
+
 43BD: DD 34 A7      inc  (ix+$07)
 43C0: DD 7E AF      ld   a,(ix+$07)
 43C3: DD BE 86      cp   (ix+$06)
@@ -9665,7 +9680,7 @@ snobee_block_break_4919:
 49CC: 20 88         jr   nz,$49EE
 49CE: DD 4E 02      ld   c,(ix+$02)
 49D1: DD 46 A3      ld   b,(ix+$03)
-49D4: CD 09 43      call $43A9
+49D4: CD 09 43      call clear_2x2_tiles_at_current_pos_43A9
 49D7: DD CB A0 6E   bit  5,(ix+$00)
 49DB: 11 03 A0      ld   de,$0003
 49DE: DD E5         push ix
@@ -9725,7 +9740,7 @@ snobee_block_break_4919:
 4A5B: 20 12         jr   nz,$4A6F
 4A5D: DD 46 23      ld   b,(ix+$03)
 4A60: DD 4E 2A      ld   c,(ix+$02)
-4A63: CD 81 E3      call $43A9
+4A63: CD 81 E3      call clear_2x2_tiles_at_current_pos_43A9
 4A66: DD 36 28 A0   ld   (ix+$00),$00
 4A6A: DD 36 2D A0   ld   (ix+$05),$00
 4A6E: C9            ret
@@ -9790,7 +9805,7 @@ snobee_block_break_4919:
 4AF3: C0            ret  nz
 4AF4: DD 4E 02      ld   c,(ix+$02)
 4AF7: DD 46 23      ld   b,(ix+$03)
-4AFA: CD 89 43      call $43A9
+4AFA: CD 89 43      call clear_2x2_tiles_at_current_pos_43A9
 4AFD: 11 32 20      ld   de,$0032
 4B00: CD 2F 08      call $28AF
 4B03: DD 36 80 A8   ld   (ix+$00),$00
