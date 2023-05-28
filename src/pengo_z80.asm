@@ -1256,10 +1256,10 @@ play_one_life_08D6:
 08F3: CD B7 11      call $31B7
 08F6: CD 30 2B      call $2B10
 08F9: CD 76 84      call $2C76
-08FC: CD A4 2D      call $2D0C
+08FC: CD A4 2D      call draw_lives_2D0C
 08FF: CD CB AD      call display_eggs_2D4B
 0902: CD DE 8F      call display_player_ready_0F76
-0905: CD DD AE      call $2E5D
+0905: CD DD AE      call draw_borders_2E5D
 0908: CD DF 8E      call $0E77
 090B: 3E 89         ld   a,$09
 090D: 32 AA 20      ld   (cursor_color_8802),a
@@ -1323,7 +1323,7 @@ run_one_life_092D:
 097C: A7            and  a
 097D: 28 06         jr   z,$0985
 097F: CD 7E AC      call $2C76
-0982: CD A4 0D      call $2D0C
+0982: CD A4 0D      call draw_lives_2D0C
 0985: CD 47 99      call init_snobee_positions_31EF
 0988: CD 03 3A      call init_moving_block_3283
 098B: CD 03 9A      call $32AB
@@ -1418,7 +1418,7 @@ level_completed_0A2B:
 0A52: FB            ei
 0A53: CD 39 A4      call $0C39
 0A56: CD 75 0C      call $0C55
-0A59: CD 0C 85      call $2D0C
+0A59: CD 0C 85      call draw_lives_2D0C
 ; prints times and associated bonuses
 0A5C: 21 00 0B      ld   hl,text_start_0B20
 0A5F: CD 54 01      call print_line_29F4
@@ -1717,7 +1717,7 @@ player_dies_0CD2:
 0D6F: 46            ld   b,(hl)
 0D70: 23            inc  hl
 0D71: E5            push hl
-0D72: CD 82 30      call $300A
+0D72: CD 82 30      call look_for_hidden_egg_300A
 0D75: 38 23         jr   c,$0D9A
 0D77: CD AF 85      call $0DAF
 0D7A: 38 96         jr   c,$0D9A
@@ -2511,19 +2511,19 @@ checksum_memory_145B: AF            xor  a
 1466: CD 6D 28      call clear_screen_and_colors_28E5
 1469: 21 00 88      ld   hl,$0000
 146C: 22 88 A0      ld   (cursor_x_8800),hl
-146F: CD C6 9C      call $draw_horizontal_line_14C6
+146F: CD C6 9C      call draw_horizontal_line_14C6
 1472: 21 1B 00      ld   hl,$001B
 1475: 22 00 00      ld   (cursor_x_8800),hl
-1478: CD C6 14      call $draw_horizontal_line_14C6
+1478: CD C6 14      call draw_horizontal_line_14C6
 147B: 21 00 AA      ld   hl,$2200
 147E: 22 88 A0      ld   (cursor_x_8800),hl
-1481: CD F0 9C      call $draw_horizontal_line_14D8
+1481: CD F0 9C      call draw_horizontal_line_14D8
 1484: 21 88 14      ld   hl,$1400
 1487: 22 00 A0      ld   (cursor_x_8800),hl
-148A: CD F0 14      call $draw_horizontal_line_14D8
+148A: CD F0 14      call draw_horizontal_line_14D8
 148D: 21 00 09      ld   hl,$2100
 1490: 22 88 88      ld   (cursor_x_8800),hl
-1493: CD D8 9C      call $draw_horizontal_line_14D8
+1493: CD D8 9C      call draw_horizontal_line_14D8
 1496: 21 8B 0E      ld   hl,$0E03
 1499: 22 00 00      ld   (cursor_x_8800),hl
 149C: 3E 9B         ld   a,$13
@@ -4013,7 +4013,7 @@ table_1DF9:
 1FD3: 0E 07         ld   c,$07
 1FD5: DD CB 80 5E   bit  3,(ix+$00)
 1FD9: 28 05         jr   z,$1FE0
-1FDB: CD C2 E3      call $4BC2
+1FDB: CD C2 E3      call set_2x2_tile_color_4BC2
 1FDE: 18 83         jr   $1FE3
 1FE0: CD 50 CB      call $4BD8
 1FE3: C9            ret
@@ -5659,6 +5659,7 @@ act_string_2D02;
 x_table_2D08:
 	dc.b 	$1A,$18,$16,$14 
 
+draw_lives_2D0C:
 2D0C: CD 36 08      call get_nb_lives_289E
 2D0F: A7            and  a
 2D10: C8            ret  z
@@ -5672,7 +5673,7 @@ x_table_2D08:
 2D1E: 47            ld   b,a
 2D1F: 3E 8B         ld   a,$0B
 2D21: 32 AA 20      ld   (cursor_color_8802),a
-2D24: 0E 8C         ld   c,$24
+2D24: 0E 8C         ld   c,$24		; pengo life upper left tile
 2D26: C5            push bc
 2D27: 78            ld   a,b
 2D28: 3D            dec  a
@@ -5727,26 +5728,26 @@ display_eggs_2D4B:
 	;;
 	;; can be translated in python as follows
 
-hl = 0x365A  # pengo start value after a reboot
-
-def pengo_random():
-    global hl
-    b = (hl & 0xFF00) >> 8
-    c = (hl & 0xFF)
-    hl = (hl * 2)
-    bc = (b << 8) + c
-    hl = (hl + bc) & 0xFFFF
-
-    a = c
-    h = (hl & 0xFF00) >> 8
-    a = (a + h) & 0xFF
-
-    hl = (hl & 0xFF) + (a<<8)
-    return a
-
-print ("%x" % pengo_random()) # 0xFD
-print ("%x" % pengo_random()) # 0x05
-print ("%x" % pengo_random()) # 0x39
+;hl = 0x365A  # pengo start value after a reboot
+;
+;def pengo_random():
+;    global hl
+;    b = (hl & 0xFF00) >> 8
+;    c = (hl & 0xFF)
+;    hl = (hl * 2)
+;    bc = (b << 8) + c
+;    hl = (hl + bc) & 0xFFFF
+;
+;    a = c
+;    h = (hl & 0xFF00) >> 8
+;    a = (a + h) & 0xFF
+;
+;    hl = (hl & 0xFF) + (a<<8)
+;    return a
+;
+;print ("%x" % pengo_random()) # 0xFD
+;print ("%x" % pengo_random()) # 0x05
+;print ("%x" % pengo_random()) # 0x39
 
 get_random_value_2D7C: C5            push bc
 2D7D: E5            push hl
@@ -5793,7 +5794,7 @@ compare_hl_to_de_2D99:
 2D9F: 5F            ld   e,a
 2DA0: 57            ld   d,a
 	
-draw_maze_2DA1: CD DD AE      call $2E5D
+draw_maze_2DA1: CD DD AE      call draw_borders_2E5D
 2DA4: CD 65 0E      call $2ECD
 2DA7: CD BC AF      call $2F14
 2DAA: 3A C0 B0      ld   a,(dip_switches_9040)
@@ -5804,12 +5805,12 @@ draw_maze_2DA1: CD DD AE      call $2E5D
 2DB1: 06 01         ld   b,$01			; draw maze sound
 2DB3: CD 89 90      call play_sfx_1889	; sound routine
 
-	;; install a modifiable routine in $8C24 (self-modifying code used
+	;; install a modifiable routine in ram_code_8C24 (self-modifying code used
 	;; for maze path drawing)
 	
 2DB6: 06 85         ld   b,$0D
-2DB8: 11 11 2E      ld   de,$2E39
-2DBB: 21 24 8C      ld   hl,$8C24
+2DB8: 11 11 2E      ld   de,to_copy_2E39
+2DBB: 21 24 8C      ld   hl,ram_code_8C24
 2DBE: 1A            ld   a,(de)
 2DBF: 77            ld   (hl),a
 2DC0: 13            inc  de
@@ -5820,7 +5821,7 @@ draw_maze_2DA1: CD DD AE      call $2E5D
 2DC4: DD 21 28 24   ld   ix,maze_data_8C20
 2DC8: DD 36 1F 80   ld   (ix+$3f),$00
 2DCC: 21 80 A8      ld   hl,$0000
-2DCF: 22 22 8C      ld   ($8C22),hl ;  first hole at 0,0
+2DCF: 22 22 8C      ld   maze_data_8C20+2,hl ;  first hole at 0,0
 2DD2: CD 95 31      call draw_one_hole_311D	;  first hole in block path drawn at 0,0
 	;; will try to initiate paths every 2 blocks (vertically and horizontally)
 	;; in the end, there won't be any 2x2 zone with more than 2 blocks
@@ -5885,7 +5886,7 @@ draw_it_2E04: ED 4B 20 8C   ld   bc,(maze_data_8C20)
 2E35: CD 3A 87      call draw_diamonds_2F3A
 2E38: C9            ret
 	
-2E39: EB            ex   de,hl
+to_copy_2E39: EB            ex   de,hl
 2E3A: 46            ld   b,(hl)
 2E3B: E9            jp   (hl)
 2E3C: 00            nop
@@ -5910,31 +5911,33 @@ draw_one_path_in_maze_2E46:
 2E49: D5            push de
 2E4A: CD 54 A5      call get_random_value_2D7C
 2E4D: E6 2B         and  $03
-2E4F: 11 55 86      ld   de,$2E55
+2E4F: 11 55 86      ld   de,table_2E55
 2E52: C3 AF 2D      jp   indirect_jump_2D8F
-2E55: 
+table_2E55: 
 	dc.w	_00_path_draw_up_3040
 	dc.w	_01_path_draw_down_304F
 	dc.w	_02_path_draw_left_305E
 	dc.w	_03_path_draw_down_306D
 
-	
-2E5E: 19            add  hl,de
-2E5F: A8            xor  b
+draw_borders_2E5D:
+2Z5D: 3A 19 A8 		ld   a,(currently_playing_8819)
 2E60: A7            and  a
 2E61: 28 2F         jr   z,$2E6A
 2E63: 3E 28         ld   a,$00
 2E65: 32 2A 88      ld   (cursor_color_8802),a
 2E68: 18 A5         jr   $2E6F
+
 2E6A: 3E 81         ld   a,$09
 2E6C: 32 A2 88      ld   (cursor_color_8802),a
 2E6F: 1E 10         ld   e,$10
-2E71: CD 81 86      call $2E81
+2E71: CD 81 86      call draw_vertical_walls_2E81
 2E74: 1E 31         ld   e,$11
-2E76: CD 3A 2E      call $2E92
+2E76: CD 3A 2E      call draw_horizontal_walls_2E92
 2E79: C9            ret
-2E7A: CD 29 2E      call $2E81
-2E7D: CD 92 86      call $2E92
+; used to replace walls by stars when diamonds are aligned
+draw_borders_2E7A:
+2E7A: CD 29 2E      call draw_vertical_walls_2E81
+2E7D: CD 92 86      call draw_horizontal_walls_2E92
 2E80: C9            ret
 
 2E81: 01 28 A1      ld   bc,$0100
@@ -5944,12 +5947,13 @@ draw_one_path_in_maze_2E46:
 2E8C: 16 94         ld   d,$1C
 2E8E: CD 2B 2E      call write_character_and_code_at_xy_2EA3
 2E91: C9            ret
+
 2E92: 01 20 01      ld   bc,$0100
 2E95: 16 20         ld   d,$20
-2E97: CD B8 86      call $2EB8
+2E97: CD B8 86      call fill_line_with_character_current_color_2EB8
 2E9A: 01 B3 01      ld   bc,$011B
 2E9D: 16 20         ld   d,$20
-2E9F: CD 90 06      call $2EB8
+2E9F: CD 90 06      call fill_line_with_character_current_color_2EB8
 2EA2: C9            ret
 
 ; < A: code
@@ -5973,6 +5977,10 @@ write_character_and_code_at_xy_2EA3:
 2EB5: 20 EC         jr   nz,write_character_and_code_at_xy_2EA3
 2EB7: C9            ret
 
+; BC: X,Y
+; D: number of repeats
+; E: character to set (with current cursor color)
+fill_line_with_character_current_color_2EB8:
 2EB8: D5            push de
 2EB9: CD 6F 81      call convert_coords_to_screen_address_296F
 2EBC: D1            pop  de
@@ -5985,7 +5993,7 @@ write_character_and_code_at_xy_2EA3:
 2EC7: D1            pop  de
 2EC8: 04            inc  b
 2EC9: 15            dec  d
-2ECA: 20 4C         jr   nz,$2EB8
+2ECA: 20 4C         jr   nz,fill_line_with_character_current_color_2EB8
 2ECC: C9            ret
 
 2ECD: 06 A9         ld   b,$09
@@ -6056,8 +6064,8 @@ set_2x2_tile_2F00: CD BC 09      call set_tile_at_current_pos_293C
 	
 draw_diamonds_2F3A:	
 2F3A: CD AC 2F      call get_random_xy_grid_in_bc_2F84
-2F3D: CD 0A 30      call $300A
-2F40: 38 78         jr   c,$draw_diamonds_2F3A
+2F3D: CD 0A 30      call look_for_hidden_egg_300A
+2F40: 38 78         jr   c,draw_diamonds_2F3A
 2F42: ED 43 30 25   ld   ($8DB0),bc
 2F46: CD 29 0F      call set_diamond_position_2FA9
 	
@@ -6067,7 +6075,7 @@ draw_diamonds_2F3A:
 2F50: 59            ld   e,c
 2F51: CD 99 05      call compare_hl_to_de_2D99
 2F54: 28 7B         jr   z,$2F49
-2F56: CD 82 30      call $300A
+2F56: CD 82 30      call look_for_hidden_egg_300A
 2F59: 38 EE         jr   c,$2F49
 2F5B: ED 43 3A 8D   ld   ($8DB2),bc
 2F5F: CD 01 AF      call set_diamond_position_2FA9
@@ -6081,7 +6089,7 @@ draw_diamonds_2F3A:
 2F6F: 2A B2 8D      ld   hl,($8DB2)
 2F72: CD 99 2D      call compare_hl_to_de_2D99
 2F75: 28 EB         jr   z,$2F62
-2F77: CD 0A 30      call $300A
+2F77: CD 0A 30      call look_for_hidden_egg_300A
 2F7A: 38 6E         jr   c,$2F62
 2F7C: ED 43 B4 8D   ld   ($8DB4),bc
 2F80: CD 29 0F      call set_diamond_position_2FA9
@@ -6158,30 +6166,33 @@ compute_eggs_locations_2FB2:
 2FF6: 11 87 10      ld   de,$100F
 2FF9: CD 99 05      call compare_hl_to_de_2D99
 2FFC: 28 DB         jr   z,$2FD9
-2FFE: CD 82 18      call $300A
+2FFE: CD 82 18      call look_for_hidden_egg_300A
 3001: 38 D6         jr   c,$2FD9
-3003: CD 2D 18      call $302D
+3003: CD 2D 18      call insert_egg_302D
 3006: C1            pop  bc
 3007: 10 E7         djnz $2FD8
 3009: C9            ret
 	
+; < BC: coords to look for hidden egg
+; > carry set if matches hidden egg
+look_for_hidden_egg_300A:
 300A: 50            ld   d,b
 300B: 59            ld   e,c
 300C: 3A E8 A5      ld   a,(total_eggs_to_hatch_8DC0)
-300F: 47            ld   b,a
-3010: 21 C2 8D      ld   hl,$8DC2
+300F: 47            ld   b,a		; loop nb eggs times
+3010: 21 C2 8D      ld   hl,egg_location_table_8DC2
 3013: C5            push bc
 3014: E5            push hl
-3015: 4E            ld   c,(hl)
+3015: 4E            ld   c,(hl)		; get egg X
 3016: 23            inc  hl
-3017: 46            ld   b,(hl)
+3017: 46            ld   b,(hl)		; get egg Y
 3018: 60            ld   h,b
 3019: 69            ld   l,c
 301A: CD 11 2D      call compare_hl_to_de_2D99
 301D: 28 0A         jr   z,$3029
 301F: E1            pop  hl
 3020: C1            pop  bc
-3021: 23            inc  hl
+3021: 23            inc  hl		; advance to next egg in table
 3022: 23            inc  hl
 3023: 10 EE         djnz $3013
 3025: 42            ld   b,d
@@ -6192,18 +6203,20 @@ compute_eggs_locations_2FB2:
 302A: C1            pop  bc
 302B: 37            scf		; set carry flag
 302C: C9            ret
-	
+
+; < BC X,Y of egg to insert
+insert_egg_302D:
 302D: 3A C1 A5      ld   a,(remaining_eggs_to_hatch_8DC1)
 3030: 87            add  a,a
 3031: 16 00         ld   d,$00
 3033: 5F            ld   e,a
-3034: 21 C2 8D      ld   hl,$8DC2
+3034: 21 C2 8D      ld   hl,egg_location_table_8DC2
 3037: 19            add  hl,de
-3038: 71            ld   (hl),c
+3038: 71            ld   (hl),c		; store coordinates
 3039: 23            inc  hl
 303A: 70            ld   (hl),b
 303B: 21 C1 05      ld   hl,remaining_eggs_to_hatch_8DC1
-303E: 34            inc  (hl)
+303E: 34            inc  (hl)		; add 1 egg
 303F: C9            ret
 	
 _00_path_draw_up_3040: CD A6 18      call is_way_up_clear_308E
@@ -6217,14 +6230,14 @@ _01_path_draw_down_304F: CD 97 B8      call is_way_down_clear_3097
 3052: C8            ret  z
 3053: CD B5 B8      call set_way_down_clear_30B5
 3056: DD 35 01      dec  (ix+$01) ; ylen--
-3059: CD F6 B8      call $draw_2_holes_down_30F6
+3059: CD F6 B8      call draw_2_holes_down_30F6
 305C: 18 1E         jr   handle_path_end_307C
 	
 _02_path_draw_left_305E: CD 16 18      call is_way_left_clear_309E
 3061: C8            ret  z
 3062: CD 34 18      call set_way_left_clear_30BC
 3065: DD 35 88      dec  (ix+$00)  ; xlen--
-3068: CD 8B 19      call $draw_2_holes_left_3103
+3068: CD 8B 19      call draw_2_holes_left_3103
 306B: 18 27         jr   handle_path_end_307C
 
 	
@@ -6233,7 +6246,7 @@ _03_path_draw_right_306D:
 3070: C8            ret  z
 3071: CD C3 B8      call set_way_right_clear_30C3
 3074: DD 34 00      inc  (ix+$00)  ; xlen++
-3077: CD 10 B9      call $draw_2_holes_right_3110
+3077: CD 10 B9      call draw_2_holes_right_3110
 307A: 18 88         jr   handle_path_end_307C
 
 	
@@ -6320,11 +6333,11 @@ set_way_clear_30D2:
 30DC: 07            rlca
 30DD: 07            rlca
 30DE: B2            or   d
-30DF: 32 0D A4      ld   ($8C25),a ; change operand of the bit/res opcode
+30DF: 32 0D A4      ld   ram_code_8C24+1,a ; change operand of the bit/res/ld opcode
 30E2: 16 88         ld   d,$00
 30E4: 58            ld   e,b
 30E5: 19            add  hl,de
-30E6: C3 0C A4      jp   $8C24	; calls self-modifying code bit/res test routine!!
+30E6: C3 0C A4      jp   ram_code_8C24	; calls self-modifying code bit/res test routine!!
 
 ; 8C24:
 ; bit <xxx>,(hl)
@@ -6333,32 +6346,34 @@ set_way_clear_30D2:
 ; ret
 
 ; < ix: maze structure
-draw_2_holes_up_30E9: DD 34 8B      inc  (ix+$03)
-30EC: CD 95 19      call $draw_one_hole_311D
+draw_2_holes_up_30E9: 
+30E9: DD 34 8B      inc  (ix+$03)
+30EC: CD 95 19      call draw_one_hole_311D
 30EF: DD 34 8B      inc  (ix+$03)
-30F2: CD 1D 31      call $draw_one_hole_311D
+30F2: CD 1D 31      call draw_one_hole_311D
 30F5: C9            ret
 	
 ; < ix: maze structure
-draw_2_holes_down_30F6: DD 35 03      dec  (ix+$03)
-30F9: CD 1D B9      call $draw_one_hole_311D
+draw_2_holes_down_30F6: 
+30F6: DD 35 03      dec  (ix+$03)
+30F9: CD 1D B9      call draw_one_hole_311D
 30FC: DD 35 03      dec  (ix+$03)
-30FF: CD 9D B9      call $draw_one_hole_311D
+30FF: CD 9D B9      call draw_one_hole_311D
 3102: C9            ret
 	
 ; < ix: maze structure
 draw_2_holes_left_3103: DD 35 2A      dec  (ix+$02)
-3106: CD 35 B1      call $draw_one_hole_311D
+3106: CD 35 B1      call draw_one_hole_311D
 3109: DD 35 2A      dec  (ix+$02)
-310C: CD 35 B1      call $draw_one_hole_311D
+310C: CD 35 B1      call draw_one_hole_311D
 310F: C9            ret
 	
 ; < ix: maze structure
 draw_2_holes_right_3110: 
 3110: DD 34 02      inc  (ix+$02)
-3113: CD 1D 99      call $draw_one_hole_311D
+3113: CD 1D 99      call draw_one_hole_311D
 3116: DD 34 02      inc  (ix+$02)
-3119: CD 1D 99      call $draw_one_hole_311D
+3119: CD 1D 99      call draw_one_hole_311D
 311C: C9            ret
 	
 draw_one_hole_311D: ED 4B 8A 0C   ld   bc,($8C22)
@@ -6586,17 +6601,17 @@ init_moving_block_3283: DD 21 28 A5   ld   ix,moving_block_struct_8DA0
 32D4: 3A AA 88      ld   a,($8822)
 32D7: CB 6F         bit  5,a
 32D9: 28 0F         jr   z,$32EA
-32DB: CD DC 4B      call $4BDC
+32DB: CD DC 4B      call convert_coords_to_screen_attributes_address_4BDC
 32DE: 36 99         ld   (hl),$11
 32E0: 0C            inc  c
-32E1: CD F4 C3      call $4BDC
+32E1: CD F4 C3      call convert_coords_to_screen_attributes_address_4BDC
 32E4: 36 99         ld   (hl),$11
 32E6: CD 71 1A      call $32F9
 32E9: C9            ret
-32EA: CD F4 63      call $4BDC
+32EA: CD F4 63      call convert_coords_to_screen_attributes_address_4BDC
 32ED: 36 00         ld   (hl),$00
 32EF: 0C            inc  c
-32F0: CD 54 4B      call $4BDC
+32F0: CD 54 4B      call convert_coords_to_screen_attributes_address_4BDC
 32F3: 36 00         ld   (hl),$00
 32F5: CD FD BA      call $32FD
 32F8: C9            ret
@@ -7421,7 +7436,7 @@ change_lateral_direction_to_follow_pengo_37E8:
 38FE: 3E 1C         ld   a,$1C
 3900: BE            cp   (hl)
 3901: 28 4B         jr   z,$38CE
-3903: CD 8A B8      call $300A
+3903: CD 8A B8      call look_for_hidden_egg_300A
 3906: 38 4E         jr   c,$38CE
 3908: DD CB 9B D6   set  7,(ix+$1b)
 390C: C3 4E C2      jp   $42C6
@@ -7850,7 +7865,7 @@ jump_table_3B2A:
 3C6B: C9            ret
 	
 3C6C: 35            dec  (hl)
-3C6D: 21 C2 A5      ld   hl,$8DC2
+3C6D: 21 C2 A5      ld   hl,egg_location_table_8DC2
 3C70: 4E            ld   c,(hl)
 3C71: 23            inc  hl
 3C72: 46            ld   b,(hl)
@@ -8731,7 +8746,7 @@ pengo_block_push_41BE: DD 21 20 25   ld   ix,moving_block_struct_8DA0
 42EB: D0            ret  nc
 42EC: 36 E8         ld   (hl),$C0
 42EE: C9            ret
-42EF: CD 0A 10      call $300A
+42EF: CD 0A 10      call look_for_hidden_egg_300A
 42F2: D0            ret  nc
 42F3: AF            xor  a
 42F4: 77            ld   (hl),a
@@ -9059,7 +9074,7 @@ snobee_collision_with_moving_block_test_444E:
 4540: 87            add  a,a
 4541: 16 A8         ld   d,$00
 4543: 5F            ld   e,a
-4544: 21 42 85      ld   hl,$8DC2
+4544: 21 42 85      ld   hl,egg_location_table_8DC2
 4547: 19            add  hl,de
 4548: 71            ld   (hl),c
 4549: 23            inc  hl
@@ -9178,9 +9193,9 @@ snobee_collision_with_moving_block_test_444E:
 4657: C0            ret  nz
 4658: DD 36 17 20   ld   (ix+$17),$00
 465C: 06 23         ld   b,$03
-465E: CD A9 B8      call play_sfx_1889
-4661: 1E 21         ld   e,$21
-4663: CD F2 06      call $2E7A
+465E: CD A9 B8      call play_sfx_1889		; diamond align bonus
+4661: 1E 21         ld   e,$21		; stars
+4663: CD F2 06      call draw_borders_2E7A
 4666: 06 E0         ld   b,$40
 4668: C5            push bc
 4669: 78            ld   a,b
@@ -9338,21 +9353,21 @@ snobee_collision_with_moving_block_test_444E:
 47A6: ED 4B 30 25   ld   bc,($8DB0)
 47AA: CD 70 CB      call $4BD8
 47AD: ED 4B 1A 8D   ld   bc,($8DB2)
-47B1: CD C2 C3      call $4BC2
+47B1: CD C2 C3      call set_2x2_tile_color_4BC2
 47B4: ED 4B B4 8D   ld   bc,($8DB4)
-47B8: CD EA 4B      call $4BC2
+47B8: CD EA 4B      call set_2x2_tile_color_4BC2
 47BB: C9            ret
 47BC: ED 4B B0 8D   ld   bc,($8DB0)
-47C0: CD 42 CB      call $4BC2
+47C0: CD 42 CB      call set_2x2_tile_color_4BC2
 47C3: ED 4B 1A 85   ld   bc,($8DB2)
 47C7: CD D0 E3      call $4BD8
 47CA: ED 4B 34 25   ld   bc,($8DB4)
-47CE: CD 42 4B      call $4BC2
+47CE: CD 42 4B      call set_2x2_tile_color_4BC2
 47D1: C9            ret
 47D2: ED 4B B0 8D   ld   bc,($8DB0)
-47D6: CD EA 4B      call $4BC2
+47D6: CD EA 4B      call set_2x2_tile_color_4BC2
 47D9: ED 4B 3A 8D   ld   bc,($8DB2)
-47DD: CD C2 C3      call $4BC2
+47DD: CD C2 C3      call set_2x2_tile_color_4BC2
 47E0: ED 4B 34 25   ld   bc,($8DB4)
 47E4: CD 70 CB      call $4BD8
 47E7: C9            ret
@@ -9562,7 +9577,8 @@ snobee_collision_with_moving_block_test_444E:
 4917: 18 ED         jr   $4906
 
 	
-snobee_block_break_4919: DD 21 E8 8C   ld   ix,$8CC0
+snobee_block_break_4919:
+4919: DD 21 E8 8C   ld   ix,$8CC0
 491D: 06 05         ld   b,$05
 491F: C5            push bc
 4920: DD CB A8 FE   bit  7,(ix+$00)
@@ -9808,7 +9824,7 @@ snobee_block_break_4919: DD 21 E8 8C   ld   ix,$8CC0
 4B47: C9            ret
 	
 blink_on_egg_locations_4B48:
-	DD 21 E0 25   ld   ix,total_eggs_to_hatch_8DC0
+4B48: DD 21 E0 25   ld   ix,total_eggs_to_hatch_8DC0
 4B4C: DD CB 9F FE   bit  7,(ix+$1f)
 4B50: C8            ret  z	; no blink
 	
@@ -9848,7 +9864,7 @@ blink_on_egg_locations_4B48:
 	
 	;; blink loop routine (snobee color)
 4B9B: DD 46 A0      ld   b,(ix+$00) ; total number
-4B9E: 21 EA 85      ld   hl,$8DC2 ; egg location table
+4B9E: 21 EA 85      ld   hl,egg_location_table_8DC2 ; egg location table
 4BA1: C5            push bc
 4BA2: E5            push hl
 4BA3: 4E            ld   c,(hl)	; get x
@@ -9869,22 +9885,26 @@ blink_on_egg_locations_4B48:
 4BBE: 23            inc  hl
 4BBF: 10 60         djnz $4BA1
 4BC1: C9            ret
+
+set_2x2_tile_color_4BC2:
 4BC2: 3E A4         ld   a,$0C
-4BC4: CD 74 CB      call $4BDC
+4BC4: CD 74 CB      call convert_coords_to_screen_attributes_address_4BDC
 4BC7: 77            ld   (hl),a
 4BC8: 0C            inc  c
-4BC9: CD D4 E3      call $4BDC
+4BC9: CD D4 E3      call convert_coords_to_screen_attributes_address_4BDC
 4BCC: 77            ld   (hl),a
 4BCD: 04            inc  b
-4BCE: CD 74 4B      call $4BDC
+4BCE: CD 74 4B      call convert_coords_to_screen_attributes_address_4BDC
 4BD1: 77            ld   (hl),a
 4BD2: 0D            dec  c
-4BD3: CD DC C3      call $4BDC
+4BD3: CD DC C3      call convert_coords_to_screen_attributes_address_4BDC
 4BD6: 77            ld   (hl),a
 4BD7: C9            ret
 
 4BD8: 3E 81         ld   a,$09
 4BDA: 18 48         jr   $4BC4
+
+convert_coords_to_screen_attributes_address_4BDC:
 4BDC: F5            push af
 4BDD: CD 6F 01      call convert_coords_to_screen_address_296F
 4BE0: 11 80 AC      ld   de,$0400
