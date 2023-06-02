@@ -1,0 +1,229 @@
+{
+  "14": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,
+    "clip_right": false
+  },
+  "15": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,
+    "clip_right": false
+  },
+  "16": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,
+    "clip_right": false
+  },
+  "17": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,    "clip_right": false
+  },
+  "18": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,    "clip_right": false
+  },
+  "19": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,
+    "clip_right": false
+  },
+  "20": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,
+    "clip_right": false
+  },
+  "21": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,
+    "clip_right": false
+  },
+  "22": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,
+    "clip_right": false
+  },
+  "23": {
+    "cluts": [
+      2,
+      3,
+      4
+    ],
+    "name": "alien",
+    "mirror": true,
+    "clip_right": false
+  },
+  "28": {
+    "cluts": [
+      7
+    ],
+    "name": "explosion_1",
+    "mirror": false,
+    "clip_right": false,
+	"hw_sprite":[2,3,4,5]
+  },
+  "29": {
+    "cluts": [
+      7
+    ],
+    "name": "explosion_2",
+    "mirror": false,
+    "clip_right": false,
+	"hw_sprite":[2,3,4,5]
+  },
+  "30": {
+    "cluts": [
+      7
+    ],
+    "name": "explosion_3",
+    "mirror": false,
+    "clip_right": false,
+	"hw_sprite":[2,3,4,5]
+  },
+  "31": {
+    "cluts": [
+      7
+    ],
+    "name": "explosion_4",
+    "mirror": false,
+    "clip_right": false,
+	"hw_sprite":[2,3,4,5]
+  },
+  "32": {
+    "cluts": [
+      7
+    ],
+    "name": "score_150",
+    "mirror": false,
+    "clip_right": false,
+	"hw_sprite":[2,3,4,5]
+  },
+  "33": {
+    "cluts": [
+      7
+    ],
+    "name": "score_200",
+    "mirror": false,
+    "clip_right": false,
+	"hw_sprite":[2,3,4,5]
+  },
+  "34": {
+    "cluts": [
+      7
+    ],
+    "name": "score_300",
+    "mirror": false,
+    "clip_right": false,
+	"hw_sprite":[2,3,4,5]
+  },
+  "35": {
+    "cluts": [
+      7
+    ],
+    "name": "score_800",
+    "mirror": false,
+    "clip_right": false,
+	"hw_sprite":[2,3,4,5]
+  },
+  "41": {
+    "cluts": [
+      1
+    ],
+    "name": "flagship",
+    "mirror": true,
+    "clip_right": false
+  },
+  "42": {
+    "cluts": [
+      1
+    ],
+    "name": "flagship",
+    "mirror": true,
+    "clip_right": false
+  },
+  "43": {
+    "cluts": [
+      1
+    ],
+    "name": "flagship",
+    "mirror": true,
+    "clip_right": false
+  },
+  "44": {
+    "cluts": [
+      1
+    ],
+    "name": "flagship",
+    "mirror": true,
+    "clip_right": false
+  },
+  "45": {
+    "cluts": [
+      1
+    ],
+    "name": "flagship",
+    "mirror": true,
+    "clip_right": false
+  },
+  "46": {
+    "cluts": [
+      1
+    ],
+    "name": "flagship",
+    "mirror": true,
+    "clip_right": false
+  },
+  "47": {
+    "cluts": [
+      1
+    ],
+    "name": "flagship",
+    "mirror": true,
+    "clip_right": false
+  }
+
+}

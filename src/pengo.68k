@@ -1,0 +1,51 @@
+
+*
+* 68k transcode by JOTD in 2023 using (https://github.com/jotd666/amiga68ktools)
+  
+* register conventions (imposed by z80268k mostly) are as follows:
+*
+* A: D0
+* B: D1
+* C: D2
+* BC: manual
+* D: D3
+* E: D4
+* DE: A1
+* H: D5
+* L: D6
+* HL: A0 or D6 (video addresses)
+* carry: manual, using D7 (push/pop af has no portable equivalent as SR is privileged on 68020+)
+*
+* depending on the context H/L/HL and D/E/DE require rework as the game
+* constructs pointers from 0x100-page aligned pointers to avoid to handle
+* lsb wrap and msb increase. Of course the 68000 can do that so easily. But
+* it cannot split address registers :) 
+*
+* screen addresses (0x5000-0x5400) are usually pointed by HL but in the API
+* I chose to store the value in D6 as it's not really an address now but rather
+* an offset to video memory once you subtract 0x5000
+
+
+* exports
+
+    * ROM
+
+    .global pengo_irq
+    .global pengo_reset
+
+	
+	.include "pengo.inc"
+	.ifdef	__amiga__
+	.include "pengo_ram.68k"
+	.endif
+	
+pengo_reset:
+	* default: 1 update/irq call
+	* we need 60 updates / second so on amiga PAL
+	* we need to set this variable to 2 once out of 5 calls
+	move.b	#1,vb_ticks_count
+
+	
+	bra		INITIALISE_SYSTEM____
+
+	
