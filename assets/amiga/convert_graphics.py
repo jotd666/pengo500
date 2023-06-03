@@ -91,47 +91,51 @@ sprites = collections.defaultdict(dict)
 
 clut_index = 12  # temp
 
+bg_cluts = block_dict["clut"]["data"]
+bg_cluts = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts]
+
 hw_sprite_table = [False]*NB_POSSIBLE_SPRITES
-for k,data in sprite_config.items():
-    sprdat = block_dict["sprite"]["data"][k]
-    for m,clut_index in enumerate(data["cluts"]):
-        spritepal = block_dict["clut"]["data"][clut_index]
-        hw_sprite = False #data.get("hw_sprite")
-        d = iter(sprdat)
-        img = Image.new('RGB',(16,16))
-        y_start = 0
+if False:
+    for k,data in sprite_config.items():
+        sprdat = block_dict["sprite"]["data"][k]
+        for m,clut_index in enumerate(data["cluts"]):
+            spritepal = bg_cluts[clut_index]
+            hw_sprite = None #data.get("hw_sprite")
+            d = iter(sprdat)
+            img = Image.new('RGB',(16,16))
+            y_start = 0
 
-        spritepal = [tuple(palette[pidx]) for pidx in spritepal]
+            #spritepal = [tuple(palette[pidx]) for pidx in spritepal]
 
-        for i in range(16):
-            for j in range(16):
-                v = next(d)
-                if j >= y_start:
-                    img.putpixel((j,i),spritepal[v])
+            for i in range(16):
+                for j in range(16):
+                    v = next(d)
+                    if j >= y_start:
+                        img.putpixel((j,i),spritepal[v])
 
-        entry = dict()
-        sprites[k][clut_index] = entry
-        sprites[k]["name"] = data['name']
+            entry = dict()
+            sprites[k][clut_index] = entry
+            sprites[k]["name"] = data['name']
 
-        right = None
-        outname = f"{k:02x}_{clut_index}_{data['name']}.png"
-        if hw_sprite is None:
-            kwargs = {"output_filename":None,"palette":bob_palette,"generate_mask":True,"blit_pad":True}
-            left = bitplanelib.palette_image2raw(img,**kwargs)
-            if data["mirror"]:
-                right = bitplanelib.palette_image2raw(ImageOps.mirror(img),**kwargs)
-        else:
-            entry["palette"]=spritepal
-            entry["hw_sprite"]=hw_sprite
-            hw_sprite_table[k] = True
+            right = None
+            outname = f"{k:02x}_{clut_index}_{data['name']}.png"
+            if hw_sprite is None:
+                kwargs = {"output_filename":None,"palette":bob_palette,"generate_mask":True,"blit_pad":True}
+                left = bitplanelib.palette_image2raw(img,**kwargs)
+                if data["mirror"]:
+                    right = bitplanelib.palette_image2raw(ImageOps.mirror(img),**kwargs)
+            else:
+                entry["palette"]=spritepal
+                entry["hw_sprite"]=hw_sprite
+                hw_sprite_table[k] = True
 
-            left = bitplanelib.palette_image2sprite(img,None,spritepal)
+                left = bitplanelib.palette_image2sprite(img,None,spritepal)
 
-        entry.update({"left":left,"right":right})
+            entry.update({"left":left,"right":right})
 
-        if dump_it:
-            scaled = ImageOps.scale(img,5,0)
-            scaled.save(os.path.join(dump_dir,outname))
+            if dump_it:
+                scaled = ImageOps.scale(img,5,0)
+                scaled.save(os.path.join(dump_dir,outname))
 
 ##grid = Image.open(os.path.join(this_dir,"grid.png"))
 ##p = bitplanelib.palette_extract(grid)
@@ -200,7 +204,7 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
                     f.write(f"{name}_{j}:\n\t.word\t")
 
                     hw_sprite = slot.get("hw_sprite")
-
+                    print(slot,hw_sprite)
                     if hw_sprite is None:
                         f.write("0   | BOB\n")
                         # just bob pointers

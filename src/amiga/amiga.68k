@@ -1,10 +1,10 @@
 *
-*	Amiga-specific portions of Galaxian
+*	Amiga-specific portions of Pengo
 *
 * (c) JOTD 2023
 *
 
-.include "../src/galaxian.inc"
+.include "../src/pengo.inc"
 .include "custom.i"
 .include "exec_lvos.i"
 .include "dos_lvos.i"
@@ -14,6 +14,7 @@ AttnFlags = 0x128
 AFB_68010 = 0
 AFB_68020 = 1
 NO68020 = 1
+
 
 SCREEN_ADDRESS = 0x5000
 
@@ -58,7 +59,7 @@ OPT_ENABLE_LOGGING = 1
 OPT_ENABLE_PROFILING = 0
 * set to higher values than 1 to speed game up
 ONE_TICK = 1
-* galaxian still has some strange sprite/clut combinations
+* pengo still has some strange sprite/clut combinations
 * we choose to ignore them as they're completely bogus
 * (ex: 95,12: yellow part of andor genesis, makes no sense,
 * Mark says that it happens when starting at level > 1 as
@@ -76,7 +77,7 @@ OPT_ENABLE_DOUBLE_BUFFERING_FG = 1
 _custom = 0xDFF000
 
 
-NB_PLAYFIELD_PLANES = 3
+NB_PLAYFIELD_PLANES = 4
 TOTAL_NB_COLORS = 16   | 8+8+16
 NB_BYTES_PER_ROW = 40
 NB_LINES = 256
@@ -215,10 +216,7 @@ w\@:
 		.global osd_read_start
 		.global osd_sound_start
 		.global osd_sound_stop
-		.global osd_play_alien_attack_loop
-		.global osd_stop_alien_attack_loop
-		.global	osd_stop_swarm_loop
-		.global	osd_play_swarm_loop
+
 
 	
 	.include	"ReadJoypad.i"
@@ -432,9 +430,9 @@ save_highscores:
     rts
     
 	
-* To get the core to run, you just need to jump to galaxian_reset after
+* To get the core to run, you just need to jump to pengo_reset after
 * you've initialised the platform (Amiga) stuff. That essentially does a
-* Z80 reset. You also need to call galaxian_im1_irq from the Amiga vblank
+* Z80 reset. You also need to call pengo_im1_irq from the Amiga vblank
 * routine. They are the only 2 entry points required for the core to run,
 * even if there's no other I/O.
 
@@ -450,7 +448,7 @@ demo_game:
 		sne		infinite_lives_flag
 		
 0:	
-		jmp			galaxian_reset					| pass control to the galaxian core
+		jmp			pengo_reset					| pass control to the pengo core
 		
 title_display:
 * we're not doing things the NeoGeo way
@@ -514,7 +512,7 @@ _vblank:
 	move.w	d0,intro_sound_lock
 222:
 	jbsr		scroll_stars
-	jbsr		galaxian_irq
+	jbsr		pengo_irq
 	.ifne  OPT_ENABLE_DOUBLE_BUFFERING_FG+OPT_ENABLE_DOUBLE_BUFFERING_BG
 	bsr		switch_screen_buffers
 	.endif
@@ -563,72 +561,6 @@ osd_calibrate_display:
 	movem.l	(a7)+,a0/d0-d1
 	rts
 	
-* < D0.B 0->0xF frequency. 0xF makes the loop play to the max len
-osd_play_swarm_loop:
-	tst.w	intro_sound_lock
-	bne.b	0f
-	movem.l	d0/d1/a0/a6,-(a7)
-	cmp.b	alien_swarm_loop_frequency,d0
-	beq.b	1f			| same freq, don't play
-
-	move.b	d0,alien_swarm_loop_frequency
-	and.w	#0xFF,d0
-	add.w	d0,d0
-	lea		swarm_sound_offsets(pc),a0
-	move.w	(a0,d0.w),d0		| sound offset for current freq
-	lea		swarm_sound_table(pc),a0
-	add.w	d0,a0
-
-	lea		_custom,a6
-	jsr		_mt_loopfx
-	st.b	alien_swarm_loop_playing
-1:
-	movem.l	(a7)+,d0/d1/a0/a6
-0:
-	rts
-	
-osd_stop_swarm_loop:
-	movem.l	d0/d1/a0/a6,-(a7)
-	tst.b	alien_swarm_loop_playing
-	beq.b	1f
-	move.l	#0,d0		| channel
-	lea		_custom,a6
-	jsr		_mt_stopfx
-	clr.b	alien_swarm_loop_playing
-	move.b	#-1,alien_swarm_loop_frequency
-1:
-	movem.l	(a7)+,d0/d1/a0/a6
-	rts
-	
-osd_stop_alien_attack_loop:
-	movem.l	d0/d1/a0/a6,-(a7)
-	move.l	#2,d0		| present on channel 2
-	lea		_custom,a6
-	jsr		_mt_stopfx
-	clr.b	alien_attack_loop_playing
-1:
-	movem.l	(a7)+,d0/d1/a0/a6
-	rts
-	
-osd_play_alien_attack_loop:
-	movem.l	d0/d1/a0/a6,-(a7)
-	tst.b	alien_attack_loop_playing
-	bne.b	1f
-	lea		_custom,a6
-	move.w	#ATTACK_END_SND*8,d0	| present on channel 2
-	lea		sound_table,a0
-	move.w	(a0,d0.w),d1	| sound type
-	beq.b	1f		| no sound
-
-2:
-	move.l	(4,a0,d0.w),a0
-	lea		_custom,a6
-	jsr		_mt_loopfx
-	st.b	alien_attack_loop_playing
-1:
-	movem.l	(a7)+,d0/d1/a0/a6
-	rts
-
 	
 osd_sound_start:
 	movem.l	d0/d1/a0/a6,-(a7)
@@ -852,15 +784,15 @@ platform_init:
     move.w #0x1C81-8,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
-    move.w #0x6600,bplcon0(a5) | 6 bitplanes, dual playfield
-    move.w #0x0048,bplcon2(a5)     | sprite starfield behind, pf2 has priority
+    move.w #0x4200,bplcon0(a5) | 4 bitplanes
+    move.w #0x0024,bplcon2(a5)
 	* AGA-compatible ECS default values
     move.w #0x0C00,bplcon3(a5)     | no AGA specificities, default ECS
     move.w #0x0011,bplcon4(a5)     | ECS default for sprite colors
     move.w #0,fmode(a5)			
 	
 
-	* screen with galaxian bg/fg tiles
+	* screen with pengo bg/fg tiles
     **move.w #2<<4,bplcon1(a5)    | foreground tiles shifted by 2 pixels
     move.w #0,bplcon1(a5)    | foreground tiles
 	move.w	#0,d0
@@ -2314,123 +2246,7 @@ blit_planes_any_internal_cookie_cut:
     movem.l (a7)+,d0-d7/a0-a4
     rts
 
-NB_STAR_ROWS = 32		| height: 256
 
-show_stars:
-	move.l	a5,-(a7)
-	lea	bg_color_table,a3
-	lea	stars_palette_rgb4,a2
-	lea	stars_copper_row_pointers(pc),a5
-	
-	clr.w	d7		| 8-row counter
-	clr.w	d2		| palette index
-2:
-	* get address for the next 8 rows
-	move.l	(a3)+,a1
-	add.w	#copper_stars_offset,a1
-
-	moveq	#8-1,d6
-	cmp.w	#28,d7
-	bne.b	3f
-	moveq	#3-1,d6		| special row
-3:
-	move.l	a1,(a5)+
-4:
-	* pick random x
-	bsr		random
-	btst	#15,d0
-	beq.b	1f	| 50% chance of displaying a star
-	and.w	#0xFF,d0
-	cmp.w	#240,d0		| empiric
-	bcc.b	4b
-	add.w	#6*8,d0	| add 48 offset because of screen centering
-	move.w	#0,d1	| max Y, else glitchy stars
-	move.l	a1,-(a7)
-	lea		HW_SpriteYTable_0,a1	
-	bsr		store_sprite_pos
-	move.l	(a7)+,a1
-	* store color
-	move.w	(a2,d2.w),(2,a1)		| change offset if copper sprite struct changes
-	addq.w	#2,d2
-	cmp.w	#128,d2		| 64 colors?
-	bne.b	0f
-	clr.w	d2			| wrap
-0:
-
-	* D0 is the sprite pos/control word
-	move.w	d0,(10,a1)		| change offset if struct changes
-	swap	d0
-	move.w	d0,(6,a1)		| change offset if struct changes
-
-	add.w	#32,a1
-	dbf		d6,3b
-	addq.w	#1,d7
-	cmp.w	#NB_STAR_ROWS,d7
-	jne		2b
-	sub.l	#stars_copper_row_pointers,a5
-	move.w	A5,d0
-	lsr.w	#2,d0
-	move.w	d0,stars_copper_pointers_count
-	move.l	(a7)+,a5
-	tst.w	slow_machine
-	bne.b	3f
-	st.b	enable_star_scroll
-3:
-	rts
-1:
-	clr.l	d0
-	bra.b	0b
-	
-scroll_stars:
-	tst.b	enable_star_scroll
-	bne.b	0f
-	rts
-0:
-	lea		stars_copper_row_pointers(pc),a5
-	move.w	stars_copper_pointers_count(pc),d7
-	move.w	d7,d6
-	add.w	d6,d6
-	add.w	d6,d6
-	add.w	d6,a5		| point at the end of the row pointers
-	subq.w	#1,d7
-	* save last line first
-
-	
-	lea		temp_copper_buffer(pc),a3
-	move.l	-(a5),a4
-	move.w	(2,a4),(a3)+
-	move.w	(10,a4),(a3)+
-	move.w	(6,a4),(a3)
-	subq	#1,d7
-	* then overwrite each next line with previous one
-0:
-	move.l	(a5),a4	| destination
-	move.l	-(a5),a3	| source
-	move.w	(2,a3),(2,a4)
-	move.w	(10,a3),(10,a4)
-	move.w	(6,a3),(6,a4)
-
-	dbf	d7,0b
-	* restore last line into the first one
-	move.l		stars_copper_row_pointers(pc),a4	| first item
-	lea		temp_copper_buffer(pc),a3
-	move.w	(a3)+,(2,a4)
-	move.w	(a3)+,(10,a4)
-	move.w	(a3),(6,a4)
-	
-	rts
-
-
-	
-random:
-    move.l  previous_random(pc),d0
-	* EAB simple random generator
-    * thanks meynaf
-    mulu #0xa57b,d0
-    addi.l #0xbb40e62d,d0
-    rol.l #6,d0
-    move.l  d0,previous_random
-    rts
 	
 	MUL_TABLE	NB_BYTES_PER_ROW,288
 
@@ -2460,8 +2276,7 @@ read_args_string:
 
 intro_sound_lock:
 	.word	0
-previous_random:
-	.long	0
+
 
 * 8 slots (indexed with the target sprite index, not
 * the amiga sprite index) with
@@ -2596,50 +2411,16 @@ _dosbase:
 	.long	0
 bg_drawed_screen_ptr:
 	.long	bg_screen_data_1
-fg_drawed_screen_ptr:
-	.long	fg_screen_data_1
 bg_displayed_screen_ptr:
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING_BG
 	.long	bg_screen_data_2
 	.else
 	.long	bg_screen_data_1
 	.endif
-fg_displayed_screen_ptr:
-	.ifne	OPT_ENABLE_DOUBLE_BUFFERING_FG
-	.long	fg_screen_data_2
-	.else
-	.long	fg_screen_data_1
-	.endif
 
 
 	.include	"sound_entries.68k"
-* extra sound entries for swarm at different loop periods
-swarm_1_len = 10273
-swarm_1_freq = 22050
-swarm_1_volume = 16
 
-    .macro    SWARM_ENTRY    size
-    .long    swarm_1_raw
-    .word   \size
-    .word   FXFREQBASE/swarm_1_freq,swarm_1_volume
-    .byte    0
-    .byte    1
-    .endm
-
-swarm_sound_table:
-	* fastest swarm sound loop freq not so high as len/16
-	SWARM_ENTRY (swarm_1_len*3)/32
-	.set	idx,2
-	.rept	15
-    SWARM_ENTRY (swarm_1_len*idx)/16
-	.set	idx,idx+1
-	.endr
-swarm_sound_offsets:
-	.set	idx,0
-	.rept	16
-	.word	idx*12	| 12 is size of sound entry
-	.set	idx,idx+1
-	.endr
 	
 dosname:
 	.ascii	"dos.library"
@@ -2648,7 +2429,7 @@ graphicsname:
 	.ascii	"graphics.library"
 	.byte	0
 normal_hiscorename:
-	.asciz	"galaxian.high"
+	.asciz	"pengo.high"
 floppy_file:
 	.ascii	"floppy"
 	.byte	0
@@ -2669,23 +2450,6 @@ irq_cnt:											ds.w		1
 		.data
 
 
-* 32 rows = 256 pixels
-* table of the colors for fg tiles in the copperlist
-	.set	row_offset,0
-bg_color_table:
-	.rept	28
-	.long	color_row_0+row_offset
-	* warning: this offset increase depends on what's in color_row_0
-	* 16=4 colors to change, 32 bytes per star pattern * 8 patterns per row
-	.set	row_offset,row_offset+copper_8x8_row_size
-	.endr
-	.long	color_row_28
-	.long	color_row_29
-	.set	row_offset,0
-	.rept	2
-	.long	color_row_30_plus+row_offset
-	.set	row_offset,row_offset+copper_8x8_row_size
-	.endr
 
 		.section .bsschip
 	* some space to write tiles slightly outside screen
@@ -2702,32 +2466,14 @@ bg_screen_data_2:
 	ds.b	BG_SCREEN_SIZE
 	ds.b	NB_BYTES_PER_ROW*12*3
 	.endif
-fg_screen_data_1:
-	ds.b	FG_SCREEN_SIZE
-	
-	* small margin (I suspect that gas is buggy with ds directive)
-	* plus fg plane shifting can write one byte too far
-	ds.b	100
-	.ifne  OPT_ENABLE_DOUBLE_BUFFERING_FG
 
-fg_screen_data_2:
-	ds.b	FG_SCREEN_SIZE
-	
-fg_tile_layer:
-	ds.b	FG_SCREEN_PLANE_SIZE
-	ds.b	NB_BYTES_PER_ROW*16
-	* small margin (I suspect that gas is buggy with ds directive)
-	* plus fg plane shifting can write one byte too far
-	ds.b	100
-	.endif
 	.section	.datachip
 	
-.macro	DECL_3_BITPLANES	bpoff_start
+.macro	DECL_4_BITPLANES	bpoff_start
 	.set	bpoff,\bpoff_start
 	.rept	NB_PLAYFIELD_PLANES
 	dc.w  0xe0+bpoff,0
 	dc.w  0xe2+bpoff,0
-	.set	bpoff,bpoff+8
 	.endr
 	.endm
 
@@ -2753,56 +2499,13 @@ blank_sprite:
 	.long	0
 	.endr
 	
-player_shot_sprite:
-	.long	0
-	.long	0x00800000
-	.long	0x00800000
-	.long	0x00800000
-	.long	0x00800000
-	.long	0x00800000
-	.long	0x00800000
-	.long	0x00800000
-	.long	0x00800000
-	.rept	22
-	.long	0
-	.endr
-	.long	0
-	
-	.macro STAR_COPPER_ROW
-    * we use sprite #7 (last) for the stars, multiplexing it
-	.word	STAR_SPRITE_COLOR_REG,0xF00	   | 4
-    .word    spr+sd_SIZEOF*STAR_SPRITE_INDEX+sd_pos,0   | 8
-    .word    spr+sd_SIZEOF*STAR_SPRITE_INDEX+sd_ctl,0   | 12
-	* sprite pattern
-    .word    spr+sd_SIZEOF*STAR_SPRITE_INDEX+sd_dataB,0x0000	| 16
-    .word    spr+sd_SIZEOF*STAR_SPRITE_INDEX+sd_dataa,0x8000	| 20
-	.word	beampos,0xFFFE              | 24
-    .word    spr+sd_SIZEOF*STAR_SPRITE_INDEX+sd_dataB,0	| 28
-    .word    spr+sd_SIZEOF*STAR_SPRITE_INDEX+sd_dataa,0	| 32	
-	
-	.endm
-	.macro FAKE_STAR_COPPER_ROW
-    * we use sprite #7 (last) for the stars, multiplexing it
-	.word	STAR_SPRITE_COLOR_REG,0xF00	   | 4
-	.word	STAR_SPRITE_COLOR_REG,0xF00	   | 4
-	.word	STAR_SPRITE_COLOR_REG,0xF00	   | 4
-	* sprite pattern
-	.word	STAR_SPRITE_COLOR_REG,0xF00	   | 4
-	.word	STAR_SPRITE_COLOR_REG,0xF00	   | 4
-	.word	beampos,0xFFFE              | 24
-	.word	STAR_SPRITE_COLOR_REG,0xF00	   | 4
-	.word	STAR_SPRITE_COLOR_REG,0xF00	   | 4
-	
-	.endm
 	
 	* main copperlist
 copperlist:
     *.word   0x1801,0xFFFE	
 
-fg_bitplanes:
-	DECL_3_BITPLANES	4
 bg_bitplanes:
-	DECL_3_BITPLANES	0
+	DECL_4_BITPLANES	0
 copperlist_colors:
 	DECL_16_COLORS	0
 sprite_cols:
@@ -2835,28 +2538,9 @@ sprites:
 end_color_copper:
    * dynamic colors for fg tile color each 8 lines
 	.set    beampos,0x1C01
-	.set	start_color,color
 	.word	beampos,0xFFFE
-color_row_0:
-	.rept	28
-	* set 4 colors for that 8-high row: 16 bytes
-	.word	start_color+2,0 
-	.word	start_color+4,0 
-	.word	start_color+6,0   
-	* set sprite slots for stars: 32*8 bytes
-	.rept	8
-	.set	beampos,beampos+0x100
-	STAR_COPPER_ROW
-	.endr
-	.endr
-color_row_28:
-	.word	start_color+2,0 
-	.word	start_color+4,0 
-	.word	start_color+6,0   
-	.rept	3
-	.set	beampos,beampos+0x100
-	STAR_COPPER_ROW
-	.endr
+
+
 
 	* pal limit
     .word  0xFFDF,0xFFFE       | PAL wait (should be 0xFFDF but probably fmode=3 changes it)
@@ -2866,28 +2550,10 @@ color_row_28:
     .word   beampos,0xFFFE	
 	
 color_row_29:
-	.word	start_color+2,0 
-	.word	start_color+4,0 
-	.word	start_color+6,0
-	.rept	8
-	.set	beampos,beampos+0x100
-	STAR_COPPER_ROW
-	.endr
 	
-	.set    beampos,0x0c01
+	.set    beampos,0x1401
 	
-color_row_30_plus:
-	.rept	4
-	.word	start_color+2,0 
-	.word	start_color+4,0 
-	.word	start_color+6,0   
-	.rept	8
-	.set	beampos,beampos+0x100
-	STAR_COPPER_ROW
-	.endr
-	.endr
-
- 	.word	beampos+0x400,0xFFFE   | wait before interrupt, avoid losing last bobs lines
+ 	.word	beampos,0xFFFE   | wait before interrupt, avoid losing last bobs lines
     .word	 intreq,0x8010
     .long    -2					
 	.ascii	"ENDCPLST"

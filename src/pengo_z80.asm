@@ -227,26 +227,29 @@
 0096: 34            inc  (hl)	;  1 more minute
 0097: BE            cp   (hl)
 0098: 30 24         jr   nc,$009E
+; reset minute counter
 009A: 36 20         ld   (hl),$00
 009C: 23            inc  hl
+; add hour, never called obviously as round "times out" before 2 minutes
+; by monsters fleeing the scene
 009D: 34            inc  (hl)
 009E: 3E 20         ld   a,$00
-00A0: DD 21 60 8C   ld   ix,$8C60
-00A4: CD 99 BA      call $1A99
+00A0: DD 21 60 8C   ld   ix,sound_channel_0_struct_8C60
+00A4: CD 99 BA      call update_sound_channel_1A99
 00A7: 3E 29         ld   a,$01
-00A9: DD 21 70 8C   ld   ix,$8C70
-00AD: CD 99 92      call $1A99
+00A9: DD 21 70 8C   ld   ix,sound_channel_1_struct_8C70
+00AD: CD 99 92      call update_sound_channel_1A99
 00B0: 3E 23         ld   a,$03
-00B2: DD 21 90 AC   ld   ix,$8C90
-00B6: CD B9 1A      call $1A99
+00B2: DD 21 90 AC   ld   ix,sound_channel_3_struct_8C90
+00B6: CD B9 1A      call update_sound_channel_1A99
 00B9: 3E 02         ld   a,$02
-00BB: DD 21 28 8C   ld   ix,$8C80
-00BF: CD 99 92      call $1A99
+00BB: DD 21 28 8C   ld   ix,sound_channel_2_struct_8C80
+00BF: CD 99 92      call update_sound_channel_1A99
 00C2: 3E A4         ld   a,$04
-00C4: DD 21 00 8C   ld   ix,$8CA0
-00C8: CD 99 BA      call $1A99
+00C4: DD 21 00 8C   ld   ix,sound_channel_4_struct_8CA0
+00C8: CD 99 BA      call update_sound_channel_1A99
 00CB: 21 20 8F      ld   hl,$8F20
-00CE: 3A 1C 8C      ld   a,($8CBC)
+00CE: 3A 1C 8C      ld   a,(sfx_1_playing)
 00D1: A7            and  a
 00D2: 28 23         jr   z,$00D7
 00D4: 21 80 8F      ld   hl,$8F28
@@ -256,7 +259,7 @@
 00DF: 7E            ld   a,(hl)
 00E0: 32 B1 8F      ld   ($8F11),a
 00E3: 21 30 8F      ld   hl,$8F30
-00E6: 3A 1D 8C      ld   a,($8CBD)
+00E6: 3A 1D 8C      ld   a,(sfx_2_playing)
 00E9: A7            and  a
 00EA: 28 A3         jr   z,$00EF
 00EC: 21 10 8F      ld   hl,$8F38
@@ -643,9 +646,9 @@ display_team_names_01C7:
 03E5: 32 EB 10      ld   (flip_screen_9043),a
 03E8: 32 C4 B0      ld   ($9044),a
 03EB: 32 ED 10      ld   ($9045),a
-03EE: 32 C7 90      ld   ($9047),a
+03EE: 32 C7 90      ld   (character_sprite_bank_selector_9047),a
 03F1: 32 42 B8      ld   (palette_bank_selector_9042),a
-03F4: 32 E6 90      ld   ($9046),a
+03F4: 32 E6 90      ld   (color_lookup_table_bank_selector_9046),a
 03F7: AF            xor  a
 03F8: 21 A0 00      ld   hl,$0000
 03FB: 32 08 88      ld   ($8808),a
@@ -653,7 +656,7 @@ display_team_names_01C7:
 0401: 32 AB 88      ld   ($880B),a
 0404: 22 94 88      ld   ($881C),hl
 0407: 22 BE 88      ld   ($881E),hl
-040A: 21 60 8C      ld   hl,$8C60
+040A: 21 60 8C      ld   hl,sound_channel_0_struct_8C60
 040D: 11 61 8C      ld   de,$8C61
 0410: 01 F7 00      ld   bc,$005F
 0413: 36 00         ld   (hl),$00
@@ -720,9 +723,9 @@ loop_0480:
 ;;; coin has been inserted
 	
 0490: 3E 20         ld   a,$00
-0492: 32 67 90      ld   ($9047),a
+0492: 32 67 90      ld   (character_sprite_bank_selector_9047),a
 0495: 32 42 38      ld   (palette_bank_selector_9042),a
-0498: 32 66 90      ld   ($9046),a
+0498: 32 66 90      ld   (color_lookup_table_bank_selector_9046),a
 049B: CD 2D 27      call wait_for_start_and_play_072D
 ;;; after game is over, loop back to "thanks for playing ..."
 049E: 18 F8         jr   loop_0478
@@ -989,7 +992,7 @@ display_demo_and_top_scores_6E1
 06E6: 32 B3 88      ld   ($8813),a
 	;; set main counter to 0
 06E9: 21 28 A0      ld   hl,$0000
-06EC: 22 24 88      ld   (counter_8824),hl
+06EC: 22 24 88      ld   (counter_lsb_8824),hl
 	;; init number of lives
 06EF: 3A 40 38      ld   a,(dip_switches_9040)
 06F2: 2F            cpl
@@ -1072,7 +1075,7 @@ wait_for_start_and_play_072D:
 078F: DD 36 81 00   ld   (ix+$09),$00
 0793: DD 36 83 00   ld   (ix+$0b),$00
 0797: CD CE 33      call display_snobee_sprite_33CE
-079A: CD 0B 39      call display_pengo_sprite_39AB
+079A: CD 0B 39      call display_character_sprite_39AB
 079D: CD 75 80      call increase_counter_0875
 07A0: CD B1 88      call $0819
 07A3: 3A A0 10      ld   a,($9080)
@@ -1188,9 +1191,9 @@ table_0822:
 0874: C9            ret
 	
 increase_counter_0875:
-0875: 2A 24 A8      ld   hl,(counter_8824)
+0875: 2A 24 A8      ld   hl,(counter_lsb_8824)
 0878: 23            inc  hl
-0879: 22 24 A8      ld   (counter_8824),hl
+0879: 22 24 A8      ld   (counter_lsb_8824),hl
 087C: C9            ret
 	
 play_one_game_087D:
@@ -1343,7 +1346,7 @@ run_one_life_092D:
 09A0: CD C4 8D      call $0D44
 09A3: DD 21 00 85   ld   ix,pengo_struct_8D80
 09A7: CD C6 9B      call display_snobee_sprite_33CE
-09AA: CD 2B 19      call display_pengo_sprite_39AB
+09AA: CD 2B 19      call display_character_sprite_39AB
 09AD: CD 58 BE      call get_div8_ix_coords_3E78
 09B0: CD 09 43      call clear_2x2_tiles_at_current_pos_43A9
 09B3: 06 FF         ld   b,$FF		; stop sound
@@ -1356,7 +1359,7 @@ run_one_life_092D:
 09C3: C2 0B A2      jp   nz,level_completed_0A2B ; end of level
 09C6: 3E C0         ld   a,$40
 09C8: CD 51 08      call delay_28D1	;  intro music?
-09CB: 3A 68 24      ld   a,($8C60)
+09CB: 3A 68 24      ld   a,(sound_channel_0_struct_8C60)
 09CE: A7            and  a
 09CF: 20 FA         jr   nz,$09CB
 09D1: 3E 06         ld   a,$06
@@ -1374,7 +1377,7 @@ run_one_life_092D:
 09E5: 36 A0         ld   (hl),$80
 	
 main_game_loop_09E7: 
-09E7: 3A 68 24      ld   a,($8C60)
+09E7: 3A 68 24      ld   a,(sound_channel_0_struct_8C60)
 09EA: A7            and  a
 09EB: 20 AF         jr   nz,$09F4
 09ED: F3            di
@@ -1628,7 +1631,7 @@ text_start_0B20:
 0CA9: E6 29         and  $01
 0CAB: C8            ret  z
 0CAC: DD 36 2A 68   ld   (ix+$02),$E0
-0CB0: CD 8B 39      call display_pengo_sprite_39AB
+0CB0: CD 8B 39      call display_character_sprite_39AB
 0CB3: 3E 40         ld   a,$40
 0CB5: CD D1 80      call delay_28D1
 0CB8: C9            ret
@@ -1639,7 +1642,7 @@ text_start_0B20:
 0CC2: E6 A1         and  $01
 0CC4: C8            ret  z
 0CC5: DD 36 A2 42   ld   (ix+$02),$E2
-0CC9: CD 83 11      call display_pengo_sprite_39AB
+0CC9: CD 83 11      call display_character_sprite_39AB
 0CCC: 3E E0         ld   a,$40
 0CCE: CD F9 28      call delay_28D1
 0CD1: C9            ret
@@ -1761,6 +1764,7 @@ player_dies_0CD2:
 0DAC: 8C            adc  a,h
 0DAD: A7            and  a
 0DAE: 8C            adc  a,h
+
 0DAF: C5            push bc
 0DB0: 50            ld   d,b
 0DB1: 59            ld   e,c
@@ -1779,6 +1783,7 @@ player_dies_0CD2:
 0DCD: C1            pop  bc
 0DCE: 37            scf
 0DCF: C9            ret
+
 0DD0: 21 04 0E      ld   hl,$0E2C
 0DD3: DD 21 A0 8D   ld   ix,snobee_1_struct_8D00
 0DD7: DD 7E 97      ld   a,(ix+$1f)
@@ -1829,12 +1834,10 @@ player_dies_0CD2:
 0E27: CD CE 33      call display_snobee_sprite_33CE
 0E2A: E1            pop  hl
 0E2B: C9            ret
-0E2C: 29            add  hl,hl
-0E2D: A2            and  d
-0E2E: 2A 91 1E      ld   hl,($1E19)
-0E31: DE 19         sbc  a,$19
-0E33: 22 02 21      ld   ($0102),hl
-0E36: 1E DE         ld   e,$FE
+
+0E2C  01 02 02 19 1E FE 19 02 02 01 1E FE
+
+
 0E38: 21 48 8D      ld   hl,$8DE0
 0E3B: 06 02         ld   b,$02
 0E3D: C5            push bc
@@ -1941,7 +1944,7 @@ player_dies_0CD2:
 0EDA: 06 26         ld   b,$06
 0EDC: CD A9 18      call play_sfx_1889
 0EDF: 21 EC 87      ld   hl,$0F4C
-0EE2: CD 06 AF      call $0F2E
+0EE2: CD 06 AF      call erase_rectangular_char_zone_0F2E
 0EE5: 21 79 87      ld   hl,$0F51
 0EE8: 3A B6 88      ld   a,(player_number_8816)
 0EEB: CB 47         bit  0,a
@@ -1978,6 +1981,9 @@ player_dies_0CD2:
 0F2A: 2B            dec  hl
 0F2B: 36 57         ld   (hl),$FF
 0F2D: C9            ret
+
+; erase chars & set fixed color attribute
+erase_rectangular_char_zone_0F2E:
 0F2E: 5E            ld   e,(hl)
 0F2F: 23            inc  hl
 0F30: 56            ld   d,(hl)
@@ -1999,46 +2005,24 @@ player_dies_0CD2:
 0F48: 14            inc  d
 0F49: 10 47         djnz $0F3A
 0F4B: C9            ret
-0F4C: 88            adc  a,b
-0F4D: A4            and  h
-0F4E: B8            cp   b
-0F4F: A4            and  h
-0F50: 05            dec  b
-0F51: 81            add  a,c
-0F52: 0D            dec  c
-0F53: B0            or   b
-0F54: 50            ld   d,b
-0F55: C4 41 D1      call nz,$5941
-0F58: 45            ld   b,l
-0F59: F2 20 20      jp   p,$2020
-0F5C: B1            or   c
-0F5D: 81            add  a,c
-0F5E: 0D            dec  c
-0F5F: B0            or   b
-0F60: F8            ret  m
-0F61: E4 E9 F1      call po,$5941
-0F64: ED D2         db   $ed,$d2
-0F66: 28 88         jr   z,$0F88
-0F68: 32 A1 8F      ld   ($0F09),a
-0F6B: 90            sub  b
-0F6C: EF            rst  $28
-0F6D: C1            pop  bc
-0F6E: CD C5 20      call $2045
-0F71: 20 4F         jr   nz,$0FC2
-0F73: F6 45         or   $45
-0F75: FA 21 6B      jp   m,$E321
-0F78: 0F            rrca
+
+0F4C  08 0C 10 0C 05 09 0D 10 50 4C 41 59 45 52 20 20   ..... ..PLAYER
+0F5C  B1 09 0D 10 50 4C 41 59 45 52 20 20 B2 09 0F 10   ± ..PLAYER  ² ..
+0F6C  47 41 4D 45 20 20 4F 56 45 D2 21 E3 0F B2 16 88   GAME  OVEÒ!ã.²..
+
+
+0F76:21 6B 0F	    ld   hl,str_player_1_FE3                                       
 0F79: 3A 16 88      ld   a,(player_number_8816)
 0F7C: CB 47         bit  0,a
 0F7E: 28 A3         jr   z,$0F83
-0F80: 21 6E 8F      ld   hl,$0FEE
+0F80: 21 6E 8F      ld   hl,str_player_2_FEE
 0F83: CD 74 A9      call print_line_29F4
-0F86: 21 79 8F      ld   hl,$0FF9
+0F86: 21 79 8F      ld   hl,str_ready_FF9
 0F89: CD 74 A9      call print_line_29F4
 0F8C: 3E 00         ld   a,$80
 0F8E: CD 51 28      call delay_28D1
-0F91: 21 DE 87      ld   hl,$0FDE
-0F94: CD 06 0F      call $0F2E
+0F91: 21 DE 87      ld   hl,rect_dimensions_FDE
+0F94: CD 06 0F      call erase_rectangular_char_zone_0F2E
 0F97: C9            ret
 0F98: 06 B0         ld   b,$10
 0F9A: 0E 81         ld   c,$09
@@ -2090,65 +2074,52 @@ player_dies_0CD2:
 0FDA: 15            dec  d
 0FDB: 20 E8         jr   nz,$0FC5
 0FDD: C9            ret
-0FDE: 09            add  hl,bc
-0FDF: B0            or   b
-0FE0: A8            xor  b
-0FE1: A2            and  d
-0FE2: AD            xor  l
-0FE3: A2            and  d
-0FE4: B9            cp   c
-0FE5: 90            sub  b
-0FE6: F8            ret  m
-0FE7: E4 E9 F1      call po,$5941
-0FEA: ED D2         db   $ed,$d2
-0FEC: 28 19         jr   z,$0F9F
-0FEE: 8A            adc  a,d
-0FEF: 91            sub  c
-0FF0: 10 F0         djnz $1042
-0FF2: 4C            ld   c,h
-0FF3: E1            pop  hl
-0FF4: 59            ld   e,c
-0FF5: E5            push hl
-0FF6: 52            ld   d,d
-0FF7: 20 B2         jr   nz,$0FAB
-0FF9: 83            add  a,e
-0FFA: 13            inc  de
-0FFB: B0            or   b
-0FFC: 52            ld   d,d
-0FFD: E5            push hl
-0FFE: 41            ld   b,c
-0FFF: E4 F1 77      call po,$FFD9
-1002: FF            rst  $38
+
+
+; control chars + PLAYER 1
+rect_dimensions_FDE:
+	dc.b	$09,$10,$00,$0A,$05
+str_player_1_FE3:
+	dc.b	$0A,$11,$10,$50,$4C,$41,$59,$45,$52,$20,$B1
+str_player_2_FEE:
+	dc.b	$0A,$11,$10
+	dc.b	"PLAYER "
+	dc.b	$B2		; 2 with bit 7 set
+str_ready_FF9:
+	dc.b	$0B,$13,$10,$52,$45,$41,$44,$D9		; READY
+
 1003: 3E 00         ld   a,$00
-1005: 32 47 B8      ld   ($9047),a
+1005: 32 47 B8      ld   (character_sprite_bank_selector_9047),a
 1008: 32 CA 90      ld   (palette_bank_selector_9042),a
-100B: 32 46 B8      ld   ($9046),a
+100B: 32 46 B8      ld   (color_lookup_table_bank_selector_9046),a
 100E: CD 7A 18      call disable_sound_18F2
 1011: CD B7 B9      call clear_sprites_31B7
 1014: CD C9 10      call $1041
-1017: CD 3B 98      call $103B
+1017: CD 3B 98      call wait_a_while_103B
 101A: CD 9C 13      call $1314
-101D: CD 3B 98      call $103B
-1020: CD 79 14      call $14F1
-1023: CD 3B 98      call $103B
+101D: CD 3B 98      call wait_a_while_103B
+1020: CD 79 14      call diagnostic_screen_14F1
+1023: CD 3B 98      call wait_a_while_103B
 1026: CD 4E 14      call $1466
-1029: CD 3B 98      call $103B
+1029: CD 3B 98      call wait_a_while_103B
 102C: CD 85 11      call $110D
-102F: CD 3B 98      call $103B
+102F: CD 3B 98      call wait_a_while_103B
 1032: CD FE 16      call $1676
-1035: CD 3B 98      call $103B
+1035: CD 3B 98      call wait_a_while_103B
 1038: C3 88 00      jp   $0000
+
 103B: 3E 0A         ld   a,$0A
 103D: CD D1 28      call delay_28D1
 1040: C9            ret
+
 1041: DD E3         ex   (sp),ix
 1043: 0E 00         ld   c,$00
-1045: 21 00 A8      ld   hl,$video_tile_memory_8000
-1048: CD 7A 10      call $10F2
+1045: 21 00 A8      ld   hl,video_tile_memory_8000
+1048: CD 7A 10      call memory_test_10F2
 104B: 38 02         jr   c,$104F
 104D: CB C1         set  0,c
 104F: 21 00 00      ld   hl,cursor_x_8800
-1052: CD F2 10      call $10F2
+1052: CD F2 10      call memory_test_10F2
 1055: 38 02         jr   c,$1059
 1057: CB C9         set  1,c
 1059: DD E3         ex   (sp),ix
@@ -2169,66 +2140,14 @@ player_dies_0CD2:
 107B: 3E 02         ld   a,$02
 107D: CD 46 9B      call $1346
 1080: C9            ret
-1081: 80            add  a,b
-1082: 22 98 52      ld   ($5210),hl
-1085: C9            ret
-1086: 65            ld   h,l
-1087: DB 08         in   a,($20)
-1089: 08            ex   af,af'
-108A: 08            ex   af,af'
-108B: DC 45 DB      call c,$5345
-108E: D4 80 12      call nc,$1208
-1091: 98            sbc  a,b
-1092: 41            ld   b,c
-1093: 4C            ld   c,h
-1094: 4C            ld   c,h
-1095: A8            xor  b
-1096: 52            ld   d,d
-1097: C9            ret
-1098: 4D            ld   c,l
-1099: DB 20         in   a,($20)
-109B: 4F            ld   c,a
-109C: CB 08         rrc  b
-109E: 12            ld   (de),a
-109F: 9E            sbc  a,(hl)
-10A0: 52            ld   d,d
-10A1: C9            ret
-10A2: 65            ld   h,l
-10A3: DB 08         in   a,($20)
-10A5: CA 41 EC      jp   z,$C441
-10A8: 20 85         jr   nz,$10B7
-10AA: 10 DA         djnz $10FE
-10AC: 41            ld   b,c
-10AD: C5            push bc
-10AE: 19            add  hl,de
-10AF: 08            ex   af,af'
-10B0: 4F            ld   c,a
-10B1: 43            ld   b,e
-10B2: 08            ex   af,af'
-10B3: 0D            dec  c
-10B4: 16 DA         ld   d,$52
-10B6: 41            ld   b,c
-10B7: 4D            ld   c,l
-10B8: 31 A8 42      ld   sp,$4220
-10BB: C9            ret
-10BC: C4 08 0F      call nz,$0F08
-10BF: 98            sbc  a,b
-10C0: 52            ld   d,d
-10C1: C9            ret
-10C2: 65            ld   h,l
-10C3: 1A            ld   a,(de)
-10C4: 08            ex   af,af'
-10C5: C7            rst  $00
-10C6: E3            ex   (sp),hl
-10C7: 80            add  a,b
-10C8: 27            daa
-10C9: 9E            sbc  a,(hl)
-10CA: 52            ld   d,d
-10CB: C9            ret
-10CC: 65            ld   h,l
-10CD: 1A            ld   a,(de)
-10CE: 08            ex   af,af'
-10CF: CA 41 C4      jp   z,$C441
+
+     1081  08 0A 10 52 41 4D 53 20 20 20 54 45 53 D4 08 12   ...RAMS   TESÔ..
+     1091  10 41 4C 4C 20 52 41 4D 53 20 4F CB 08 12 16 52   .ALL RAMS OË...R
+     10A1  41 4D 53 20 42 41 C4 08 0D 10 52 41 4D 31 20 4F   AMS BAÄ...RAM1 O
+     10B1  CB 08 0D 16 52 41 4D 31 20 42 41 C4 08 0F 10 52   Ë...RAM1 BAÄ...R
+     10C1  41 4D 32 20 4F CB 08 0F 16 52 41 4D 32 20 42 41   AM2 OË...RAM2 BA
+     10D1  C4
+
 10D2: 21 20 10      ld   hl,$10A8
 10D5: CB 41         bit  0,c
 10D7: 28 03         jr   z,$10DC
@@ -2245,6 +2164,8 @@ player_dies_0CD2:
 10ED: CD DC 01      call print_line_29F4
 10F0: C1            pop  bc
 10F1: C9            ret
+
+memory_test_10F2:
 10F2: FD E3         ex   (sp),iy
 10F4: 51            ld   d,c
 10F5: 01 00 08      ld   bc,$0800
@@ -2572,10 +2493,11 @@ draw_horizontal_line_14D8:
 14EE: 10 73         djnz $14EB
 14F0: C9            ret
 
+diagnostic_screen_14F1:
 14F1: CD E5 28      call clear_screen_and_colors_28E5
 14F4: 3E 98         ld   a,$10
 14F6: 32 8A 88      ld   (cursor_color_8802),a
-14F9: 21 5B 9E      ld   hl,$165B
+14F9: 21 5B 9E      ld   hl,$165B		; player controls
 14FC: 11 8E 04      ld   de,$0406
 14FF: ED 53 28 08   ld   (cursor_x_8800),de
 1503: CD 46 3D      call $15C6
@@ -2702,57 +2624,18 @@ draw_horizontal_line_14D8:
 161E: A0            and  b
 161F: DB 54         in   a,($54)
 1621: C9            ret
-1622: 52            ld   d,d
-1623: FC 08 C7      call m,$4F20
-1626: E6 C7         and  $4F
-1628: 46            ld   b,(hl)
-1629: EE 55         xor  $55
-162B: D8            ret  c
-162C: 3A 12 3A      ld   a,($3A3A)
-162F: 12            ld   (de),a
-1630: 3A 3A BA      ld   a,($BA3A)
-1633: CC 4F DF      call z,$574F
-1636: 4E            ld   c,(hl)
-1637: 3A 3A 3A      ld   a,($3A3A)
-163A: 3A 32 4C      ld   a,($4CBA)
-163D: CD 46 DC      call $5446
-1640: 3A 12 3A      ld   a,($3A3A)
-1643: 12            ld   (de),a
-1644: BA            cp   d
-1645: DA 61 CF      jp   c,$4749
-1648: 60            ld   h,b
-1649: DC 3A 12      call c,$3A3A
-164C: 3A 32 50      ld   a,($50BA)
-164F: DD 53         db   $dd,$53
-1651: 48            ld   c,b
-1652: 3A 3A 3A      ld   a,($3A3A)
-1655: 3A BA D8      ld   a,($50BA)
-1658: B1            or   c
-1659: D8            ret  c
-165A: B2            or   d
-165B: D8            ret  c
-165C: 4C            ld   c,h
-165D: C9            ret
-165E: 59            ld   e,c
-165F: CD 52 08      call $2052
-1662: 43            ld   b,e
-1663: C7            rst  $00
-1664: 66            ld   h,(hl)
-1665: DC 52 C7      call c,$4F52
-1668: 64            ld   h,h
-1669: FB            ei
-166A: 19            add  hl,de
-166B: D8            ret  c
-166C: 08            ex   af,af'
-166D: 08            ex   af,af'
-166E: 08            ex   af,af'
-166F: 08            ex   af,af'
-1670: 20 A8         jr   nz,$1692
-1672: 20 A8         jr   nz,$1694
-1674: 32 D0 F3      ld   ($F3D0),a
+
+1622  52 D4 20 4F CE 4F 46 C6 55 50 3A 3A 3A 3A 3A 3A   ;RÔ OÎOFÆUP::::::
+1632  BA 44 4F 57 4E 3A 3A 3A 3A BA 4C 45 46 54 3A 3A   ;ºDOWN::::ºLEFT::
+1642  3A 3A BA 52 49 47 48 54 3A 3A 3A BA 50 55 53 48   ;::ºRIGHT:::ºPUSH
+1652  3A 3A 3A 3A BA 50 B1 50 B2 50 4C 41 59 45 52 20   ;::::ºP±P²PLAYER
+1662  43 4F 4E 54 52 4F 4C D3 31 50 20 20 20 20 20 20   ;CONTROLÓ1P
+1672  20 20 32 D0 
+
+1676: F3			di                                                  
 1677: 3E 04         ld   a,$04
 1679: 32 03 04      ld   ($8C03),a
-167C: CD B0 16      call $16B0
+167C: CD B0 16      call coin_test_screen_init_16B0
 167F: 3E 3C         ld   a,$3C
 1681: CD F7 9E      call $16DF
 1684: 28 00         jr   z,$16AE
@@ -2775,15 +2658,25 @@ draw_horizontal_line_14D8:
 16AB: C2 7F 9E      jp   nz,$167F
 16AE: FB            ei
 16AF: C9            ret
+coin_test_screen_init_16B0:
 16B0: CD E5 28      call clear_screen_and_colors_28E5
 16B3: 21 C0 9E      ld   hl,$16C0
 16B6: CD F4 29      call print_line_29F4
 16B9: 21 CD 9E      ld   hl,$16CD
 16BC: CD F4 29      call print_line_29F4
 16BF: C9            ret
-16C0: 20 88         jr   nz,$16C2
-16C2: 10 CB         djnz $1707
-16C4: 67            ld   h,a
+
+16C0  08 00 10 43 4F 49 4E 53 20 54 45 53 D4 06 02 10   ...COINS TESÔ...
+16D0  42 41 44 20 20 20 47 4F 4F 44 20 20 42 41 C4 DF   BAD   GOOD  BAÄß
+16E0  D5 45 EA 16 D1 48 15 A8 F7 41 16 65 36 00 E5 F8   ÕEê.ÑH.¨÷A.e6.åø
+16F0  16 C0 1B 7A A7 A8 F7 41 06 00 3A 80 90 2F CB 6F   .À.z§¨÷A..:../Ëo
+1700  40 12 C0 90 86 41 AF E3 E7 E8 84 12 C0 90 AF E3   @.À..A¯ãçè..À.¯ã
+1710  6F 40 32 70 90 61 3E 05 32 02 8C BE 24 9A 01 8C   o@2p.a>.2..¾$...
+1720  4D 5A 17 E5 67 17 BA 02 8C B8 B2 02 8C E5 5A 17   MZ.åg.º..¸²..åZ.
+1730  CD 67 17 F8 A7 62 49 17 21 01 8C 9D 21 02 8C 9D   Íg.ø§bI.!...!...
+1740  4A 49 17 E5 5A 17 43 30 17 E5 5A 17 A1 01 8C 1D   JI.åZ.C0.åZ.¡...
+1750  C2 49 17 BA 02 8C A7 60 37 61 06 04 0E BB 0D 88   ÂI.º..§`7a...»..
+
 16C5: C1            pop  bc
 16C6: 66            ld   h,(hl)
 16C7: DB 08         in   a,($20)
@@ -2835,35 +2728,38 @@ draw_horizontal_line_14D8:
 1712: 32 D8 90      ld   ($9070),a
 1715: C9            ret
 1716: 3E 85         ld   a,$05
-1718: 32 82 8C      ld   ($8C02),a
+1718: 32 82 8C      ld   (unknown_8C02),a
 171B: 3E 24         ld   a,$24
-171D: 32 01 24      ld   ($8C01),a
-1720: CD 72 97      call $175A
+171D: 32 01 24      ld   (unknown_8C01),a
+1720: CD 72 97      call kick_watchdog_175A
 1723: CD E7 3F      call $1767
-1726: 3A 2A 0C      ld   a,($8C02)
+1726: 3A 2A 0C      ld   a,(unknown_8C02)
 1729: 90            sub  b
-172A: 32 2A 0C      ld   ($8C02),a
-172D: CD DA 3F      call $175A
+172A: 32 2A 0C      ld   (unknown_8C02),a
+172D: CD DA 3F      call kick_watchdog_175A
 1730: CD CF 17      call $1767
 1733: 78            ld   a,b
 1734: A7            and  a
 1735: CA 49 97      jp   z,$1749
-1738: 21 81 8C      ld   hl,$8C01
+1738: 21 81 8C      ld   hl,unknown_8C01
 173B: 35            dec  (hl)
-173C: 21 82 8C      ld   hl,$8C02
+173C: 21 82 8C      ld   hl,unknown_8C02
 173F: 35            dec  (hl)
 1740: CA 61 97      jp   z,$1749
-1743: CD DA 3F      call $175A
+1743: CD DA 3F      call kick_watchdog_175A
 1746: C3 B8 97      jp   $1730
-1749: CD DA 3F      call $175A
-174C: 21 29 0C      ld   hl,$8C01
+1749: CD DA 3F      call kick_watchdog_175A
+174C: 21 29 0C      ld   hl,unknown_8C01
 174F: 35            dec  (hl)
 1750: C2 E1 17      jp   nz,$1749
-1753: 3A 02 24      ld   a,($8C02)
+1753: 3A 02 24      ld   a,(unknown_8C02)
 1756: A7            and  a
 1757: C8            ret  z
 1758: 37            scf
 1759: C9            ret
+
+; active cpu loop then write into watchdog
+kick_watchdog_175A:
 175A: 06 84         ld   b,$04
 175C: 0E 3B         ld   c,$BB
 175E: 0D            dec  c
@@ -2871,6 +2767,7 @@ draw_horizontal_line_14D8:
 1761: 10 79         djnz $175C
 1763: 32 F0 18      ld   ($9070),a
 1766: C9            ret
+
 1767: 06 80         ld   b,$00
 1769: 3A 80 04      ld   a,($8C00)
 176C: FE 69         cp   $41
@@ -2886,15 +2783,15 @@ draw_horizontal_line_14D8:
 177F: 04            inc  b
 1780: C9            ret
 1781: 3E A4         ld   a,$24
-1783: 32 81 04      ld   ($8C01),a
-1786: CD 72 97      call $175A
+1783: 32 81 04      ld   (unknown_8C01),a
+1786: CD 72 97      call kick_watchdog_175A
 1789: CD E7 3F      call $1767
 178C: 78            ld   a,b
 178D: A7            and  a
 178E: CA 1B 17      jp   z,$1793
 1791: 37            scf
 1792: C9            ret
-1793: 21 01 24      ld   hl,$8C01
+1793: 21 01 24      ld   hl,unknown_8C01
 1796: 35            dec  (hl)
 1797: C2 86 97      jp   nz,$1786
 179A: C9            ret
@@ -3028,7 +2925,7 @@ draw_horizontal_line_14D8:
 1888: C9            ret
 	
 play_sfx_1889: F3            di
-188A: 21 48 A4      ld   hl,$8C60
+188A: 21 48 A4      ld   hl,sound_channel_0_struct_8C60
 188D: 04            inc  b
 188E: 28 9C         jr   z,$18A4
 1890: 05            dec  b
@@ -3040,27 +2937,26 @@ play_sfx_1889: F3            di
 189F: CD 82 90      call $1882
 18A2: FB            ei
 18A3: C9            ret
-	
 18A4: 36 88         ld   (hl),$00
 18A6: AF            xor  a
-18A7: 32 58 A4      ld   ($8C70),a
-18AA: 32 A8 A4      ld   ($8C80),a
+18A7: 32 58 A4      ld   (sound_channel_1_struct_8C70),a
+18AA: 32 A8 A4      ld   (sound_channel_2_struct_8C80),a
 18AD: 18 DB         jr   $18A2
 18AF: F3            di
-18B0: 21 90 8C      ld   hl,$8C90
+18B0: 21 90 8C      ld   hl,sound_channel_3_struct_8C90
 18B3: 04            inc  b
 18B4: 28 0D         jr   z,$18C3
 18B6: 05            dec  b
 18B7: CD 70 18      call $1870
 18BA: 38 8D         jr   c,$18C1
 18BC: 3E 77         ld   a,$FF
-18BE: 32 34 A4      ld   ($8CBC),a
+18BE: 32 34 A4      ld   (sfx_1_playing),a
 18C1: FB            ei
 18C2: C9            ret
 18C3: 36 00         ld   (hl),$00
 18C5: 18 FA         jr   $18C1
 18C7: F3            di
-18C8: 21 28 A4      ld   hl,$8CA0
+18C8: 21 28 A4      ld   hl,sound_channel_4_struct_8CA0
 18CB: 04            inc  b
 18CC: 28 92         jr   z,$18E8
 18CE: 05            dec  b
@@ -3073,7 +2969,7 @@ play_sfx_1889: F3            di
 18DC: CD F8 18      call $1870
 18DF: 38 05         jr   c,$18E6
 18E1: 3E FF         ld   a,$FF
-18E3: 32 BD A4      ld   ($8CBD),a
+18E3: 32 BD A4      ld   (sfx_2_playing),a
 18E6: FB            ei
 18E7: C9            ret
 18E8: 36 88         ld   (hl),$00
@@ -3192,6 +3088,7 @@ table_1A20:
 1A36: E6 0F         and  $0F
 1A38: 77            ld   (hl),a
 1A39: C9            ret
+
 1A3A: E6 0F         and  $0F
 1A3C: 47            ld   b,a
 1A3D: 7E            ld   a,(hl)
@@ -3201,6 +3098,7 @@ table_1A20:
 1A43: 3E 27         ld   a,$0F
 1A45: 77            ld   (hl),a
 1A46: C9            ret
+
 1A47: E6 27         and  $0F
 1A49: 47            ld   b,a
 1A4A: 7E            ld   a,(hl)
@@ -3254,6 +3152,11 @@ table_1A71:
 1A94: 21 3D 8F      ld   hl,$8F3D
 1A97: 18 E5         jr   $1A7E
 
+; I'm not going to dive too deep in that code
+; < ix: pointer on sound channel ($8C60, $8C70, ...)
+; offset 0: $F when not playing
+
+update_sound_channel_1A99:
 1A99: 32 BE 04      ld   ($8CBE),a
 1A9C: DD 7E 00      ld   a,(ix+$00)
 1A9F: A7            and  a
@@ -3360,7 +3263,7 @@ jump_table_1B45
 1B7B: 3A 11 27      ld   a,($8F11)
 1B7E: F6 58         or   $F0
 1B80: 32 39 0F      ld   ($8F11),a
-1B83: 21 3C 04      ld   hl,$8CBC
+1B83: 21 3C 04      ld   hl,sfx_1_playing
 1B86: 36 28         ld   (hl),$00
 1B88: E1            pop  hl
 1B89: E1            pop  hl
@@ -3368,7 +3271,7 @@ jump_table_1B45
 1B8B: 3A 92 07      ld   a,($8F12)
 1B8E: F6 D8         or   $F0
 1B90: 32 92 8F      ld   ($8F12),a
-1B93: 21 BD 24      ld   hl,$8CBD
+1B93: 21 BD 24      ld   hl,sfx_2_playing
 1B96: 18 6E         jr   $1B86
 1B98: E1            pop  hl
 1B99: 23            inc  hl
@@ -3740,7 +3643,7 @@ table_1DF9:
 1E45: 0F            rrca
 1E46: 3D            dec  a
 1E47: DD 77 96      ld   (ix+$1e),a ; set mode as level number / 2:	level 16: hardest hunt mode
-1E4A: CD 23 39      call display_pengo_sprite_39AB
+1E4A: CD 23 39      call display_character_sprite_39AB
 1E4D: CD E6 1B      call display_snobee_sprite_33CE
 1E50: DD 34 1F      inc  (ix+$1f)
 1E53: C9            ret
@@ -3805,7 +3708,7 @@ table_1DF9:
 1EE7: DD BE 88      cp   (ix+$00)
 1EEA: CC C6 37      call z,$1F4E
 1EED: C3 D7 15      jp   $3DD7
-1EF0: 3A AC 88      ld   a,(counter_8824)
+1EF0: 3A AC 88      ld   a,(counter_lsb_8824)
 1EF3: E6 1F         and  $1F
 1EF5: C0            ret  nz
 	;; counter 1 out of 32 xxx
@@ -3910,7 +3813,7 @@ table_1DF9:
 1FE4: DD 7E 85      ld   a,(ix+$05)
 1FE7: FE 82         cp   $02
 1FE9: CA 70 36      jp   z,$1EF0
-1FEC: 3A AC 08      ld   a,(counter_8824)
+1FEC: 3A AC 08      ld   a,(counter_lsb_8824)
 1FEF: E6 1F         and  $1F
 1FF1: C0            ret  nz
 	;; counter 1 out of 32 xxx
@@ -4136,7 +4039,7 @@ table_1DF9:
 216F: 89            adc  a,c
 2170: 06 50         ld   b,$78
 2172: DD 70 02      ld   (ix+$02),b
-2175: CD AB 11      call display_pengo_sprite_39AB
+2175: CD AB 11      call display_character_sprite_39AB
 2178: DD 34 0B      inc  (ix+$0b)
 217B: C9            ret
 217C: 06 54         ld   b,$7C
@@ -4161,11 +4064,11 @@ table_1DF9:
 219D: DD 36 81 8F   ld   (ix+$09),$0F
 21A1: C9            ret
 21A2: DD 36 AA 14   ld   (ix+$02),$94
-21A6: CD 2B 19      call display_pengo_sprite_39AB
+21A6: CD 2B 19      call display_character_sprite_39AB
 21A9: DD 34 A3      inc  (ix+$0b)
 21AC: C9            ret
 21AD: DD 36 82 12   ld   (ix+$02),$12
-21B1: CD AB 11      call display_pengo_sprite_39AB
+21B1: CD AB 11      call display_character_sprite_39AB
 21B4: DD 34 0B      inc  (ix+$0b)
 21B7: C9            ret
 21B8: 8E            adc  a,(hl)
@@ -4230,11 +4133,11 @@ table_1DF9:
 2226: DD 34 AB      inc  (ix+$0b)
 2229: C9            ret
 222A: DD 36 2A 7C   ld   (ix+$02),$F4
-222E: CD 0B 39      call display_pengo_sprite_39AB
+222E: CD 0B 39      call display_character_sprite_39AB
 2231: DD 34 A3      inc  (ix+$0b)
 2234: C9            ret
 2235: DD 36 22 F0   ld   (ix+$02),$F0
-2239: CD AB 91      call display_pengo_sprite_39AB
+2239: CD AB 91      call display_character_sprite_39AB
 223C: DD 34 0B      inc  (ix+$0b)
 223F: C9            ret
 
@@ -4289,31 +4192,36 @@ table_2265:
 229F: CD CE 33      call display_snobee_sprite_33CE
 22A2: DD 34 AB      inc  (ix+$0b)
 22A5: C9            ret
+
 22A6: DD 36 28 56   ld   (ix+$00),$7E
 22AA: DD 36 29 88   ld   (ix+$01),$88
 22AE: CD CE 33      call display_snobee_sprite_33CE
 22B1: DD 34 A3      inc  (ix+$0b)
 22B4: C9            ret
+
 22B5: DD 36 22 E8   ld   (ix+$02),$E8
-22B9: CD AB 91      call display_pengo_sprite_39AB
+22B9: CD AB 91      call display_character_sprite_39AB
 22BC: DD 34 0B      inc  (ix+$0b)
 22BF: C9            ret
 22C0: DD 36 2A 4C   ld   (ix+$02),$EC
-22C4: CD 0B B1      call display_pengo_sprite_39AB
+22C4: CD 0B B1      call display_character_sprite_39AB
 22C7: DD 34 83      inc  (ix+$0b)
 22CA: C9            ret
-22CB: CD B9 23      call $2319
-22CE: CD 25 23      call $2325
+
+banquise_screen_22CB:
+22CB: CD B9 23      call set_bank_selectors_2319
+22CE: CD 25 23      call reset_attributes_to_10_2325
 22D1: CD 60 B5      call init_all_characters_states_1D60
 22D4: CD 55 08      call increase_counter_0875
+; active wait
 22D7: 06 00         ld   b,$00
 22D9: 10 FE         djnz $22D9
 22DB: 10 FE         djnz $22DB
-22DD: 3A 24 A8      ld   a,(counter_8824)
+22DD: 3A 24 A8      ld   a,(counter_lsb_8824)
 22E0: A7            and  a
 22E1: 20 2E         jr   nz,$22E9
-22E3: 3A 25 88      ld   a,($8825)
-22E6: CD 5C 24      call $24FC
+22E3: 3A 25 88      ld   a,(counter_msb_8825)
+22E6: CD 5C 24      call set_sky_color_24FC
 22E9: CD B6 23      call $233E
 22EC: CD E4 23      call $2344
 22EF: CD 4A 03      call $234A
@@ -4325,29 +4233,36 @@ table_2265:
 2300: 20 52         jr   nz,$22D4
 2302: 3E C0         ld   a,$40
 2304: CD 51 08      call delay_28D1
-2307: CD 44 8C      call $24EC
-230A: CD A6 2B      call $230E
+2307: CD 44 8C      call cycle_sky_color_24EC
+230A: CD A6 2B      call clr_bank_selectors_230E
 230D: C9            ret
+
+clr_bank_selectors_230E:
 230E: AF            xor  a
-230F: 32 47 B8      ld   ($9047),a
+230F: 32 47 B8      ld   (character_sprite_bank_selector_9047),a
 2312: 32 E2 90      ld   (palette_bank_selector_9042),a
-2315: 32 46 B8      ld   ($9046),a
+2315: 32 46 B8      ld   (color_lookup_table_bank_selector_9046),a
 2318: C9            ret
+
+set_bank_selectors_2319:
 2319: 3E 01         ld   a,$01
-231B: 32 47 B8      ld   ($9047),a
+231B: 32 47 B8      ld   (character_sprite_bank_selector_9047),a
 231E: 32 E2 B0      ld   (palette_bank_selector_9042),a
-2321: 32 EE 10      ld   ($9046),a
+2321: 32 EE 10      ld   (color_lookup_table_bank_selector_9046),a
 2324: C9            ret
+
+reset_attributes_to_10_2325:
 2325: 21 A8 04      ld   hl,$8400
 2328: 11 81 A4      ld   de,$8401
 232B: 01 56 83      ld   bc,$03FE
 232E: 36 90         ld   (hl),$10
 2330: ED B0         ldir
 2332: 21 A0 60      ld   hl,$6000
-2335: 11 00 A8      ld   de,$video_tile_memory_8000
+2335: 11 00 A8      ld   de,video_tile_memory_8000
 2338: 01 A0 04      ld   bc,$0400
 233B: ED B0         ldir
 233D: C9            ret
+
 233E: DD 21 A8 25   ld   ix,snobee_1_struct_8D00
 2342: 18 B4         jr   $2360
 2344: DD 21 28 25   ld   ix,snobee_2_struct_8D20
@@ -4360,16 +4275,17 @@ table_2265:
 235A: 18 A4         jr   $2360
 235C: DD 21 A0 8D   ld   ix,moving_block_struct_8DA0
 2360: DD 7E 9F      ld   a,(ix+$1f)
-2363: 11 49 8B      ld   de,$2369
+2363: 11 49 8B      ld   de,table_2369
 2366: C3 27 0D      jp   indirect_jump_2D8F
-2369: DB 2B         in   a,($23)
-236B: 4F            ld   c,a
-236C: 2B            dec  hl
-236D: EF            rst  $28
-236E: 2B            dec  hl
+table_2369:
+  .word	$2373 
+  .word	$23E7 
+  .word	$236F 
+
 236F: CD FF 23      call $23FF
 2372: C9            ret
-2373: 21 B7 23      ld   hl,$23B7
+
+2373: 21 B7 23      ld   hl,table_23B7
 2376: DD 7E 05      ld   a,(ix+$05)
 2379: 3D            dec  a
 237A: 87            add  a,a
@@ -4408,53 +4324,13 @@ table_2265:
 23AF: DD 36 B2 00   ld   (ix+$12),$00
 23B3: DD 34 97      inc  (ix+$1f)
 23B6: C9            ret
-23B7: 50            ld   d,b
-23B8: 50            ld   d,b
-23B9: 86            add  a,(hl)
-23BA: 02            ld   (bc),a
-23BB: A1            and  c
-23BC: 0C            inc  c
-23BD: A0            and  b
-23BE: 68            ld   l,b
-23BF: 50            ld   d,b
-23C0: F8            ret  m
-23C1: A6            and  (hl)
-23C2: AB            xor  e
-23C3: 81            add  a,c
-23C4: 8C            adc  a,h
-23C5: 80            add  a,b
-23C6: 4B            ld   c,e
-23C7: F8            ret  m
-23C8: F8            ret  m
-23C9: A6            and  (hl)
-23CA: AC            xor  h
-23CB: 81            add  a,c
-23CC: 8C            adc  a,h
-23CD: 80            add  a,b
-23CE: 49            ld   c,c
-23CF: F8            ret  m
-23D0: 50            ld   d,b
-23D1: 86            add  a,(hl)
-23D2: 05            dec  b
-23D3: A1            and  c
-23D4: 0C            inc  c
-23D5: 20 6A         jr   nz,$2441
-23D7: 50            ld   d,b
-23D8: 50            ld   d,b
-23D9: 86            add  a,(hl)
-23DA: 08            ex   af,af'
-23DB: A1            and  c
-23DC: 0C            inc  c
-23DD: A0            and  b
-23DE: 6D            ld   l,l
-23DF: 50            ld   d,b
-23E0: F8            ret  m
-23E1: A6            and  (hl)
-23E2: 8C            adc  a,h
-23E3: 81            add  a,c
-23E4: 8C            adc  a,h
-23E5: 80            add  a,b
-23E6: 4E            ld   c,(hl)
+
+table_23B7:
+23B7  78 50 0E 02 01 0C 00 68 78 50 0E 03 01 0C 00 6B
+23C7  78 50 0E 04 01 0C 00 69 78 50 0E 05 01 0C 20 6A
+23D7  78 50 0E 08 01 0C 00 6D 78 50 0E 0C 01 0C 00 6E
+
+
 23E7: CD 57 8B      call $23FF
 23EA: DD 34 AF      inc  (ix+$07)
 23ED: DD 7E 87      ld   a,(ix+$07)
@@ -4464,7 +4340,8 @@ table_2265:
 23F8: CD 35 24      call $2435
 23FB: CD A0 24      call $24A0
 23FE: C9            ret
-23FF: 3A 24 88      ld   a,(counter_8824)
+
+23FF: 3A 24 88      ld   a,(counter_lsb_8824)
 2402: E6 A7         and  $07
 2404: C0            ret  nz
 	;; counter 1 out of 8 xxx
@@ -4482,8 +4359,9 @@ table_2265:
 2423: DD CB B2 6E   bit  0,(ix+$12)
 2427: 28 2C         jr   z,$242D
 2429: DD CB A2 CE   set  1,(ix+$02)
-242D: CD 83 11      call display_pengo_sprite_39AB
+242D: CD 83 11      call display_character_sprite_39AB
 2430: C9            ret
+
 2431: CD 85 91      call $3985
 2434: C9            ret
 2435: DD 6E 30      ld   l,(ix+$10)
@@ -4544,52 +4422,73 @@ table_2265:
 24A0: 21 1D 24      ld   hl,$24BD
 24A3: E5            push hl
 24A4: DD 7E 2C      ld   a,(ix+$04)
-24A7: 11 85 24      ld   de,$24AD
+24A7: 11 85 24      ld   de,move_table_24AD
 24AA: C3 8F A5      jp   indirect_jump_2D8F
-24AD: E8            ret  pe
-24AE: 24            inc  h
-24AF: EC 24 E8      call pe,$C824
-24B2: 24            inc  h
-24B3: EC 24 78      call pe,$D024
-24B6: 24            inc  h
-24B7: 7F            ld   a,a
-24B8: 24            inc  h
-24B9: FE 24         cp   $24
-24BB: 4D            ld   c,l
-24BC: 24            inc  h
+
+move_table_24AD:
+	.word	decrease_y_24C0  
+	.word	increase_y_24C4 
+	.word	decrease_x_24C8 
+	.word	increase_x_24CC 
+	.word	dec_y_inc_x_24D0 
+	.word	dec_y_dec_x_24D7 
+	.word	inc_y_inc_x_24DE 
+	.word	inc_y_dec_x_24E5 
+
+
 24BD: C3 CE 13      jp   display_snobee_sprite_33CE
+
+decrease_y_24C0:
 24C0: DD 35 29      dec  (ix+$01)
 24C3: C9            ret
+
+increase_y_24C4:
 24C4: DD 34 29      inc  (ix+$01)
 24C7: C9            ret
+
+decrease_x_24C8:
 24C8: DD 35 28      dec  (ix+$00)
 24CB: C9            ret
+
+increase_x_24CC:
 24CC: DD 34 28      inc  (ix+$00)
 24CF: C9            ret
-24D0: CD 68 24      call $24C0
-24D3: CD CC 04      call $24CC
+
+dec_y_inc_x_24D0:
+24D0: CD 68 24      call decrease_y_24C0
+24D3: CD CC 04      call increase_x_24CC
 24D6: C9            ret
-24D7: CD C0 04      call $24C0
-24DA: CD E8 24      call $24C8
+
+dec_y_dec_x_24D7:
+24D7: CD C0 04      call decrease_y_24C0
+24DA: CD E8 24      call decrease_x_24C8
 24DD: C9            ret
-24DE: CD 6C 24      call $24C4
-24E1: CD CC 24      call $24CC
+
+inc_y_inc_x_24DE:
+24DE: CD 6C 24      call increase_y_24C4
+24E1: CD CC 24      call increase_x_24CC
 24E4: C9            ret
-24E5: CD 4C 24      call $24C4
-24E8: CD C8 24      call $24C8
+
+inc_y_dec_x_24E5:
+24E5: CD 4C 24      call increase_y_24C4
+24E8: CD C8 24      call decrease_x_24C8
 24EB: C9            ret
+
+cycle_sky_color_24EC:
 24EC: 06 84         ld   b,$0C
 24EE: C5            push bc
 24EF: 78            ld   a,b
-24F0: CD DC 24      call $24FC
+24F0: CD DC 24      call set_sky_color_24FC
 24F3: 3E 09         ld   a,$09
 24F5: CD D1 80      call delay_28D1
 24F8: C1            pop  bc
 24F9: 10 F3         djnz $24EE
 24FB: C9            ret
+
+set_sky_color_24FC:
 24FC: E6 A7         and  $0F
 24FE: F6 30         or   $10
-2500: 21 C0 A4      ld   hl,$8440
+2500: 21 C0 A4      ld   hl,$8440		; attribute memory
 2503: 11 BD 80      ld   de,$0015
 2506: 0E B4         ld   c,$1C
 2508: 06 A3         ld   b,$0B
@@ -4847,7 +4746,7 @@ create_highscore_entry_269E:
 26FE: 20 10         jr   nz,$2730
 2700: CB 5F         bit  3,a
 2702: 20 B9         jr   nz,$273D
-2704: 3A C8 84      ld   a,($8C60)
+2704: 3A C8 84      ld   a,(sound_channel_0_struct_8C60)
 2707: A7            and  a
 2708: 20 A0         jr   nz,$2712
 270A: E1            pop  hl
@@ -4856,11 +4755,11 @@ create_highscore_entry_269E:
 270E: CD 51 28      call delay_28D1
 2711: C9            ret
 2712: CD 75 08      call increase_counter_0875
-2715: 3A 25 88      ld   a,($8825)
+2715: 3A 25 88      ld   a,(counter_msb_8825)
 2718: E6 A7         and  $07
 271A: 20 D8         jr   nz,$26F4
 271C: 06 B0         ld   b,$10
-271E: 3A 25 80      ld   a,($8825)
+271E: 3A 25 80      ld   a,(counter_msb_8825)
 2721: CB 5F         bit  3,a
 2723: 20 AA         jr   nz,$2727
 2725: 06 BE         ld   b,$16
@@ -6322,9 +6221,9 @@ must_flip_screen_317F:
 3187: E6 81         and  $01
 3189: C9            ret
 	
-; < HL: pengo struct 8D80
+; < HL: pengo/snobee struct 8Dxx
 ; < A: pengo sprite index
-display_pengo_sprite_318A:
+display_character_sprite_318A:
 318A: FD 21 70 07   ld   iy,sprite_ram_8FF0
 318E: 23            inc  hl
 318F: 23            inc  hl		; skip coordinates
@@ -6454,7 +6353,7 @@ init_moving_block_3283: DD 21 28 A5   ld   ix,moving_block_struct_8DA0
 329B: DD 36 9E 00   ld   (ix+$16),$00
 329F: DD 36 9F 00   ld   (ix+$17),$00
 32A3: DD 36 97 00   ld   (ix+$1f),$00
-32A7: CD AB 11      call display_pengo_sprite_39AB
+32A7: CD AB 11      call display_character_sprite_39AB
 32AA: C9            ret
 
 ; 5 slots of 5-byte stuff
@@ -6575,7 +6474,7 @@ _01_snobee_not_moving_3377:
 3385: DD 36 22 84   ld   (ix+$0a),$04
 3389: DD 36 21 8F   ld   (ix+$09),$0F
 338D: C9            ret
-338E: 3A AC 88      ld   a,(counter_8824)
+338E: 3A AC 88      ld   a,(counter_lsb_8824)
 3391: A7            and  a
 3392: C0            ret  nz
 3393: DD 7E A2      ld   a,(ix+$0a)
@@ -7366,16 +7265,16 @@ snobee_try_to_move_right_3940: DD 7E 80      ld   a,(ix+$00)
 animate_pengo_39A4: DD 7E 88      ld   a,(ix+$08)
 394D: A7            and  a
 394E: C8            ret  z	; returns if a == 0
-394F: 3A 24 20      ld   a,(counter_8824)
+394F: 3A 24 20      ld   a,(counter_lsb_8824)
 3952: E6 B7         and  $1F
-3954: C0            ret  nz	; returns if counter_8824 isn't dividable by 32?
+3954: C0            ret  nz	; returns if counter_lsb_8824 isn't dividable by 32?
 	;; counter 1 out of 32 pengo animation moves
 3955: 18 14         jr   $396B
 	
 3957: DD 7E A0      ld   a,(ix+$08)
 395A: A7            and  a
 395B: C8            ret  z
-395C: 3A 8C 88      ld   a,(counter_8824)
+395C: 3A 8C 88      ld   a,(counter_lsb_8824)
 395F: E6 9F         and  $1F
 3961: C0            ret  nz
 	;; counter 1 out of 32 snobees animation moves
@@ -7410,13 +7309,13 @@ animate_pengo_39A4: DD 7E 88      ld   a,(ix+$08)
 399D: DD 77 82      ld   (ix+$02),a
 39A0: DD 7E 84      ld   a,(ix+$04)
 39A3: FE 83         cp   $03
-39A5: 20 84         jr   nz,display_pengo_sprite_39AB
+39A5: 20 84         jr   nz,display_character_sprite_39AB
 39A7: DD CB 2A 4E   set  1,(ix+$02)
-display_pengo_sprite_39AB:
+display_character_sprite_39AB:
 39AB: DD 7E 2D      ld   a,(ix+$05)
 39AE: DD E5         push ix
 39B0: E1            pop  hl
-39B1: CD 8A 99      call display_pengo_sprite_318A
+39B1: CD 8A 99      call display_character_sprite_318A
 39B4: C9            ret
 	
 _04_snobee_stunned_39B5:
@@ -7431,7 +7330,8 @@ _04_snobee_stunned_39B5:
 39CB: 06 86         ld   b,$06
 39CD: CD 47 30      call $18C7
 39D0: C9            ret
-39D1: 3A 24 20      ld   a,(counter_8824)
+
+39D1: 3A 24 20      ld   a,(counter_lsb_8824)
 39D4: E6 FF         and  $7F
 39D6: C0            ret  nz
 	;; counter 1 out of 128 xxx
@@ -7444,7 +7344,7 @@ _04_snobee_stunned_39B5:
 39E8: 28 2A         jr   z,$39EC
 39EA: CB CF         set  1,a
 39EC: DD 77 82      ld   (ix+$02),a
-39EF: CD AB B9      call display_pengo_sprite_39AB
+39EF: CD AB B9      call display_character_sprite_39AB
 39F2: C9            ret
 	
 _05_snobee_blinking_stunned_39F3:
@@ -7457,7 +7357,7 @@ _05_snobee_blinking_stunned_39F3:
 3A01: DD 36 82 20   ld   (ix+$0a),$08
 3A05: DD 36 81 27   ld   (ix+$09),$0F
 3A09: C9            ret
-3A0A: 3A 0C A0      ld   a,(counter_8824) ; count mask
+3A0A: 3A 0C A0      ld   a,(counter_lsb_8824) ; count mask
 3A0D: A7            and  a
 3A0E: C0            ret  nz
 3A0F: DD 7E 0A      ld   a,(ix+$0a)
@@ -7473,7 +7373,7 @@ _05_snobee_blinking_stunned_39F3:
 3A24: C6 89         add  a,$01
 3A26: 47            ld   b,a
 3A27: DD 70 8B      ld   (ix+$03),b
-3A2A: CD 23 39      call display_pengo_sprite_39AB
+3A2A: CD 23 39      call display_character_sprite_39AB
 3A2D: C9            ret
 	;; no longer stunned
 3A2E: DD 7E 00      ld   a,(ix+$00)
@@ -7499,7 +7399,7 @@ _05_snobee_blinking_stunned_39F3:
 3A59: E6 07         and  $07
 3A5B: C6 01         add  a,$01
 3A5D: DD 77 8B      ld   (ix+$03),a
-3A60: CD 23 39      call display_pengo_sprite_39AB
+3A60: CD 23 39      call display_character_sprite_39AB
 3A63: DD 36 96 02   ld   (ix+$1e),$02 ; wake up from "stunned" -> A.I. mode set to breaking block mode
 3A67: DD 36 97 02   ld   (ix+$1f),$02 ; set state to "alive"
 3A6B: C9            ret
@@ -7511,13 +7411,13 @@ _05_snobee_blinking_stunned_39F3:
 3A77: DD 36 0A 08   ld   (ix+$0a),$08
 3A7B: DD 36 09 0F   ld   (ix+$09),$0F
 3A7F: DD 36 8A 80   ld   (ix+$02),$80
-3A83: CD AB 11      call display_pengo_sprite_39AB
+3A83: CD AB 11      call display_character_sprite_39AB
 3A86: 11 82 00      ld   de,$000A
 3A89: CD AF 00      call $28AF
 3A8C: 06 8A         ld   b,$02
 3A8E: CD EF 18      call $18C7
 3A91: C9            ret
-3A92: 3A AC 88      ld   a,(counter_8824) ;  count mask
+3A92: 3A AC 88      ld   a,(counter_lsb_8824) ;  count mask
 3A95: A7            and  a
 3A96: C0            ret  nz
 3A97: DD 7E 0A      ld   a,(ix+$0a)
@@ -7578,7 +7478,7 @@ _05_snobee_blinking_stunned_39F3:
 3B16: 3A 0F 8D      ld   a,($8DA7)
 3B19: DD 77 87      ld   (ix+$07),a
 3B1C: CD 66 33      call display_snobee_sprite_33CE
-3B1F: CD 2B B1      call display_pengo_sprite_39AB
+3B1F: CD 2B B1      call display_character_sprite_39AB
 3B22: DD 36 89 28   ld   (ix+$09),$00
 3B26: DD 34 9F      inc  (ix+$1f)
 3B29: C9            ret
@@ -7631,7 +7531,7 @@ jump_table_3B2A:
 3B71: FE 03         cp   $03
 3B73: 20 04         jr   nz,$3B79
 3B75: DD CB 82 CE   set  1,(ix+$02)
-3B79: CD AB B9      call display_pengo_sprite_39AB
+3B79: CD AB B9      call display_character_sprite_39AB
 3B7C: C9            ret
 3B7D: DD CB A1 C6   bit  0,(ix+$09)
 3B81: CC 08 B3      call z,$3B88
@@ -7653,7 +7553,7 @@ jump_table_3B2A:
 3BA4: FE 2B         cp   $03
 3BA6: 20 2C         jr   nz,$3BAC
 3BA8: DD CB 82 46   set  1,(ix+$02)
-3BAC: CD 83 B9      call display_pengo_sprite_39AB
+3BAC: CD 83 B9      call display_character_sprite_39AB
 3BAF: DD 36 A0 FF   ld   (ix+$08),$FF
 3BB3: C9            ret
 3BB4: DD CB 09 C6   bit  0,(ix+$09)
@@ -7703,13 +7603,13 @@ jump_table_3B2A:
 3C15: 19            add  hl,de
 3C16: 7E            ld   a,(hl)
 3C17: DD 77 8A      ld   (ix+$02),a
-3C1A: CD 23 39      call display_pengo_sprite_39AB
+3C1A: CD 23 39      call display_character_sprite_39AB
 3C1D: C9            ret
 3C1E: 84            add  a,h
 3C1F: 00            nop
 3C20: A4            and  h
 3C21: B8            cp   b
-3C22: 3A 0C A0      ld   a,(counter_8824) ;  count mask
+3C22: 3A 0C A0      ld   a,(counter_lsb_8824) ;  count mask
 3C25: A7            and  a
 3C26: C0            ret  nz
 3C27: DD 7E 82      ld   a,(ix+$0a)
@@ -7769,7 +7669,7 @@ jump_table_3B2A:
 3C91: E6 07         and  $07
 3C93: 3C            inc  a
 3C94: DD 77 03      ld   (ix+$03),a ;  sets color
-3C97: CD AB 39      call display_pengo_sprite_39AB
+3C97: CD AB 39      call display_character_sprite_39AB
 3C9A: DD 7E 1C      ld   a,(ix+$1c)
 3C9D: DD 77 8E      ld   (ix+$06),a
 3CA0: DD 36 21 88   ld   (ix+$09),$00
@@ -7824,7 +7724,7 @@ jump_table_3B2A:
 3CF6: DD 36 0A 8C   ld   (ix+$0a),$04
 3CFA: DD 36 09 0F   ld   (ix+$09),$0F
 3CFE: C9            ret
-3CFF: 3A A4 00      ld   a,(counter_8824)
+3CFF: 3A A4 00      ld   a,(counter_lsb_8824)
 3D02: E6 B7         and  $3F
 3D04: C0            ret  nz
 	;; counter 1 out of 64 xxx
@@ -7841,7 +7741,7 @@ jump_table_3B2A:
 3D1C: DD 7E 02      ld   a,(ix+$02)
 3D1F: D6 84         sub  $04
 3D21: DD 77 2A      ld   (ix+$02),a
-3D24: CD 83 B9      call display_pengo_sprite_39AB
+3D24: CD 83 B9      call display_character_sprite_39AB
 3D27: C9            ret
 3D28: DD 34 9F      inc  (ix+$1f)
 3D2B: C9            ret
@@ -7849,7 +7749,7 @@ jump_table_3B2A:
 3D30: CC 5E 3C      call z,$3CF6
 3D33: CD 37 BD      call $3D37
 3D36: C9            ret
-3D37: 3A 24 20      ld   a,(counter_8824)
+3D37: 3A 24 20      ld   a,(counter_lsb_8824)
 3D3A: E6 BF         and  $3F
 3D3C: C0            ret  nz
 	;; counter 1 out of 64 xxx
@@ -7866,7 +7766,7 @@ jump_table_3B2A:
 3D54: DD 7E 02      ld   a,(ix+$02)
 3D57: C6 04         add  a,$04
 3D59: DD 77 82      ld   (ix+$02),a
-3D5C: CD 2B 39      call display_pengo_sprite_39AB
+3D5C: CD 2B 39      call display_character_sprite_39AB
 3D5F: C9            ret
 3D60: DD 34 9F      inc  (ix+$1f)
 3D63: 21 18 05      ld   hl,remaining_alive_snobees_8D98
@@ -7899,7 +7799,7 @@ pengo_moves_3D73: DD 21 00 8D
 3D9E: DD 36 8A 2A   ld   (ix+$0a),$02
 3DA2: DD 36 89 27   ld   (ix+$09),$0F
 3DA6: C9            ret
-3DA7: 3A A4 00      ld   a,(counter_8824) ;  count mask
+3DA7: 3A A4 00      ld   a,(counter_lsb_8824) ;  count mask
 3DAA: A7            and  a
 3DAB: C0            ret  nz
 3DAC: DD 7E 8A      ld   a,(ix+$0a)
@@ -8196,7 +8096,7 @@ get_div8_iy_coords_3E8F: FD 7E 88      ld   a,(iy+$00)
 3FC6: 07            rlca
 3FC7: 07            rlca
 3FC8: DD 77 82      ld   (ix+$02),a
-3FCB: CD 2B B1      call display_pengo_sprite_39AB
+3FCB: CD 2B B1      call display_character_sprite_39AB
 3FCE: 3E 20         ld   a,$08
 3FD0: CD 51 28      call delay_28D1
 3FD3: C1            pop  bc
@@ -8239,7 +8139,7 @@ table_3FF2:
 4010: FE 23         cp   $03
 4012: 20 24         jr   nz,$4018
 4014: DD CB 02 EE   set  1,(ix+$02)
-4018: CD 8B 39      call display_pengo_sprite_39AB
+4018: CD 8B 39      call display_character_sprite_39AB
 401B: DD 34 A3      inc  (ix+$0b)
 401E: C9            ret
 
@@ -8253,7 +8153,7 @@ table_3FF2:
 402E: DD 36 0A 21   ld   (ix+$0a),$01
 4032: DD 36 09 A7   ld   (ix+$09),$0F
 4036: C9            ret
-4037: 3A 24 A8      ld   a,(counter_8824) ; count mask
+4037: 3A 24 A8      ld   a,(counter_lsb_8824) ; count mask
 403A: A7            and  a
 403B: C0            ret  nz
 403C: DD 7E 0A      ld   a,(ix+$0a)
@@ -8286,7 +8186,7 @@ table_405C:
 4079: DD 36 A2 02   ld   (ix+$0a),$02
 407D: DD 36 A1 AF   ld   (ix+$09),$0F
 4081: C9            ret
-4082: 3A 24 88      ld   a,(counter_8824)
+4082: 3A 24 88      ld   a,(counter_lsb_8824)
 4085: E6 BF         and  $1F
 4087: C0            ret  nz
 	;; counter 1 out of 32 pengo breaks block
@@ -8548,7 +8448,7 @@ pengo_block_push_41BE: DD 21 20 25   ld   ix,moving_block_struct_8DA0
 424B: 28 2A         jr   z,$424F
 424D: 3E 74         ld   a,$74
 424F: DD 77 22      ld   (ix+$02),a
-4252: CD 8B 39      call display_pengo_sprite_39AB
+4252: CD 8B 39      call display_character_sprite_39AB
 4255: DD 34 B7      inc  (ix+$1f)
 4258: 06 25         ld   b,$05
 425A: CD 8F 18      call $18AF
@@ -9111,7 +9011,7 @@ snobee_collision_with_moving_block_test_444E:
 468F: CD B7 11      call clear_sprites_31B7
 4692: CD B8 0F      call $0F98
 4695: 21 6C 67      ld   hl,$476C
-4698: CD 86 0F      call $0F2E
+4698: CD 86 0F      call erase_rectangular_char_zone_0F2E
 469B: 21 79 67      ld   hl,$4779
 469E: DD CB 3E 56   bit  7,(ix+$16)
 46A2: 28 A3         jr   z,$46A7
@@ -9509,7 +9409,7 @@ snobee_block_break_4919:
 496A: F6 82         or   $02
 496C: DD 77 A8      ld   (ix+$00),a
 496F: DD 34 A5      inc  (ix+$05)
-4972: 3A 24 88      ld   a,(counter_8824)
+4972: 3A 24 88      ld   a,(counter_lsb_8824)
 4975: E6 1F         and  $1F
 4977: C0            ret  nz
 	;; counter 1 out of 32 broken block shatters
@@ -9588,7 +9488,7 @@ snobee_block_break_4919:
 4A1A: F6 A7         or   $0F
 4A1C: DD 77 00      ld   (ix+$00),a
 4A1F: DD 34 A5      inc  (ix+$05)
-4A22: 3A 24 88      ld   a,(counter_8824)
+4A22: 3A 24 88      ld   a,(counter_lsb_8824)
 4A25: E6 AF         and  $0F
 4A27: C0            ret  nz
 	;; counter 1 out of 16 eggs hatching
@@ -9625,7 +9525,7 @@ snobee_block_break_4919:
 4A7A: F6 23         or   $03
 4A7C: DD 77 00      ld   (ix+$00),a
 4A7F: DD 34 A5      inc  (ix+$05)
-4A82: 3A 24 88      ld   a,(counter_8824)
+4A82: 3A 24 88      ld   a,(counter_lsb_8824)
 4A85: E6 BF         and  $1F
 4A87: C0            ret  nz
 	;; counter 1 out of 32 ???
@@ -9669,7 +9569,7 @@ snobee_block_break_4919:
 4ADD: 32 02 A8      ld   (cursor_color_8802),a
 4AE0: 3E 98         ld   a,$98
 4AE2: CD A0 A7      call set_2x2_tile_2F00
-4AE5: 3A 24 88      ld   a,(counter_8824)
+4AE5: 3A 24 88      ld   a,(counter_lsb_8824)
 4AE8: E6 17         and  $3F
 4AEA: C0            ret  nz
 	;; counter 1 out of 64
@@ -9685,10 +9585,11 @@ snobee_block_break_4919:
 4B03: DD 36 80 A8   ld   (ix+$00),$00
 4B07: DD 36 85 A8   ld   (ix+$05),$00
 4B0B: C9            ret
+
 4B0C: DD 21 20 25   ld   ix,moving_block_struct_8DA0
 4B10: DD CB 17 56   bit  7,(ix+$17)
 4B14: C8            ret  z
-4B15: 3A 24 88      ld   a,(counter_8824)
+4B15: 3A 24 88      ld   a,(counter_lsb_8824)
 4B18: 47            ld   b,a
 4B19: E6 3F         and  $3F
 4B1B: C0            ret  nz
@@ -9728,7 +9629,7 @@ blink_on_egg_locations_4B48:
 4B64: DD CB 9F 4E   set  4,(ix+$1f)
 4B68: C9            ret
 	
-4B69: 3A 2C 20      ld   a,(counter_8824)
+4B69: 3A 2C 20      ld   a,(counter_lsb_8824)
 4B6C: E6 A7         and  $0F
 4B6E: C0            ret  nz
 	;; counter 1 out of 16:	egg blink
@@ -9843,7 +9744,7 @@ handle_pengo_snobee_collisions_4BE6:
 4C3C: 07            rlca
 4C3D: 07            rlca
 4C3E: DD 77 2A      ld   (ix+$02),a
-4C41: CD 83 11      call display_pengo_sprite_39AB
+4C41: CD 83 11      call display_character_sprite_39AB
 4C44: CD 9E A0      call get_nb_lives_289E
 4C47: 3D            dec  a
 4C48: C8            ret  z

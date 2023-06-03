@@ -46,6 +46,6 @@ pengo_reset:
 	move.b	#1,vb_ticks_count
 
 	
-	bra		INITIALISE_SYSTEM____
-
+	*bra		INITIALISE_SYSTEM____
+	illegal
 	
