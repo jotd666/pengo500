@@ -27,8 +27,6 @@ with open("pengo_z80.asm") as f:
 
 
 
-print(f"{len(anon)} anonymous vars")
-print([f"${x:04x}" for x in sorted(anon)])
 
 f = sys.stdout
 prev_address = None
@@ -48,3 +46,5 @@ for address,name in sorted(var_dict.items()):
 size = max_ram-prev_address
 f.write(f"\tds.b\t0x{size:02x}\n")
 
+print(f"{len(anon)} anonymous vars")
+print([f"${x:04x}" for x in sorted(anon)])
