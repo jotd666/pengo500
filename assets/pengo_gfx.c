@@ -8116,7 +8116,7 @@ uint8_t palette[NUM_COLOURS][3] =
 
 // clut
 
-uint8_t clut[NUM_CLUTS] = 
+uint8_t clut[NUM_CLUTS][4] = 
 {
   {  0,  0,  0,  0 },
   {  0,  5,  3,  1 },
