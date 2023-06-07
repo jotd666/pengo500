@@ -181,6 +181,7 @@ char_state = $1F
 	;; set to 00 00 when hatched/destroyed
 	;; 1F:	blink timer:	!= 0:	 blinking, = 0:	not blinking
 
+INITIALISE_SYSTEM:
 0000: 31 78 8F      ld   sp,stack_pointer_8FF0
 0003: ED 56         im   1			; set interrupt mode to mode 1
 0005: 21 28 A0      ld   hl,$0000
@@ -189,6 +190,7 @@ char_state = $1F
 
 000E:  .byte  $A0,$28
 
+check_coin_inserted_0010:
 0010: 3A 68 90      ld   a,(coin_input_90C0)
 0013: 2F            cpl
 0014: A0            and  b
@@ -241,7 +243,7 @@ char_state = $1F
 006B: 23            inc  hl
 006C: 22 22 88      ld   (timer_16bit_8822),hl
 006F: CD BC 12      call $32BC
-0072: CD 0A 02      call $02A2
+0072: CD 0A 02      call coin_routine_02A2
 0075: CD CD 22      call $02CD
 0078: CD D7 02      call $027F
 007B: CD B2 23      call $03B2
@@ -458,9 +460,10 @@ display_team_names_01C7:
 029B: 21 08 A8      ld   hl,number_of_credits_8808
 029E: 34            inc  (hl)
 029F: C3 8B A3      jp   $038B
+coin_routine_02A2:
 02A2: 21 30 88      ld   hl,unknown_8830
 02A5: 06 38         ld   b,$10
-02A7: CD 38 A0      call $0010
+02A7: CD 38 A0      call check_coin_inserted_0010
 02AA: 00            nop
 02AB: 00            nop
 02AC: 00            nop
@@ -486,7 +489,7 @@ display_team_names_01C7:
 02CB: 18 B2         jr   $0307
 02CD: 21 31 88      ld   hl,unknown_8830+1
 02D0: 06 00         ld   b,$20
-02D2: CD 30 00      call $0010
+02D2: CD 30 00      call check_coin_inserted_0010
 02D5: 00            nop
 02D6: 00            nop
 02D7: 00            nop
@@ -714,14 +717,15 @@ loop_0480:
 049B: CD 2D 27      call wait_for_start_and_play_072D
 ;;; after game is over, loop back to "thanks for playing ..."
 049E: 18 F8         jr   loop_0478
-	
+
+display_thanks_for_playing_04A0:
 04A0: CD 6D A0      call clear_screen_and_colors_28E5
 04A3: CD 17 31      call clear_sprites_31B7
 04A6: CD B0 A3      call update_all_scores_2B10
-04A9: 3A 5B A4      ld   a,($04D3)
+04A9: 3A 5B A4      ld   a,table_04D0+3
 04AC: FE 20         cp   $20
 04AE: C0            ret  nz
-04AF: 21 D0 24      ld   hl,$04D0
+04AF: 21 D0 24      ld   hl,table_04D0
 04B2: CD 5C 29      call print_line_29F4
 04B5: E5            push hl
 04B6: 11 23 00      ld   de,$0003
@@ -737,10 +741,12 @@ loop_0480:
 04CA: 3E E8         ld   a,$C0
 04CC: CD F9 A0      call delay_28D1
 04CF: C9            ret
-     04D0  02 0A 90 20 20 20 20 20 A0 02 0D 90 20 20 20 54   ...      ...   T
-     04E0  48 41 4E 4B 53 20 46 4F 52 20 50 4C 41 59 49 4E   HANKS FOR PLAYIN
-     04F0  47 3A 20 A0 02 10 90 20 20 20 20 20 54 52 59 20   G:  ...     TRY
-     0500  4F 4E 43 45 20 4D 4F 52 45 20 3D 20 20 20 20 A0   ONCE MORE =     
+
+table_04D0:
+     dc.b	0x02,0x0A,0x90,0x20,0x20,0x20,0x20,0x20,0xA0,0x02,0x0D,0x90,0x20,0x20,0x20,0x54   | ......   T
+     dc.b	0x48,0x41,0x4E,0x4B,0x53,0x20,0x46,0x4F,0x52,0x20,0x50,0x4C,0x41,0x59,0x49,0x4E   | HANKS FOR PLAYIN
+     dc.b	0x47,0x3A,0x20,0xA0,0x02,0x10,0x90,0x20,0x20,0x20,0x20,0x20,0x54,0x52,0x59,0x20   | G:...     TRY
+     dc.b	0x4F,0x4E,0x43,0x45,0x20,0x4D,0x4F,0x52,0x45,0x20,0x3D,0x20,0x20,0x20,0x20,0xA0   | ONCE MORE =
 
 wierd_memory_check_510:
 0510: AF            xor  a

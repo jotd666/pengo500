@@ -6,7 +6,9 @@
 	.global	vb_ticks_count
 	.global	bg_videoram
 	.global	bg_colorram
-	* on amiga, this file is included in galaxian.68k file
+	
+	.global	unknown_87FF
+	* on amiga, this file is included in pengo.68k file
 	* so the assembler can optimize by using PC-relative addressing
 	* whenever possible (and it does)
 	.ifndef	__amiga__
@@ -19,6 +21,7 @@
 	.include	"pengo_game_ram.68k"
 *VARIABLES_END:
 
+	.align	2
 bg_videoram:
 CHARACTER_RAM:						| $5000
 	ds.b	0x800
@@ -35,4 +38,7 @@ infinite_lives_flag:
 vb_ticks_count:
 	.byte	0
 current_ticks_count:
+	.byte	0
+
+unknown_87FF:
 	.byte	0
