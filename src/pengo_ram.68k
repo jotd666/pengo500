@@ -4,7 +4,8 @@
 	.global	high_score_beaten
 	.global	current_ticks_count
 	.global	vb_ticks_count
-	
+	.global	bg_videoram
+	.global	bg_colorram
 	* on amiga, this file is included in galaxian.68k file
 	* so the assembler can optimize by using PC-relative addressing
 	* whenever possible (and it does)

@@ -49,3 +49,6 @@ pengo_reset:
 	*bra		INITIALISE_SYSTEM____
 	illegal
 	
+pengo_irq:
+	rts
+	

@@ -107,7 +107,6 @@ char_color = $03
 facing_direction = $04
 char_id = $05
 instant_move_period = $06
-instant_move_period = $06
 current_period_counter = $07
 unknown_09 = $09
 ; stunned counter for snobees, push block counter for pengo
