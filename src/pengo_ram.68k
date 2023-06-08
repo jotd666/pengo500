@@ -29,6 +29,9 @@ bg_colorram:
 ATTRIBUTE_RAM:						| $5800
 	ds.b	0x800
 
+sprite_ram_9020:
+	ds.b	0x10
+	
 high_score_beaten:
 	.word	0
 invincible_flag:

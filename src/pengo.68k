@@ -197,8 +197,8 @@ char_state = 0x1F
 	.include "pengo.inc"
 	.ifdef	__amiga__
 	.include "pengo_ram.68k"
+	.align	2
 	.endif
-	
 pengo_reset:
 	* default: 1 update/irq call
 	* we need 60 updates / second so on amiga PAL
@@ -276,15 +276,16 @@ l_013f:
 	
 l_03d4:
 * zero a lot of hardware stuff
+	jbsr	osd_sound_disable
 	clr.b	d0                               	| [xor  a]
-	move.b	d0,dip_switches_9040            	| [ld   (dip_switches_9040),a]
-	move.b	d0,sound_enable_9041            	| [ld   (sound_enable_9041),a]
-	move.b	d0,flip_screen_9043             	| [ld   (flip_screen_9043),a]
-	move.b	d0,coin_counter_9044            	| [ld   (coin_counter_9044),a]
-	move.b	d0,coin_counter_9045            	| [ld   (coin_counter_9045),a]
-	move.b	d0,character_sprite_bank_selector_9047	| [ld   (character_sprite_bank_selector_9047),a]
-	move.b	d0,palette_bank_selector_9042   	| [ld   (palette_bank_selector_9042),a]
-	move.b	d0,color_lookup_table_bank_selector_9046	| [ld   (color_lookup_table_bank_selector_9046),a]
+*	move.b	d0,dip_switches_9040            	| [ld   (dip_switches_9040),a]
+*	move.b	d0,sound_enable_9041            	| [ld   (sound_enable_9041),a]
+*	move.b	d0,flip_screen_9043             	| [ld   (flip_screen_9043),a]
+*	move.b	d0,coin_counter_9044            	| [ld   (coin_counter_9044),a]
+*	move.b	d0,coin_counter_9045            	| [ld   (coin_counter_9045),a]
+*	move.b	d0,character_sprite_bank_selector_9047	| [ld   (character_sprite_bank_selector_9047),a]
+*	move.b	d0,palette_bank_selector_9042   	| [ld   (palette_bank_selector_9042),a]
+*	move.b	d0,color_lookup_table_bank_selector_9046	| [ld   (color_lookup_table_bank_selector_9046),a]
 	clr.b	d0                               	| [xor  a]
 * zero a lot of global counters
 	move.b	d0,number_of_credits_8808       	| [ld   (number_of_credits_8808),a]
@@ -348,15 +349,6 @@ display_thanks_for_playing_04A0:
 0:
 	lea	table_04D0(pc),a0                      	| [ld   hl,0x04D0]
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
-	move.l	a0,-(sp)                        	| [push hl]
-	lea	0x0003(pc),a1                      	| [ld   de,0x0003]
-add  hl,de
-	move.b	#0x20,d0                        	| [ld   a,0x20]
-	cmp.b	(a0),d0                          	| [cp   (hl)]
-	beq.b	0f
-	rts                                    	| [ret  nz]
-0:
-	move.l	(sp)+,a0                        	| [pop  hl]
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
 	move.b	#0x40,d0                        	| [ld   a,0x40]
 	jbsr	delay_28D1                        	| [call delay_28D1]
@@ -373,14 +365,10 @@ table_04D0:
 
 
 enable_sound_18EC:
-	move.b	#0x01,d0                        	| [ld   a,0x01]
-	move.b	d0,sound_enable_9041            	| [ld   (sound_enable_9041),a]
-	rts                                    	| [ret]
+	jra		osd_sound_enable
 
 disable_sound_18F2:
-	clr.b	d0                               	| [ld   a,0x00]
-	move.b	d0,sound_enable_9041            	| [ld   (sound_enable_9041),a]
-	rts                                    	| [ret]
+	jra		osd_sound_disable
 
 * set default hiscores all to 20000
 * (would be a good location to load highscores)
@@ -437,17 +425,47 @@ l_28d4:
 	jne	l_28d4                             	| [jr   nz,0x28D4]
 	rts                                    	| [ret]
 
+
+clear_screen_and_colors_28E5:
+	* not very useful to transcode that part. Just re-code it
+	move.w	#0x8000,d6
+	move.w	#0x3FF,d1
+	move.b	#0x20,d0
+0:
+	jbsr	osd_w_videoram
+	addq.w	#1,d6
+	dbf		d1,0b
+* same thing with attributes
+	move.w	#0x3FF,d1
+	clr		d0
+0:
+	jbsr	osd_w_colorram
+	addq.w	#1,d6
+	dbf		d1,0b
+	rts
+
+
+put_blank_at_current_pos_2900:
+	move.w	d0,-(sp)                        	| [push af]
+	move.b	#0x20,d0                        	| [ld   a,$20]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	move.w	(sp)+,d0                        	| [pop  af]
+	rts                                    	| [ret]
+
+
 * < A: attribute code to put at current screen address
 * (doesn't write at this address but in attributes at +0x400)
 * updates current position
 
 set_attribute_at_current_pos_292D:
 	move.l	d0,-(sp)                        	| [push af]
-	move.l	a4,-(sp)                        	| [push bc]
+	move.w	d1,-(sp)                        	| [push bc]
+	move.w	d2,-(sp)                        	| [push bc]
 	move.l	a1,-(sp)                        	| [push de]
 	move.l	a0,-(sp)                        	| [push hl]
-	move.l	af,-(sp)                        	| [push af]
-	move.w	cursor_x_8800(pc),a4            	| [ld   bc,(cursor_x_8800)]
+	move.l	d0,-(sp)                        	| [push af]
+	move.b	cursor_x_8800,D1            	| get current X & Y [ld   bc,(cursor_x_8800)]
+	move.b	cursor_x_8800+1,D2            	| get current X & Y [ld   bc,(cursor_x_8800)]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
 	move.l	(sp)+,d0                        	| [pop  af]
 	jra	l_294f                             	| [jr   0x294F]
@@ -457,20 +475,21 @@ set_attribute_at_current_pos_292D:
 
 set_tile_at_current_pos_293C:
 	move.l	d0,-(sp)                        	| store a lot of registers :) [push af]
-	move.l	a4,-(sp)                        	| [push bc]
+	move.w	d1,-(sp)                        	| [push bc]
+	move.w	d2,-(sp)                        	| [push bc]
 	move.l	a1,-(sp)                        	| [push de]
 	move.l	a0,-(sp)                        	| [push hl]
 	move.l	d0,-(sp)                        	| save A again [push af]
-	move.w	cursor_x_8800,a4            	| get current X & Y [ld   bc,(cursor_x_8800)]
+	move.b	cursor_x_8800,D1            	| get current X & Y [ld   bc,(cursor_x_8800)]
+	move.b	cursor_x_8800+1,D2            	| get current X & Y [ld   bc,(cursor_x_8800)]
 	jbsr	convert_coords_to_screen_address_296F	| convert to address in HL [call convert_coords_to_screen_address_296F]
 	move.l	(sp)+,d0                        	| restore A [pop  af]
-	move.b	d0,(a0)                         	| put value of A at screen XY [ld   (hl),a]
+	jbsr	osd_w_videoram                    	| put value of A at screen XY [ld   (hl),a]
 	move.b	cursor_color_8802,d0            	| get current attribute [ld   a,(cursor_color_8802)]
 	and.b	#0x1F,d0                         	| mask attribute bits [and  0x1F]
 l_294f:
-	lea	0x0400(pc),a1                      	| address of attributes = screen + 0x400 [ld   de,0x0400]
-add  hl,de
-	move.b	d0,(a0)                         	| store attribute for tile [ld   (hl),a]
+    add.w	#0x400,d6		                  	| address of attributes = screen + 0x400 [ld   de,0x0400]
+	jbsr	osd_w_colorram                         	| store attribute for tile [ld   (hl),a]
 	move.b	d2,d0                           	| [ld   a,c]
 	addq.b	#1,d0                           	| Y += 1 [inc  a]
 	move.b	d0,d2                           	| [ld   c,a]
@@ -484,18 +503,20 @@ add  hl,de
 	jcs	l_2966                             	| no, leave it [jr   c,0x2966]
 	clr.b	d1                               	| start of line [ld   b,0x00]
 l_2966:
-	move.b	a4,cursor_x_8800                	| update current cursor pos [ld   (cursor_x_8800),bc]
+	move.b	d1,cursor_x_8800                	| update current cursor pos [ld   (cursor_x_8800),bc]
+	move.b	d2,cursor_x_8800+1                	| update current cursor pos [ld   (cursor_x_8800),bc]
 	move.l	(sp)+,a0                        	| [pop  hl]
 	move.l	(sp)+,a1                        	| [pop  de]
-	move.l	(sp)+,a4                        	| [pop  bc]
+	move.w	(sp)+,d2                        	| [pop  bc]
+	move.w	(sp)+,d1                        	| [pop  bc]
 	move.l	(sp)+,d0                        	| [pop  af]
 	rts                                    	| [ret]
 
 * converts coordinates to screen address
 * 8000 is bottom of screen
-* < B: X
-* < C: Y
-* > HL
+* < B: X (D1)
+* < C: Y (D2)
+* > HL (D6)
 convert_coords_to_screen_address_296F:
 	move.b	d1,d0                           	| load B into A [ld   a,b]
 	cmp.b	#0x20,d0                         	| is A < 0x20 [cp   0x20]
@@ -504,46 +525,44 @@ convert_coords_to_screen_address_296F:
 	cmp.b	#0x1C,d0                         	| compare [cp   0x1C]
 	jcc	l_29b2                             	| if A >= 0x1C goto 0x29B2 [jr   nc,0x29B2]
 	add.b	d0,d0                            	| multiply a by 2 [add  a,a]
-	clr.b	d3                               	| [ld   d,0x00]
-	move.b	d0,d4                           	| extend a into DE [ld   e,a]
+	clr.w	d3                               	| [ld   d,0x00]
+	move.b	d0,d3                           	| extend a into DE [ld   e,a]
 	lea	screen_line_address_table_29B6(pc),a0	| [ld   hl,screen_line_address_table_29B6]
-add  hl,de		; to get an entry into address table
+	move.w	(a0,d3.w),d3						| to get an entry into address table
 	move.b	(a0),d4                         	| load e [ld   e,(hl)]
-	addq.w	#1,a0                           	| [inc  hl]
-	move.b	(a0),d3                         	| load d: loads address in DE [ld   d,(hl)]
-	clr.b	d5                               	| [ld   h,0x00]
+	clr		d6                               	| [ld   h,0x00]
 	move.b	d1,d6                           	| [ld   l,b]
 * acts like multiply table for Y plus X
-add  hl,de
+	add.w	d3,d6							| [add  hl,de]
 	rts                                    	| [ret]
 * handle limit cases
 l_2989:
 	cmp.b	#0x22,d0                         	| [cp   0x22]
 	jcc	l_2999                             	| [jr   nc,0x2999]
-	lea	0x8002(pc),a0                      	| [ld   hl,0x8002]
+	move.w	#0x8002,d6                      	| [ld   hl,0x8002]
 	btst.b	#0,d0                           	| [bit  0,a]
 	jeq	l_2997                             	| [jr   z,0x2997]
-	lea	0x8022(pc),a0                      	| [ld   hl,0x8022]
+	move.w	#0x8022,d6                     	| [ld   hl,0x8022]
 l_2997:
 	jra	l_29a7                             	| [jr   0x29A7]
 l_2999:
 	cmp.b	#0x24,d0                         	| [cp   0x24]
 	jcc	l_29b2                             	| [jr   nc,0x29B2]
-	lea	0x83C2(pc),a0                      	| set screen address to 83C2 [ld   hl,0x83C2]
+	move.w	#0x83C2,d6                      	| set screen address to 83C2 [ld   hl,0x83C2]
 	btst.b	#0,d0                           	| [bit  0,a]
 	jeq	l_29a7                             	| [jr   z,0x29A7]
-	lea	0x83E2(pc),a0                      	| set screen address to 83E2 [ld   hl,0x83E2]
+	move.w	#0x83E2,d6                      	| set screen address to 83E2 [ld   hl,0x83E2]
 l_29a7:
 	move.b	#0x1B,d0                        	| [ld   a,0x1B]
 	cmp.b	d2,d0                            	| [cp   c]
 	jcs	l_29b2                             	| [jr   c,0x29B2]
 	sub.b	d2,d0                            	| [sub  c]
-	clr.b	d3                               	| [ld   d,0x00]
-	move.b	d0,d4                           	| [ld   e,a]
-add  hl,de
+	clr		d3                               	| [ld   d,0x00]
+	move.b	d0,d3                           	| [ld   e,a]
+	add.w	d3,d6								| [add hl,de]
 	rts                                    	| [ret]
 l_29b2:
-	lea	video_tile_memory_8000(pc),a0      	| [ld   hl,video_tile_memory_8000]
+	move.w	#0x8000,d6      	| [ld   hl,video_tile_memory_8000]
 	rts                                    	| [ret]
 
 screen_line_address_table_29B6:
@@ -552,17 +571,18 @@ screen_line_address_table_29B6:
 	.word	0x81a0,0x8180,0x8160,0x8140,0x8120,0x8100,0x80e0,0x80c0
 	.word	0x80a0,0x8080,0x8060,0x8040,0x8020,0x8000,0x8000
 
-* HL contains pointer on coordinates + color & attributes + text
+* HL (a0) contains pointer on coordinates + color & attributes + text
+* and is updated on exit
 print_line_29F4:
-	move.b	(a0),d0                         	| load text X [ld   a,(hl)]
+	move.b	(a0)+,d0                         	| load text X [ld   a,(hl)]
 	move.b	d0,cursor_x_8800                	| store in current X [ld   (cursor_x_8800),a]
-	addq.w	#1,a0                           	| [inc  hl]
-	move.b	(a0),d0                         	| load text Y [ld   a,(hl)]
+	                           	| [inc  hl]
+	move.b	(a0)+,d0                         	| load text Y [ld   a,(hl)]
 	move.b	d0,cursor_y_8801                	| store in current Y [ld   (cursor_y_8801),a]
-	addq.w	#1,a0                           	| [inc  hl]
-	move.b	(a0),d0                         	| load text color [ld   a,(hl)]
+	                           	| [inc  hl]
+	move.b	(a0)+,d0                         	| load text color [ld   a,(hl)]
 	move.b	d0,cursor_color_8802            	| store in current color [ld   (cursor_color_8802),a]
-	addq.w	#1,a0                           	| [inc  hl]
+	                           	| [inc  hl]
 l_2a03:
 	move.b	(a0),d0                         	| get character [ld   a,(hl)]
 	btst.b	#7,d0                           	| [bit  7,a]
@@ -602,69 +622,70 @@ l_2a46:
 	move.b	d1,d5                           	| [ld   h,b]
 	move.b	d2,d6                           	| [ld   l,c]
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
-	lea	credit_string_2AB8(pc),a0          	| [ld   hl,credit_string_2AB8]
+	lea	push_string_2A7D+0xB8-0x7D(pc),a0          	| [ld   hl,credit_string_2AB8]
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
 	jbsr	display_number_of_credits_2B7A    	| [call display_number_of_credits_2B7A]
 	lea	copyright_string_2ACE(pc),a0       	| [ld   hl,copyright_string_2ACE]
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
 	lea	bonus_for_30000_pts_2ADC(pc),a0    	| [ld   hl,bonus_for_30000_pts_2ADC]
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
-	lea	for_50000_pts_2AF3(pc),a0          	| [ld   hl,for_50000_pts_2AF3]
-	jbsr	osd_get_dip
-	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-	btst.b	#0,d0                           	| [bit  0,a]
-* if DWS is set accordignly, overwrite "30000" string with "50000"
-	beq	0f
-	jbsr	print_line_29F4                   	| [call nz,print_line_29F4]
-0:
+*	lea	for_50000_pts_2AF3(pc),a0          	| [ld   hl,for_50000_pts_2AF3]
+*	jbsr	osd_get_dip
+*	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
+*	btst.b	#0,d0                           	| [bit  0,a]
+** if DWS is set accordignly, overwrite "30000" string with "50000"
+*	beq	0f
+*	jbsr	print_line_29F4                   	| [call nz,print_line_29F4]
+*0:
 	move.b	#0x0B,d0                        	| [ld   a,0x0B]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
-	move.b	#0x14,d5                        	| [ld   h,0x14]
-	move.b	#0x03,d6                        	| [ld   l,0x03]
-	move.b	a0,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+											| [ld   h,0x14]
+											| [ld   l,0x03]
+	move.w	#0x0314,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x24,d0                        	| [ld   a,0x24]
 	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
 	rts                                    	| [ret]
+	
 push_string_2A7D:
 	.byte	0x0A,0x09,0x17,0x50,0x20,0x55,0x20,0x53,0x20
-	.byte	0xC8,0x07,0x0C,0x10,0x53,0x54,0x41  | . .P U S È...STA
-	.byte	0x52,0x54,0x20,0x20,0x42,0x55,0x54,0x54,0x4F,0xCE,0x07,0x0F,0x18,0x31,0x20,0x4F   RT  BUTTOÎ...1 O
-	.byte	0x52,0x20,0x32,0x20,0x50,0x4C,0x41,0x59,0x45,0x52,0xD3,0x07,0x0F,0x18,0x31,0x20   R 2 PLAYERÓ...1
-	.byte	0x50,0x4C,0x41,0x59,0x45,0x52,0x20,0x4F,0x4E,0x4C,0xD9,0x07,0x12,0x10,0x43,0x52   PLAYER ONLÙ...CR
-	.byte	0x45,0x44,0x49,0x54,0xA0,0x07,0x0F,0x10,0x46,0x52,0x45,0x45,0x20,0x50,0x4C,0x41   EDIT ...FREE PLA
+	.byte	0xC8,0x07,0x0C,0x10,0x53,0x54,0x41  | . .P U S H...STA
+	.byte	0x52,0x54,0x20,0x20,0x42,0x55,0x54,0x54,0x4F,0xCE,0x07,0x0F,0x18,0x31,0x20,0x4F   | RT  BUTTON...1 O
+	.byte	0x52,0x20,0x32,0x20,0x50,0x4C,0x41,0x59,0x45,0x52,0xD3,0x07,0x0F,0x18,0x31,0x20   | R 2 PLAYERS...1
+	.byte	0x50,0x4C,0x41,0x59,0x45,0x52,0x20,0x4F,0x4E,0x4C,0xD9,0x07,0x12,0x10,0x43,0x52   | PLAYER ONLY...CR
+	.byte	0x45,0x44,0x49,0x54,0xA0,0x07,0x0F,0x10,0x46,0x52,0x45,0x45,0x20,0x50,0x4C,0x41   | EDITS...FREE PLA
 	.byte	0xD9
 
-copyright_string_2ACE;
+copyright_string_2ACE:
 	.byte	0x08,0x19,0x10,0x40,0x20,0x53,0x45,0x47,0x41,0x20,0x31,0x39,0x38,0xB2
 bonus_for_30000_pts_2ADC:
-	.byte	0x06,0x15,0x18,0x42,0x4F,0x4E,0x55,0x53,0x20,0x46,0x4F,0x52,0x20,0x33,0x30,0x30,0x30   ;..BONUS FOR 3000
+	.byte	0x06,0x15,0x18,0x42,0x4F,0x4E,0x55,0x53,0x20,0x46,0x4F,0x52,0x20,0x33,0x30,0x30,0x30   |..BONUS FOR 3000
 	.byte	0x30,0x20,0x50,0x54,0x53,0xBA
 for_50000_pts_2AF3:
-	.byte	0x10,0x15,0x18,0x35,0x30,0x30,0x30,0xB0  | 0 PTSº...5000°
+	.byte	0x10,0x15,0x18,0x35,0x30,0x30,0x30,0xB0  | 0 PTS....50000
 
-
-* < HL: write pseudo-BCD 4 digits at current cursor
+	.align	2
+* < HL (d6): write pseudo-BCD 4 digits at current cursor
 * updates number_buffer_8803
 convert_number_2B40:
 	move.l	a2,-(sp)                        	| [push ix]
 	move.l	a3,-(sp)                        	| [push iy]
 	lea	powers_of_ten_table_2B70(pc),a3    	| [ld   iy,powers_of_ten_table_2B70]
-	lea	number_buffer_8803(pc),a2          	| [ld   ix,number_buffer_8803]
+	lea	number_buffer_8803,a2          	| [ld   ix,number_buffer_8803]
 l_2b4c:
 	clr.b	d0                               	| [xor  a]
-	move.b	(0x00,a3),d4                    	| [ld   e,(iy+$00)]
-	move.b	(0x01,a3),d3                    	| [ld   d,(iy+$01)]
+	move.w	(a3),d3                    	| [ld   e,(iy+$00)]
+												| [ld   d,(iy+$01)]
 l_2b53:
-	tst.b	d0                               	| [and  a]
-sbc  hl,de
+											| [and  a]
+	sub.w	d3,d6							| [sbc  hl,de] with C cleared, no sub hl,de instruction
 	jcs	l_2b5b                             	| [jr   c,$2B5B]
 	addq.b	#1,d0                           	| [inc  a]
 	jra	l_2b53                             	| [jr   $2B53]
 l_2b5b:
-add  hl,de
+	add.w	d3,d6						| [add  hl,de]
 	or.b	#0x30,d0                          	| add '0' character [or   $30]
-	move.b	d0,(0x00,a2)                    	| store in buffer [ld   (ix+$00),a]
-	addq.w	#1,a2                           	| [inc  ix]
+	move.b	d0,(a2)+                    	| store in buffer [ld   (ix+$00),a]
+	                           	| [inc  ix]
 	addq.w	#2,a3                           	| [inc  iy]
 	btst.b	#0,d4                           	| [bit  0,e]
 	jeq	l_2b4c                             	| [jr   z,$2B4C]
@@ -676,13 +697,13 @@ powers_of_ten_table_2B70:
 
 
 display_number_of_credits_2B7A:
-	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
-	clr.b	d5                               	| [ld   h,$00]
-	move.b	d0,d6                           	| [ld   l,a]
+	clr		d6                               	| [ld   h,$00]
+	move.b	number_of_credits_8808,d6       	| [ld   a,(number_of_credits_8808)]
+												| [ld   l,a]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
-	move.b	#0x12,d5                        	| [ld   h,$12]
-	move.b	#0x0F,d6                        	| [ld   l,$0F]
-	move.b	a0,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+												| [ld   h,$12]
+												| [ld   l,$0F]
+	move.w	#0x0F12,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x10,d0                        	| [ld   a,$10]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	jbsr	write_2_digits_to_screen_2C6F     	| [call write_2_digits_to_screen_2C6F]
@@ -690,11 +711,11 @@ display_number_of_credits_2B7A:
 
 
 write_hiscore_to_screen_2B93:
-	move.w	high_score_880C(pc),a0          	| [ld   hl,(high_score_880C)]
+	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
-	move.b	#0x22,d5                        	| [ld   h,$22]
-	move.b	#0x0C,d6                        	| [ld   l,$0C]
-	move.b	a0,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+												| [ld   h,$22]
+												| [ld   l,$0C]
+	move.w	#0x0C22,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x10,d0                        	| [ld   a,$10]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
@@ -702,43 +723,43 @@ write_hiscore_to_screen_2B93:
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	rts                                    	| [ret]
 
-	move.w	player_1_score_880E(pc),a0      	| [ld   hl,(player_1_score_880E)]
+	move.w	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
-	move.b	#0x22,d5                        	| [ld   h,$22]
-	move.b	#0x03,d6                        	| [ld   l,$03]
-	move.b	a0,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+												| [ld   h,$22]
+												| [ld   l,$03]
+	move.w	#0x0322,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x10,d0                        	| [ld   a,$10]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
 	move.b	#0x30,d0                        	| write the fixed '0' for score [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p1_score_for_extra_life_2BAE	| [call check_p1_score_for_extra_life_2BAE]
-	move.w	high_score_880C(pc),a0          	| [ld   hl,(high_score_880C)]
-	move.w	player_1_score_880E(pc),a1      	| [ld   de,(player_1_score_880E)]
+	move.w	high_score_880C,d6    		      	| [ld   hl,(high_score_880C)]
+	move.w	player_1_score_880E,d3    		  	| [ld   de,(player_1_score_880E)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
-	move.b	a1,high_score_880C              	| [ld   (high_score_880C),de]
+	move.w	d3,high_score_880C              	| [ld   (high_score_880C),de]
 	jbsr	write_hiscore_to_screen_2B93      	| [call write_hiscore_to_screen_2B93]
 	rts                                    	| [ret]
 
 check_p1_score_for_extra_life_2BAE:
-	lea	lives_counter_p1_8814(pc),a0       	| [ld   hl,lives_counter_p1_8814]
+	lea	lives_counter_p1_8814,a0       	| [ld   hl,lives_counter_p1_8814]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	move.l	a0,-(sp)                        	| [push hl]
-	move.w	player_1_score_880E(pc),a0      	| [ld   hl,(player_1_score_880E)]
-	lea	0x0BB8(pc),a1                      	| [ld   de,$0BB8]
-	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-	btst.b	#0,d0                           	| [bit  0,a]
-	jeq	l_2bf5                             	| [jr   z,$2BF5]
-	lea	0x1388(pc),a1                      	| 5000 [ld   de,$1388]
-l_2bf5:
+	move.w	d6,-(sp)                        	| [push hl]
+	move.w	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
+	move.w	#0x0BB8,d3                      	| [ld   de,$0BB8]
+*	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
+*	btst.b	#0,d0                           	| [bit  0,a]
+*	jeq	l_2bf5                             	| [jr   z,$2BF5]
+*	move.w	#0x1388,d3                      	| 5000 [ld   de,$1388]
+*l_2bf5:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
-	move.l	(sp)+,a0                        	| [pop  hl]
+	movem.w	(sp)+,d6                        	| [pop  hl]
 	bcc.b	0f
 	rts                                    	| [ret  c]
 0:
@@ -751,51 +772,51 @@ l_2bfa:
 	rts                                    	| [ret]
 
 check_p2_score_for_extra_life_2C06:
-	lea	lives_counter_p2_8815(pc),a0       	| [ld   hl,lives_counter_p2_8815]
+	lea	lives_counter_p2_8815,a0 		      	| [ld   hl,lives_counter_p2_8815]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	move.l	a0,-(sp)                        	| [push hl]
-	move.w	player_2_score_8810(pc),a0      	| [ld   hl,(player_2_score_8810)]
-	lea	0x0BB8(pc),a1                      	| [ld   de,$0BB8]
-	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-	btst.b	#0,d0                           	| [bit  0,a]
-	jeq	l_2c1d                             	| [jr   z,$2C1D]
-	lea	0x1388(pc),a1                      	| 5000 [ld   de,$1388]
-l_2c1d:
+	move.w	d6,-(sp)                        	| [push hl]
+	move.w	player_2_score_8810,a0      	| [ld   hl,(player_2_score_8810)]
+	move.w	#0x0BB8,d3                      	| [ld   de,$0BB8]
+*	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
+*	btst.b	#0,d0                           	| [bit  0,a]
+*	jeq	l_2c1d                             	| [jr   z,$2C1D]
+*	move.w	#0x1388,d3                      	| 5000 [ld   de,$1388]
+*l_2c1d:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
-	move.l	(sp)+,a0                        	| [pop  hl]
+	movem.w	(sp)+,d6                        	| [pop  hl]
 	bcc.b	0f
 	rts                                    	| [ret  c]
 0:
 	jra	l_2bfa                             	| [jr   $2BFA]
 
 update_and_display_p1_score_2C24:
-	move.w	player_2_score_8810(pc),a0      	| [ld   hl,(player_2_score_8810)]
+	move.w	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
-	move.b	#0x22,d5                        	| [ld   h,$22]
-	move.b	#0x15,d6                        	| [ld   l,$15]
-	move.b	a0,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+											| [ld   h,$22]
+											| [ld   l,$15]
+	move.w	#0x1522,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x10,d0                        	| [ld   a,$10]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
 	move.b	#0x30,d0                        	| [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p2_score_for_extra_life_2C06	| [call check_p2_score_for_extra_life_2C06]
-	move.w	high_score_880C(pc),a0          	| [ld   hl,(high_score_880C)]
-	move.w	player_2_score_8810(pc),a1      	| [ld   de,(player_2_score_8810)]
+	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)]
+	move.w	player_2_score_8810,d3      	| [ld   de,(player_2_score_8810)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
-	move.b	a1,high_score_880C              	| [ld   (high_score_880C),de]
+	move.w	d3,high_score_880C              	| [ld   (high_score_880C),de]
 	jbsr	write_hiscore_to_screen_2B93      	| [call write_hiscore_to_screen_2B93]
 	rts                                    	| [ret]
 
 write_5_digits_to_screen_2C54:
 	move.b	#0x05,d1                        	| write 5 numbers [ld   b,$05]
-	lea	number_buffer_8803(pc),a0          	| source [ld   hl,number_buffer_8803]
+	lea	number_buffer_8803,a0          	| source [ld   hl,number_buffer_8803]
 l_2c59:
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	cmp.b	#0x30,d0                         	| compare to '0' [cp   $30]
@@ -817,8 +838,16 @@ l_2c67:
 
 write_2_digits_to_screen_2C6F:
 	move.b	#0x02,d1                        	| write 2 numbers [ld   b,$02]
-	lea	number_buffer_8803+3(pc),a0        	| source [ld   hl,number_buffer_8803+3]
+	lea	number_buffer_8803+3,a0        	| source [ld   hl,number_buffer_8803+3]
 	jra	l_2c59      
+
+* computes D-H, then E-L if D-H != 0
+* < HL (d6)
+* < DE (d3)
+* < Z if equal, NZ otherwise, C flag set for first different value
+compare_hl_to_de_2D99:
+	cmp.w	d6,d3
+	rts                                    	| [ret]
 
 
 draw_ice_block_tile_2EFE:
@@ -837,6 +866,14 @@ set_2x2_tile_2F00:
 	addq.b	#1,d0                           	| [inc  a]
 	rts                                    	| [ret]
 
+clear_sprites_31B7:
+	lea	sprite_ram_9020,a0             	| [ld   hl,sprite_ram_9020]
+	move.b	#0x10,d1                        	| [ld   b,$10]
+l_31bc:
+	clr.b	(a0)+                             	| [ld   (hl),$00]
+	subq.b	#1,d1                           	| [...]
+	jne	l_31bc                             	| [djnz $31BC]
+	rts                                    	| [ret]
 
 l_32bc:
 	move.b	game_playing_8817,d0            	| [ld   a,(game_playing_8817)]
@@ -849,28 +886,34 @@ l_32bc:
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	lea	0x2201(pc),a4                      	| [ld   bc,0x2201]
+	move.b	#0x01,d1                      	| [ld   bc,0x2201]
+	move.b	#0x22,d2                      	| [ld   bc,0x2201]
 	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
 	btst.b	#0,d0                           	| [bit  0,a]
 	jeq	l_32d4                             	| [jr   z,0x32D4]
-	lea	0x2213(pc),a4                      	| [ld   bc,0x2213]
+	move.b	#0x13,d1                      	| [ld   bc,0x2213]
+	move.b	#0x22,d2                      	| [ld   bc,0x2213]
 l_32d4:
 	move.b	timer_16bit_8822,d0             	| [ld   a,(timer_16bit_8822)]
 	btst.b	#5,d0                           	| [bit  5,a]
 	jeq	l_32ea                             	| [jr   z,0x32EA]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	#0x11,(a0)                      	| [ld   (hl),0x11]
+	moveq	#0x11,d0                             | [ld   (hl),0x11]
+	jbsr	osd_w_colorram                      	
 	addq.b	#1,d2                           	| [inc  c]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	#0x11,(a0)                      	| [ld   (hl),0x11]
+	moveq	#0x11,d0                             | [ld   (hl),0x11]
+	jbsr	osd_w_colorram                      	
 	jbsr	l_32f9                            	| [call 0x32F9]
 	rts                                    	| [ret]
 l_32ea:
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	clr.b	(a0)                             	| [ld   (hl),0x00]
+	moveq	#0,d0                             	| [ld   (hl),0x00]
+	jbsr	osd_w_colorram
 	addq.b	#1,d2                           	| [inc  c]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	clr.b	(a0)                             	| [ld   (hl),0x00]
+	moveq	#0,d0                             	| [ld   (hl),0x00]
+	jbsr	osd_w_colorram
 	jbsr	l_32fd                            	| [call 0x32FD]
 	rts                                    	| [ret]
 l_32f9:
@@ -879,12 +922,20 @@ l_32f9:
 l_32fd:
 	move.b	#0x0C,d0                        	| [ld   a,0x0C]
 l_32ff:
-	clr.b	d5                               	| [ld   h,0x00]
-	move.b	#0x08,d6                        	| [ld   l,0x08]
-	move.b	a0,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	                       	| [ld   l,0x08]+[ld  h,0]
+	move.w	#0x0800,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x0C,d1                        	| [ld   b,0x0C]
 l_3308:
 	jbsr	set_attribute_at_current_pos_292D 	| [call set_attribute_at_current_pos_292D]
 	subq.b	#1,d1                           	| [...]
 	jne	l_3308                             	| [djnz 0x3308]
 	rts       	
+
+convert_coords_to_screen_attributes_address_4BDC:
+	move.w	d0,-(sp)                        	| [push af]
+	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
+	add.w	#0x400,d6                      	| [ld   de,$0400]
+										| [add  hl,de]
+	move.w	(sp)+,d0                        	| [pop  af]
+	rts             
+	

@@ -727,6 +727,9 @@ display_thanks_for_playing_04A0:
 04AE: C0            ret  nz
 04AF: 21 D0 24      ld   hl,table_04D0
 04B2: CD 5C 29      call print_line_29F4
+; this part is either a protection or buggy. It checks
+; for space character but if not space, returns to bogus address
+; push hl without pop hl
 04B5: E5            push hl
 04B6: 11 23 00      ld   de,$0003
 04B9: 19            add  hl,de
