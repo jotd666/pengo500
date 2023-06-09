@@ -841,7 +841,7 @@ draw_sega_logo_05BE:
 05FF: 3E 22         ld   a,$22		; (R) registered char
 0601: CD B4 01      call set_tile_at_current_pos_293C
 0604: 3C            inc  a			; bottom of (R) char
-0605: CD B9 01      call move_cursor_down_by_1_2919
+0605: CD B9 01      call move_cursor_1_2919
 0608: CD 14 A1      call set_tile_at_current_pos_293C
 060B: C9            ret
 
@@ -1160,7 +1160,7 @@ table_0822:
 0832: 2E 33         ld   l,$13
 0834: 22 20 88      ld   (cursor_x_8800),hl
 0837: CD 00 81      call put_blank_at_current_pos_2900
-083A: CD B1 29      call move_cursor_down_by_1_2919
+083A: CD B1 29      call move_cursor_1_2919
 083D: 3E 4E         ld   a,$4E
 083F: CD B4 01      call set_tile_at_current_pos_293C
 0842: DD 34 AB      inc  (ix+$0b)
@@ -1171,7 +1171,7 @@ table_0822:
 084A: 22 A0 88      ld   (cursor_x_8800),hl
 084D: 3E EE         ld   a,$4E
 084F: CD 3C 81      call set_tile_at_current_pos_293C
-0852: CD B1 29      call move_cursor_down_by_1_2919
+0852: CD B1 29      call move_cursor_1_2919
 0855: CD 00 81      call put_blank_at_current_pos_2900
 0858: DD 34 0B      inc  (ix+$0b)
 085B: C9            ret
@@ -2103,6 +2103,7 @@ str_player_2_FEE:
 str_ready_FF9:
 	dc.b	$0B,$13,$10,$52,$45,$41,$44,$D9		; READY
 
+jmp_1003:
 1003: 3E 00         ld   a,$00
 1005: 32 47 B8      ld   (character_sprite_bank_selector_9047),a
 1008: 32 CA 90      ld   (palette_bank_selector_9042),a
@@ -2491,7 +2492,7 @@ draw_horizontal_line_14C6:
 14CA: 32 8A A0      ld   (cursor_color_8802),a
 14CD: 3E 03         ld   a,$03
 14CF: CD 3C 29      call set_tile_at_current_pos_293C
-14D2: CD 19 29      call move_cursor_down_by_1_2919
+14D2: CD 19 29      call move_cursor_1_2919
 14D5: 10 F8         djnz $14CF
 14D7: C9            ret
 
@@ -2904,7 +2905,7 @@ string_17D9:
 185F: C9            ret
 1860: C5            push bc
 1861: 06 23         ld   b,$0B
-1863: C3 23 01      jp   move_cursor_down_by_b_290B
+1863: C3 23 01      jp   move_cursor_b_290B
 1866: 3A E8 90      ld   a,(coin_input_90C0)
 1869: 2F            cpl
 186A: E6 87         and  $0F
@@ -3946,7 +3947,7 @@ table_1FF7:
 20C4: 06 80         ld   b,$08
 20C6: C5            push bc
 20C7: CD A5 01      call set_attribute_at_current_pos_292D
-20CA: CD 91 A1      call move_cursor_down_by_1_2919
+20CA: CD 91 A1      call move_cursor_1_2919
 20CD: C1            pop  bc
 20CE: 10 7E         djnz $20C6
 20D0: C9            ret
@@ -4154,7 +4155,7 @@ jump_table_21CC:
 2250: CD 94 29      call set_tile_at_current_pos_293C
 2253: 3C            inc  a
 2254: 10 DA         djnz $2250
-2256: CD 03 29      call move_cursor_down_by_3_2923
+2256: CD 03 29      call move_cursor_4_2923
 2259: 06 04         ld   b,$04
 225B: CD 3C 81      call set_tile_at_current_pos_293C
 225E: 3C            inc  a
@@ -4993,7 +4994,7 @@ put_blank_at_current_pos_2900:
 2908: C5            push bc
 2909: 06 AB         ld   b,$03
 
-move_cursor_down_by_b_290B:
+move_cursor_b_290B:
 290B: F5            push af
 290C: E5            push hl
 290D: 21 A8 20      ld   hl,cursor_x_8800
@@ -5007,25 +5008,25 @@ move_cursor_down_by_b_290B:
 2917: C1            pop  bc
 2918: C9            ret
 
-move_cursor_down_by_1_2919:
+move_cursor_1_2919:
 2919: C5            push bc
 291A: 06 A1         ld   b,$01
-291C: 18 4D         jr   move_cursor_down_by_b_290B
+291C: 18 4D         jr   move_cursor_b_290B
 
-move_cursor_down_by_2_291E:
+move_cursor_2_291E:
 291E: C5            push bc
 291F: 06 AA         ld   b,$02
-2921: 18 40         jr   move_cursor_down_by_b_290B
+2921: 18 40         jr   move_cursor_b_290B
 
-move_cursor_down_by_3_2923:
+move_cursor_4_2923:
 2923: C5            push bc
 2924: 06 84         ld   b,$04
-2926: 18 4B         jr   move_cursor_down_by_b_290B
+2926: 18 4B         jr   move_cursor_b_290B
 
-move_cursor_down_by_1A_2928:
+move_cursor_1A_2928:
 2928: C5            push bc
 2929: 06 9A         ld   b,$1A
-292B: 18 D6         jr   move_cursor_down_by_b_290B
+292B: 18 D6         jr   move_cursor_b_290B
 
 ; < A: attribute code to put at current screen address
 ; (doesn't write at this address but in attributes at +$400)
@@ -5302,6 +5303,7 @@ write_hiscore_to_screen_2B93:
 2BAA: CD BC 09      call set_tile_at_current_pos_293C
 2BAD: C9            ret
 
+update_and_display_p1_score_2BAE:
 2BAE: 2A A6 88      ld   hl,(player_1_score_880E)
 2BB1: CD 40 03      call convert_number_2B40
 2BB4: 26 22         ld   h,$22
@@ -5337,7 +5339,7 @@ check_p1_score_for_extra_life_2BAE:
 2BF9: D8            ret  c
 2BFA: 34            inc  (hl)
 2BFB: CB FE         set  7,(hl)
-2BFD: CD 13 05      call $2D13
+2BFD: CD 13 05      call draw_lives_2D13
 2C00: 06 A1         ld   b,$01
 2C02: CD 0F B8      call $18AF
 2C05: C9            ret
@@ -5482,6 +5484,9 @@ draw_lives_2D0C:
 2D0F: A7            and  a
 2D10: C8            ret  z
 2D11: 18 05         jr   $2D18
+
+
+draw_lives_2D13:
 2D13: CD 9E 00      call get_nb_lives_289E
 2D16: 3D            dec  a
 2D17: C8            ret  z
@@ -5854,7 +5859,7 @@ set_2x2_tile_2F00:
 2F03: 3C            inc  a
 2F04: CD BC 09      call set_tile_at_current_pos_293C
 2F07: 3C            inc  a
-2F08: CD B6 09      call move_cursor_down_by_2_291E
+2F08: CD B6 09      call move_cursor_2_291E
 2F0B: CD 1C A9      call set_tile_at_current_pos_293C
 2F0E: 3C            inc  a
 2F0F: CD 3C 01      call set_tile_at_current_pos_293C
@@ -8696,7 +8701,7 @@ clear_2x2_tiles_at_current_pos_43A9:
 43A9: ED 43 80 80   ld   (cursor_x_8800),bc
 43AD: CD A8 A9      call put_blank_at_current_pos_2900
 43B0: CD A0 29      call put_blank_at_current_pos_2900
-43B3: CD 1E 01      call move_cursor_down_by_2_291E
+43B3: CD 1E 01      call move_cursor_2_291E
 43B6: CD A0 29      call put_blank_at_current_pos_2900
 43B9: CD 00 01      call put_blank_at_current_pos_2900
 43BC: C9            ret

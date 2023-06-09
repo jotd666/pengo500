@@ -270,9 +270,32 @@ l_013f:
 	move.w	(sp)+,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 
 	jbsr	l_015b                            	| [call 0x015B]
-	jbsr	l_0179                            	| [call 0x0179]
+	**jbsr	l_0179                            	| [call 0x0179]
 	rts
 	
+
+l_015b:
+	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
+	tst.b	d0                               	| [and  a]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
+	tst.b	d0                               	| [and  a]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+ * start game (credits inserted)
+	move.b	#0x01,d0                        	| [ld   a,$01]
+	move.b	d0,currently_playing_8819       	| [ld   (currently_playing_8819),a]
+*ld   sp,stack_pointer_8FF0
+	lea	0x0490,a0                      	| [ld   hl,$0490]
+	move.l	a0,-(sp)                        	| [push hl]
+	**move.b	#0x01,d0                        	| [ld   a,$01]
+	**move.b	d0,dip_switches_9040            	| [ld   (dip_switches_9040),a]
+	rts
+	
+
 	
 l_03d4:
 * zero a lot of hardware stuff
@@ -296,7 +319,7 @@ l_03d4:
 
 	jbsr	enable_sound_18EC                 	| [call enable_sound_18EC]
 	
-	jbsr	osd_enable_vblank
+	jbsr	osd_enable_vblank_interrupt
 	
 	clr.b	d0                               	| [xor  a]
 	move.b	d0,unknown_8828                 	| [ld   (unknown_8828),a]
@@ -342,7 +365,7 @@ display_thanks_for_playing_04A0:
 	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
 	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
-	move.b	0x04D3,d0                       	| [ld   a,(0x04D3)]
+	move.b	table_04D0+3(pc),d0                       	| [ld   a,(0x04D3)]
 	cmp.b	#0x20,d0                         	| [cp   0x20]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -362,6 +385,21 @@ table_04D0:
      dc.b	0x47,0x3A,0x20,0xA0,0x02,0x10,0x90,0x20,0x20,0x20,0x20,0x20,0x54,0x52,0x59,0x20   | G:...     TRY
      dc.b	0x4F,0x4E,0x43,0x45,0x20,0x4D,0x4F,0x52,0x45,0x20,0x3D,0x20,0x20,0x20,0x20,0xA0   | ONCE MORE =
 
+
+* control chars + PLAYER 1
+rect_dimensions_FDE:
+	dc.b	0x09,0x10,0x00,0x0A,0x05
+str_player_1_FE3:
+	dc.b	0x0A,0x11,0x10,0x50,0x4C,0x41,0x59,0x45,0x52,0x20,0xB1
+str_player_2_FEE:
+	dc.b	0x0A,0x11,0x10
+	.ascii	"PLAYER "
+	dc.b	0xB2		| 2 with bit 7 set
+str_ready_FF9:
+	dc.b	0x0B,0x13,0x10,0x52,0x45,0x41,0x44,0xD9		| READY
+	.align	2
+	
+                            	| [ret]
 
 
 enable_sound_18EC:
@@ -415,6 +453,16 @@ set_3_chars_2589:
 	rts                                    	| [ret]
 
 
+get_nb_lives_289E:
+	lea	lives_counter_p1_8814,a0       	| [ld   hl,lives_counter_p1_8814]
+	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
+	btst.b	#0,d0                           	| [bit  0,a]
+	jeq	l_28ab                             	| [jr   z,$28AB]
+	lea	lives_counter_p2_8815,a0       	| [ld   hl,lives_counter_p2_8815]
+l_28ab:
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	and.b	#0x7F,d0                         	| [and  $7F]
+	rts                        
 
  * a:	value to wait (1 = 1/5th of seconds roughly speaking)
 delay_28D1:
@@ -451,7 +499,40 @@ put_blank_at_current_pos_2900:
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	move.w	(sp)+,d0                        	| [pop  af]
 	rts                                    	| [ret]
+move_cursor_b_290B:
+	move.w	d0,-(sp)                        	| [push af]
+	move.l	a0,-(sp)                        	| [push hl]
+	lea	cursor_x_8800(pc),a0               	| [ld   hl,cursor_x_8800]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	sub.b	d1,d0                            	| [sub  b]
+	move.b	d0,(a0)+                         	| [ld   (hl),a]
+										| [inc  hl]
+	addq.b	#1,(a0)                         	| [inc  (hl)]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	move.w	(sp)+,d0                        	| [pop  af]
+	move.w	(sp)+,d1                        	| [pop  bc]
+	rts                                    	| [ret]
 
+
+move_cursor_1_2919:
+	move.w	d1,-(sp)                        	| [push bc]
+	move.b	#0x01,d1                        	| [ld   b,$01]
+	jra	move_cursor_b_290B         	| [jr   move_cursor_b_290B]
+
+move_cursor_2_291E:
+	move.w	d1,-(sp)                        	| [push bc]
+	move.b	#0x02,d1                        	| [ld   b,$02]
+	jra	move_cursor_b_290B         	| [jr   move_cursor_b_290B]
+
+move_cursor_4_2923:
+	move.w	d1,-(sp)                        	| [push bc]
+	move.b	#0x04,d1                        	| [ld   b,$04]
+	jra	move_cursor_b_290B         	| [jr   move_cursor_b_290B]
+
+move_cursor_1A_2928:
+	move.w	d1,-(sp)                        	| [push bc]
+	move.b	#0x1A,d1                        	| [ld   b,$1A]
+	jra	move_cursor_b_290B         	| [jr   move_cursor_b_290B]
 
 * < A: attribute code to put at current screen address
 * (doesn't write at this address but in attributes at +0x400)
@@ -610,14 +691,14 @@ l_2a1a:
 l_2a2c:
 	lea	push_string_2A7D(pc),a0            	| [ld   hl,push_string_2A7D]
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
-	lea	start_button_string_2A87(pc),a0    	| [ld   hl,start_button_string_2A87]
+	lea	push_string_2A7D+0x87-0x7D(pc),a0    	| [ld   hl,start_button_string_2A87]
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
-	lea	one_or_two_player_string_2A97(pc),a4	| [ld   bc,one_or_two_player_string_2A97]
+	lea	push_string_2A7D+0x97-0x7D(pc),a4	| [ld   bc,one_or_two_player_string_2A97]
 	move.b	#0x01,d3                        	| [ld   d,0x01]
 	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
 	cmp.b	d3,d0                            	| [cp   d]
 	jne	l_2a46                             	| [jr   nz,0x2A46]
-	lea	one_player_only_string_2AA8(pc),a4 	| [ld   bc,one_player_only_string_2AA8]
+	lea	push_string_2A7D+0xA8-0x7D(pc),a4 	| [ld   bc,one_player_only_string_2AA8]
 l_2a46:
 	move.b	d1,d5                           	| [ld   h,b]
 	move.b	d2,d6                           	| [ld   l,c]
@@ -629,13 +710,13 @@ l_2a46:
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
 	lea	bonus_for_30000_pts_2ADC(pc),a0    	| [ld   hl,bonus_for_30000_pts_2ADC]
 	jbsr	print_line_29F4                   	| [call print_line_29F4]
-*	lea	for_50000_pts_2AF3(pc),a0          	| [ld   hl,for_50000_pts_2AF3]
-*	jbsr	osd_get_dip
-*	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-*	btst.b	#0,d0                           	| [bit  0,a]
-** if DWS is set accordignly, overwrite "30000" string with "50000"
-*	beq	0f
-*	jbsr	print_line_29F4                   	| [call nz,print_line_29F4]
+**	lea	for_50000_pts_2AF3(pc),a0          	| [ld   hl,for_50000_pts_2AF3]
+**	jbsr	osd_get_dip
+**	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
+**	btst.b	#0,d0                           	| [bit  0,a]
+* if DSW is set accordignly, overwrite "30000" string with "50000"
+**	beq	0f
+**	jbsr	print_line_29F4                   	| [call nz,print_line_29F4]
 *0:
 	move.b	#0x0B,d0                        	| [ld   a,0x0B]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
@@ -664,6 +745,20 @@ for_50000_pts_2AF3:
 	.byte	0x10,0x15,0x18,0x35,0x30,0x30,0x30,0xB0  | 0 PTS....50000
 
 	.align	2
+
+update_all_scores_2B10:
+	lea	score_titles_string_2B20,a0    	| [ld   hl,score_titles_string_2B20]
+	jbsr	print_line_29F4                   	| [call print_line_29F4]
+	jbsr	write_hiscore_to_screen_2B93      	| [call write_hiscore_to_screen_2B93]
+	jbsr	update_and_display_p1_score_2BAE  	| [call update_and_display_p1_score_2BAE]
+	jbsr	update_and_display_p1_score_2C24  	| [call update_and_display_p1_score_2C24]
+	rts                                    	| [ret]
+
+score_titles_string_2B20:
+	dc.b	0x01,0x22,0x11,0x31,0x50,0x20,0x20,0x20,0x20,0x20,0x20,0x20
+	dc.b	0x48,0x49,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x32,0xD0   | 01 21 10 43 52 45 44 49 D4        2Ð.!.CREDIÔ
+	.align	2
+
 * < HL (d6): write pseudo-BCD 4 digits at current cursor
 * updates number_buffer_8803
 convert_number_2B40:
@@ -723,6 +818,7 @@ write_hiscore_to_screen_2B93:
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	rts                                    	| [ret]
 
+update_and_display_p1_score_2BAE:
 	move.w	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 												| [ld   h,$22]
@@ -766,9 +862,9 @@ check_p1_score_for_extra_life_2BAE:
 l_2bfa:
 	addq.b	#1,(a0)                         	| [inc  (hl)]
 	bset.b	#7,(a0)                         	| [set  7,(hl)]
-	jbsr	l_2d13                            	| [call $2D13]
+	jbsr	draw_lives_2D13                            	| [call $2D13]
 	move.b	#0x01,d1                        	| [ld   b,$01]
-	jbsr	l_18af                            	| [call $18AF]
+	* sound stuff jbsr	l_18af                            	| [call $18AF]
 	rts                                    	| [ret]
 
 check_p2_score_for_extra_life_2C06:
@@ -841,6 +937,56 @@ write_2_digits_to_screen_2C6F:
 	lea	number_buffer_8803+3,a0        	| source [ld   hl,number_buffer_8803+3]
 	jra	l_2c59      
 
+draw_lives_2D0C:
+	jbsr	get_nb_lives_289E                 	| [call get_nb_lives_289E]
+	tst.b	d0                               	| [and  a]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	jra	l_2d18                             	| [jr   $2D18]
+draw_lives_2D13:
+	jbsr	get_nb_lives_289E                 	| [call get_nb_lives_289E]
+	subq.b	#1,d0                           	| [dec  a]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+l_2d18:
+	cmp.b	#0x05,d0                         	| [cp   $05]
+	jcs	l_2d1e                             	| [jr   c,$2D1E]
+	move.b	#0x04,d0                        	| [ld   a,$04]
+l_2d1e:
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	#0x0B,d0                        	| [ld   a,$0B]
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	move.b	#0x24,d2                        	| pengo life upper left tile [ld   c,$24]
+l_2d26:
+	move.w	d1,-(sp)                        	| [push bc]
+	move.b	d1,d0                           	| [ld   a,b]
+	subq.b	#1,d0                           	| [dec  a]
+	add.b	d0,d0                            	| [add  a,a]
+												| [ld   h,$23]
+	move.w	#0x23,d5											| [ld   l,a]
+	move.w	d5,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	move.w	d5,-(sp)                        	| [push hl]
+	move.b	d2,d0                           	| [ld   a,c]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	addq.b	#1,d0                           	| [inc  a]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	move.w	(sp)+,d5                        	| [pop  hl]
+	clr.b	d5                               	| [ld   h,$00]
+	move.b	d5,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	move.w	d5,d6
+	lsr.w	#8,d6
+	move.b	d5,cursor_x_8800+1                	| [ld   (cursor_x_8800),hl]
+	addq.b	#1,d0                           	| [inc  a]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	addq.b	#1,d0                           	| [inc  a]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	move.w	(sp)+,d1                        	| [pop  bc]
+	subq.b	#1,d1                           	| [...]
+	jne	l_2d26                             	| [djnz $2D26]
+	rts                                    	| [ret]
+
 * computes D-H, then E-L if D-H != 0
 * < HL (d6)
 * < DE (d3)
@@ -859,7 +1005,7 @@ set_2x2_tile_2F00:
 	addq.b	#1,d0                           	| [inc  a]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	addq.b	#1,d0                           	| [inc  a]
-	jbsr	move_cursor_down_by_2_291E        	| [call move_cursor_down_by_2_291E]
+	jbsr	move_cursor_2_291E        	| [call move_cursor_2_291E]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	addq.b	#1,d0                           	| [inc  a]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
