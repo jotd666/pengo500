@@ -498,7 +498,7 @@ _vblank:
 	subq.w	#1,d0
 	move.w	d0,intro_sound_lock
 222:
-	bsr		update_rows
+	**bsr		update_rows
 	jbsr		pengo_irq
 	.ifne  OPT_ENABLE_DOUBLE_BUFFERING_BG
 	bsr		switch_screen_buffers
@@ -1132,13 +1132,6 @@ decode_sprite_data:
 
 
 	
-* sprite structure: 4 bytes: X,sprite_id (with attributes),clut_index,Y
-
-test_sprite_data:
-	.byte	0xF8,0x00,0x00,0xF8,0xF8,0x00,0x00,0xF8,0xF8,0x00,0x00,0xF8,0xF8,0x00,0x00,0xF8
-	.byte	0x40,0x11,0x04,0x10,0xF8,0x00,0x00,0xF8,0xF8,0x00,0x00,0xF8,0xF8,0x00,0x00,0xF8
-	.byte	0x2F,0x11,0x04,0xC4,0x2F,0x11,0x03,0xB4,0x2F,0x11,0x02,0xA4,0x2F,0x29,0x01,0x94
-
 * d6=screen address (preserved), d0=tile (preserved)
 * d6 starts at 0x8000 ends at 0x83FF
 * should preserve all registers
@@ -1146,6 +1139,7 @@ test_sprite_data:
 osd_w_videoram:
     .ifeq OPT_DISABLE_BG_LAYER
 	movem.l	d0-d3/d6/a0-a2,-(a7)
+	
 	sub.w	#SCREEN_ADDRESS,d6
 	cmp.w	#0x400,d6
 	bcs.b	1f
@@ -1153,6 +1147,7 @@ osd_w_videoram:
 	move.w	#0,d6
 1:
 	lea		bg_videoram,a1
+	move.l	a1,0x100
 	add.w	d6,a1
 	cmp.b	(a1),d0
 	beq.b	0f		| already the proper value
@@ -1313,21 +1308,43 @@ erase_previous_ship:
 * d6: screen offset
 * d0: tile code
 * d1: attribute
+*
+* the layout is strange.
+* first row (last row in memory) is shown "normally" (X is mirrored, but horizontal,
+* Y is at top of the screen)
+* other rows use a X/Y transposed system like Galaxian or Xevious!
+*
 update_bg_tile:
 	* compute Y
 	and.w	#0xFF,d0	| mask up to 255
+	cmp.w	#0x3C0,d6
+	bcc.b	0f
 	move.w	d6,d3
 	lsr.w	#5,d6		| this is X
 	neg.w	d6
 	add.w	#32,d6
 	and.w	#0x1F,d3	| this is Y
+*	neg.w	d3
+*	add.w	#32,d3
+	bra.b	1f
+	* two first rows
+0:
+	move.w	d6,d3
+	lsr.w	#5,d3		| this is Y
+	neg.w	d3
+	add.w	#30,d3		| minus 2
+	and.w	#0x1F,d6	| this is X
+	neg.w	d6
+	add.w	#32,d6
+1:	
 	* mark row as dirty
-	lea		dirty_rows_values(pc),a1
-	move.b	#2,(a1,d3.w)	| 2 refreshes needed (double buffering)
+	*lea		dirty_rows_values(pc),a1
+	*move.b	#2,(a1,d3.w)	| 2 refreshes needed (double buffering)
 	* multiply by 240
 	lea		mulNB_BYTES_PER_ROW_table(pc),a0
 
-	lea		bg_screen_backbuffer,a1
+	*lea		bg_screen_backbuffer,a1
+	move.l	bg_drawed_screen_ptr(pc),a1
 	add.w	d3,d3
 	move.w	(a0,d3.w),d3
 	lsl.w	#3,d3		| times 8
@@ -1335,12 +1352,8 @@ update_bg_tile:
 	add.w	d6,a1
 	* optimization when a well-known
 	* empty character is passed
-	cmp.b	#0x10,d0	| empty character
+	cmp.b	#0x20,d0	| empty character
 	jeq	1f
-	cmp.b	#0x2C,d0	| empty characters (0x2C-0x2F)
-	jcs	0f
-	cmp.b	#0x30,d0
-	jcs	1f
 0:
 	lea		character_table,a0
 	add.w	d0,d0
@@ -2031,7 +2044,7 @@ flip_flop:
 keyboard_table:
 	ds.b	0x100
 dirty_rows_values:
-	ds.b	0x20
+	ds.b	0x24
 	
 pause_flag:
 	dc.w	0

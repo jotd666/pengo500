@@ -5044,7 +5044,7 @@ set_attribute_at_current_pos_292D:
 293A: 18 B3         jr   $294F
 	
 ; < A: tile code to put at current screen address with current color
-; updates current position
+; updates current position X+=1, and Y+=1 if X at end of line
 
 set_tile_at_current_pos_293C:
 293C: F5            push af			; store a lot of registers :)
@@ -5062,17 +5062,17 @@ set_tile_at_current_pos_293C:
 2952: 19            add  hl,de
 2953: 77            ld   (hl),a			; store attribute for tile
 2954: 79            ld   a,c
-2955: 3C            inc  a						; Y += 1
+2955: 3C            inc  a						; X += 1
 2956: 4F            ld   c,a
-2957: FE 1D         cp   $1D					; Y > $1C (end of text rows) ?
+2957: FE 1D         cp   $1D					; X > $1C (end of line) ?
 2959: 38 0B         jr   c,$2966				; no, store X and Y and go out
-295B: 0E 00         ld   c,$00					; set C (Y) to 0
+295B: 0E 00         ld   c,$00					; set C (X) to 0
 295D: 78            ld   a,b
 295E: 3C            inc  a
-295F: 47            ld   b,a					; X += 1
-2960: FE 8C         cp   $24					; X > $24 (end of line) ?
+295F: 47            ld   b,a					; Y += 1
+2960: FE 8C         cp   $24					; Y > $24 (end of screen) ?
 2962: 38 82         jr   c,$2966				; no, leave it
-2964: 06 80         ld   b,$00					; start of line
+2964: 06 80         ld   b,$00					; start of screen
 2966: ED 43 A8 20   ld   (cursor_x_8800),bc		; update current cursor pos
 296A: E1            pop  hl
 296B: D1            pop  de
