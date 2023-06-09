@@ -542,6 +542,8 @@ osd_sound_enable:
 osd_sound_disable:	
 	rts
 osd_sound_start:
+	rts
+	
 	movem.l	d0/d1/a0/a6,-(a7)
 
 	cmp.w	#INTRO_SND,d0

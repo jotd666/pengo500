@@ -497,7 +497,7 @@ display_title_screen_0521:
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
 	lea	diamondblock_string_05AE(pc),a0    	| [ld   hl,diamondblock_string_05AE]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
-	**jbsr	pengo_intermission_or_title_1D29  	| [call pengo_intermission_or_title_1D29]
+	jbsr	pengo_intermission_or_title_1D29  	| [call pengo_intermission_or_title_1D29]
 	rts                                    	| [ret]
 squash_snobee_msg_57A:
 	.byte	0x05,0x06,0x91,0x53,0x51,0x55,0x41,0x53,0x48,0x20,0x54,0x48,0x45,0x20,0x53,0x4E  |  ...SQUASH THE SNOBEES
@@ -552,6 +552,10 @@ l_060e:
 	jne	l_060e                             	| [djnz $060E]
 	rts                                    	| [ret]
 
+increase_counter_0875:
+	addq.w	#1,counter_lsb_8824
+	rts                                    	| [ret]
+
 * control chars + PLAYER 1
 rect_dimensions_FDE:
 	dc.b	0x09,0x10,0x00,0x0A,0x05
@@ -566,7 +570,14 @@ str_ready_FF9:
 	.align	2
 	
                             	| [ret]
-
+play_sfx_1889:
+	move.w	d0,-(sp)
+	clr		D0
+	move.b	d1,d0
+	bsr		osd_sound_start
+	move.w	(sp)+,d0
+	rts
+	
 
 enable_sound_18EC:
 	jra		osd_sound_enable
@@ -574,6 +585,182 @@ enable_sound_18EC:
 disable_sound_18F2:
 	jra		osd_sound_disable
 
+* the main idea of this routine is to move characters automatically
+* during non-playing parts of the game
+pengo_intermission_or_title_1D29:
+	move.b	#0x07,d1                        	| [ld   b,$07]
+	jbsr	play_sfx_1889                     	| dance music [call play_sfx_1889]
+	move.b	#0x40,d0                        	| [ld   a,$40]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	jbsr	init_all_characters_states_1D60   	| [call init_all_characters_states_1D60]
+l_1d36:
+	jbsr	increase_counter_0875             	| [call increase_counter_0875]
+ * small active loop
+	clr.b	d1                               	| [ld   b,$00]
+l_1d3b:
+	subq.b	#1,d1                           	| [...]
+	jne	l_1d3b                             	| [djnz $1D3B]
+
+
+* here we move 6 objects max: 6 pengos, using the ice block
+* sprite structure
+	jbsr	move_snobee_1_title_1DA2          	| [call move_snobee_1_title_1DA2]
+	jbsr	move_snobee_2_title_1DA8          	| 2 [call move_snobee_2_title_1DA8]
+	jbsr	move_snobee_3_title_1DAE          	| 3 [call move_snobee_3_title_1DAE]
+	jbsr	move_snobee_4_title_1DB4          	| 4 [call move_snobee_4_title_1DB4]
+	jbsr	move_character_following_path_1DBA	| pengo [call move_character_following_path_1DBA]
+	jbsr	move_character_following_path_1DC0	| moving block [call move_character_following_path_1DC0]
+	lea	moving_block_struct_8DA0(pc),a2    	| [ld   ix,moving_block_struct_8DA0]
+	move.b	#0x05,d0                        	| [ld   a,$05]
+	cmp.b	(char_state,a2),d0               	| [cp   (ix+char_state)]
+	jne	l_1d36                             	| [jr   nz,$1D36]
+	move.b	#0x40,d0                        	| [ld   a,$40]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	rts                                    	| [ret]
+
+ * init snobees, pengo, and moving block to an empty state (0) and init sprites
+ * used for title, intermission and ice pack screens, not in real game
+init_all_characters_states_1D60:
+	lea	snobee_1_struct_8D00(pc),a2        	| [ld   ix,snobee_1_struct_8D00]
+	move.w	#0x20,d3                      	| [ld   de,$0020]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	move.b	#0x01,(char_id,a2)              	| [ld   (ix+char_id),$01]
+	add.w	d3,a2								| [add  ix,de]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	move.b	#0x02,(char_id,a2)              	| [ld   (ix+char_id),$02]
+	add.w	d3,a2								| [add  ix,de]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	move.b	#0x03,(char_id,a2)              	| [ld   (ix+char_id),$03]
+	add.w	d3,a2								| [add  ix,de]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	move.b	#0x04,(char_id,a2)              	| [ld   (ix+char_id),$04]
+	add.w	d3,a2								| [add  ix,de]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	move.b	#0x05,(char_id,a2)              	| [ld   (ix+char_id),$05]
+	add.w	d3,a2								| [add  ix,de]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	move.b	#0x06,(char_id,a2)              	| [ld   (ix+char_id),$06]
+	rts                                    	| [ret]
+
+move_snobee_1_title_1DA2:
+	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
+	jra	l_1dc4                             	| [jr   $1DC4]
+
+move_snobee_2_title_1DA8:
+	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
+	jra	l_1dc4                             	| [jr   $1DC4]
+
+move_snobee_3_title_1DAE:
+	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
+	jra	l_1dc4                             	| [jr   $1DC4]
+
+move_snobee_4_title_1DB4:
+	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
+	jra	l_1dc4                             	| [jr   $1DC4]
+
+move_character_following_path_1DBA:
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
+	jra	l_1dc4                             	| [jr   $1DC4]
+
+move_character_following_path_1DC0:
+	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
+
+l_1dc4:
+	lea	table_1DF9(pc),a1                  	| [ld   de,table_1DF9]
+	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
+	tst.b	d0                               	| [and  a]
+	jeq	l_1dda                             	| not playing, skip [jr   z,$1DDA]
+	jbsr	get_level_number_288F             	| [call get_level_number_288F]
+	lea	table_1DE1(pc),a1                  	| [ld   de,table_1DE1]
+	cmp.b	#0x0A,d0                         	| [cp   $0A]
+	jcs	l_1dda                             	| less than level 10 [jr   c,$1DDA]
+* >= level 10
+	lea	table_1DED(pc),a1                  	| table for level 10 and more [ld   de,table_1DED]
+l_1dda:
+	move.b	(char_state,a2),d0              	| get char to know where to jump [ld   a,(ix+char_state)]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+
+do_nothing_1DE0:
+	rts                                    	| [ret]
+
+table_1DE1:
+	.long	l_1e05
+	.long	do_nothing_1DE0
+	.long	l_1ec4
+	.long	l_20dc
+	.long	l_1ec4
+	.long	do_nothing_1DE0
+table_1DED:
+	.long	move_during_title_screen_1E54
+	.long	do_nothing_1DE0
+	.long	l_1f52
+	.long	do_nothing_1DE0
+	.long	l_20dc
+	.long	do_nothing_1DE0
+table_1DF9:
+	.long	l_1e9c
+	.long	do_nothing_1DE0
+	.long	l_1f90
+	.long	l_204e
+	.long	do_nothing_1DE0
+	.long	do_nothing_1DE0
+	.long	l_1e55
+
+l_1e26:
+	move.b	#0x03,(facing_direction,a2)     	| [ld   (ix+facing_direction),$03]
+	move.b	#0x0A,(instant_move_period,a2)  	| [ld   (ix+instant_move_period),$0A]
+	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
+	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	clr.b	(stunned_push_block_counter,a2)  	| [ld   (ix+stunned_push_block_counter),$00]
+	clr.b	(0x0b,a2)                        	| [ld   (ix+$0b),$00]
+	jbsr	get_level_number_288F             	| [call get_level_number_288F]
+	ror.b	#1,d0                            	| [rrca]
+	subq.b	#1,d0                           	| [dec  a]
+	move.b	d0,(ai_mode,a2)                 	| set mode as level number / 2:	level 16: hardest hunt mode [ld   (ix+ai_mode),a]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	rts                                    	| [ret]
+
+move_during_title_screen_1E54:
+	lea	table_1E84(pc),a0                  	| [ld   hl,table_1E84]
+	jbsr	next_auto_move_1E64               	| [call next_auto_move_1E64]
+	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
+	cmp.b	#0x01,d0                         	| [cp   $01]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	rts                                    	| [ret]
+
+next_auto_move_1E64:
+	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
+	subq.b	#1,d0                           	| [dec  a]
+	rol.b	#2,d0                            	| [rlca]
+	                            	| [rlca]
+	clr.b	d3                               	| [ld   d,$00]
+	move.b	d0,d3                           	| [ld   e,a]
+	add.w	d3,a0						| [add hl,de]
+											| [ld   a,(hl)]
+											| [inc  hl]
+	move.b	(a0)+,(x_pos,a2)                   	| [ld   (ix+x_pos),a]
+												| [ld   a,(hl)]
+												| [inc  hl]
+	move.b	(a0)+,(y_pos,a2)                   	| [ld   (ix+y_pos),a]
+	                      	| [ld   a,(hl)]
+	                          	| [inc  hl]
+	move.b	(a0)+,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	move.b	(a0)+,d0                         	| [ld   a,(hl)]
+												| [inc  hl]
+	move.b	d0,(char_color,a2)              	| [ld   (ix+char_color),a]
+	jra	l_1e26                             	| [jr   $1E26]
+
+
+table_1E84:
+	.byte	0x00,0x98,0x08,0x09,0x70,0x88,0x70,0x10,0x80,0x88,0x70
+	.byte	0x10,0x70,0x98,0x70,0x10,0x80,0x98,0x70,0x10,0x70,0x90,0xF0,0x0B
+	
 * set default hiscores all to 20000
 * (would be a good location to load highscores)
 init_highscore_table_2540:
@@ -618,6 +805,15 @@ set_3_chars_2589:
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	rts                                    	| [ret]
 
+get_level_number_288F:
+	lea	level_number_player1_8812,a0   	| [ld   hl,level_number_player1_8812]
+	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
+	btst.b	#0,d0                           	| [bit  0,a]
+	jeq	l_289c                             	| [jr   z,$289C]
+	lea	level_number_player2_8813,a0   	| [ld   hl,level_number_player2_8813]
+l_289c:
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	rts                                    	| [ret]
 
 get_nb_lives_289E:
 	lea	lives_counter_p1_8814,a0       	| [ld   hl,lives_counter_p1_8814]
@@ -1157,6 +1353,17 @@ l_2d26:
 	jne	l_2d26                             	| [djnz $2D26]
 	rts                                    	| [ret]
 
+* kinds of jmp (de,a*2) (68k instruction)
+* < de / A1:	jump table
+* < a / D0.B:	index
+indirect_jump_2D8F:
+	and.w	#0xFF,d0
+	add.w	d0,d0
+	add.w	d0,d0
+	move.l	(a1,d0.w),a0
+	jmp		(a0)                               	| [jp   (hl)]
+
+
 * computes D-H, then E-L if D-H != 0
 * < HL (d6)
 * < DE (d3)
@@ -1189,6 +1396,46 @@ set_diamond_position_2FA9:
 	move.b	d1,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
 	move.b	#0x1C,d0                        	| [ld   a,$1C]
 	jra	set_2x2_tile_2F00                  	| [jp   set_2x2_tile_2F00]
+	
+* < A: sprite number to display
+* < HL: points on X,Y
+display_sprite_3154:
+	lea	sprite_ram_9020(pc),a3             	| [ld   iy,sprite_ram_9020]
+	add.b	d0,d0                            	| [add  a,a]
+	clr.b	d3                               	| [ld   d,$00]
+	move.b	d0,d3                           	| [ld   e,a]
+	add.w	d3,a3								| [add  iy,de]
+
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	not.b	d0                               	| [cpl]
+l_316a:
+	move.b	d0,(0x00,a3)                    	| [ld   (iy+$00),a]
+	addq.w	#1,a0                           	| [inc  hl]
+
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	not.b	d0                               	| 255-Y [cpl]
+	addq.b	#1,d0                           	| [inc  a]
+l_317b:
+	move.b	d0,(0x01,a3)                    	| [ld   (iy+$01),a]
+	rts                                    	| [ret]
+
+* < HL: pengo/snobee struct 8Dxx
+* < A: pengo sprite index
+display_character_sprite_318A:
+	lea	sprite_ram_8FF2-2,a3          	| [ld   iy,stack_pointer_8FF0]
+	addq.w	#2,a0                           	| [inc  hl]
+											  | skip coordinates [inc  hl]
+	add.b	d0,d0                            	| we only read sprite index & color [add  a,a]
+	clr.b	d3                               	| [ld   d,$00]
+	move.b	d0,d3                           	| [ld   e,a]
+	add.w	d3,a3								| [add  iy,de]
+	move.b	(a0),d3                         	| [ld   d,(hl)]
+
+	move.b	d3,(0x00,a3)                    	| [ld   (iy+$00),d]
+	addq.w	#1,a0                           	| [inc  hl]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	d0,(0x01,a3)                    	| [ld   (iy+$01),a]
+	rts                                    	| [ret]
 	
 clear_sprites_31B7:
 	lea	sprite_ram_9020,a0             	| [ld   hl,sprite_ram_9020]
@@ -1255,6 +1502,85 @@ l_3308:
 	jne	l_3308                             	| [djnz 0x3308]
 	rts       	
 
+display_snobee_sprite_33CE:
+	move.b	(char_id,a2),d0                 	| load sprite index [ld   a,(ix+char_id)]
+	move.l	a2,a0                        	| [push ix]
+											| [pop  hl]
+	jbsr	display_sprite_3154               	| [call display_sprite_3154]
+	rts
+	
+animate_pengo_39A4:
+	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
+	tst.b	d0                               	| [and  a]
+	bne.b	0f
+	rts                                    	| returns if a == 0 [ret  z]
+0:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	and.b	#0x1F,d0                         	| [and  $1F]
+	beq.b	0f
+	rts                                    	| returns if counter_lsb_8824 isn't dividable by 32? [ret  nz]
+0:
+ * counter 1 out of 32 pengo animation moves
+	jra	l_396b                             	| [jr   $396B]
+
+l_3957:
+	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
+	tst.b	d0                               	| [and  a]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	and.b	#0x1F,d0                         	| [and  $1F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * counter 1 out of 32 snobees animation moves
+	addq.b	#1,(0x0c,a2)                    	| [inc  (ix+$0c)]
+	move.b	(0x0c,a2),d0                    	| [ld   a,(ix+$0c)]
+	and.b	#0x03,d0                         	| [and  $03]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+l_396b:
+	clr.b	d1                               	| [ld   b,$00]
+	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
+	cmp.b	#0x05,d0                         	| [cp   $05]
+	jeq	l_3985                             	| [jr   z,$3985]
+	move.b	#0x26,d1                        	| [ld   b,$26]
+	move.b	(ai_mode,a2),d0                 	| [ld   a,(ix+ai_mode)]
+	cmp.b	#0x02,d0                         	| [cp   $02]
+	jeq	l_3985                             	| [jr   z,$3985]
+	move.b	#0x2C,d1                        	| [ld   b,$2C]
+	cmp.b	#0x09,d0                         	| [cp   $09]
+	jcc	l_3985                             	| [jr   nc,$3985]
+	move.b	#0x12,d1                        	| [ld   b,$12]
+l_3985:
+	addq.b	#1,(0x0c,a2)                    	| [inc  (ix+$0c)]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+	jne	l_3990                             	| [jr   nz,$3990]
+	subq.b	#1,d0                           	| [dec  a]
+l_3990:
+	add.b	d0,d0                            	| [add  a,a]
+	btst.b	#2,(0x0c,a2)                    	| [bit  2,(ix+$0c)]
+	jne	l_3998                             	| [jr   nz,$3998]
+	addq.b	#1,d0                           	| [inc  a]
+l_3998:
+	add.b	d1,d0                            	| [add  a,b]
+	asl.b	#2,d0                            	| [sla  a]
+												| [sla  a]
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+	jne	display_character_sprite_39AB      	| [jr   nz,display_character_sprite_39AB]
+	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
+display_character_sprite_39AB:
+	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
+	move.l	a2,-(sp)                        	| [push ix]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	jbsr	display_character_sprite_318A     	| [call display_character_sprite_318A]
+	rts                                    	| [ret]
+	
 convert_coords_to_screen_attributes_address_4BDC:
 	move.w	d0,-(sp)                        	| [push af]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
@@ -1263,3 +1589,14 @@ convert_coords_to_screen_attributes_address_4BDC:
 	move.w	(sp)+,d0                        	| [pop  af]
 	rts             
 	
+	
+l_1ec4:
+l_20dc:
+l_1f52:
+l_1f90:
+l_204e:
+l_1e55:
+l_1e9c:
+l_1e05:
+	illegal
+	rts

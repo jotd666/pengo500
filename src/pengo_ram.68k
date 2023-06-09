@@ -6,6 +6,8 @@
 	.global	vb_ticks_count
 	.global	bg_videoram
 	.global	bg_colorram
+	.global	sprite_ram_8FF2
+	.global	sprite_ram_9020
 	
 	.global	unknown_87FF
 	* on amiga, this file is included in pengo.68k file
@@ -28,6 +30,10 @@ CHARACTER_RAM:						| $5000
 bg_colorram:
 ATTRIBUTE_RAM:						| $5800
 	ds.b	0x800
+
+	ds.b	2
+sprite_ram_8FF2:
+	ds.b	0xE
 
 sprite_ram_9020:
 	ds.b	0x10
