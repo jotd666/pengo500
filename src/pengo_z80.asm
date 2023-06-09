@@ -414,17 +414,17 @@ display_team_names_01C7:
 01C7: CD 65 A8      call clear_screen_and_colors_28E5
 01CA: CD 1F 39      call clear_sprites_31B7
 01CD: 21 56 81      ld   hl,$01FE
-01D0: CD 7C 29      call print_line_29F4
-01D3: CD F4 01      call print_line_29F4
+01D0: CD 7C 29      call print_line_typewriter_style_29F4
+01D3: CD F4 01      call print_line_typewriter_style_29F4
 01D6: 21 94 02      ld   hl,$021C
-01D9: CD F4 01      call print_line_29F4
-01DC: CD 7C 29      call print_line_29F4
+01D9: CD F4 01      call print_line_typewriter_style_29F4
+01DC: CD 7C 29      call print_line_typewriter_style_29F4
 01DF: 21 1D 82      ld   hl,$023D
-01E2: CD 5C 09      call print_line_29F4
-01E5: CD 74 A9      call print_line_29F4
+01E2: CD 5C 09      call print_line_typewriter_style_29F4
+01E5: CD 74 A9      call print_line_typewriter_style_29F4
 01E8: 21 F1 AA      ld   hl,$0259
-01EB: CD 74 A9      call print_line_29F4
-01EE: CD 5C 29      call print_line_29F4
+01EB: CD 74 A9      call print_line_typewriter_style_29F4
+01EE: CD 5C 29      call print_line_typewriter_style_29F4
 01F1: 3E FF         ld   a,$FF
 01F3: CD D1 00      call delay_28D1
 01F6: 3E 80         ld   a,$08
@@ -589,7 +589,7 @@ FF 03 FF 04 FF 05 FF 06 FF 00 01 00 01 01 01 FF
 039F: FE A9         cp   $01
 03A1: 20 AB         jr   nz,$03A6
 03A3: 21 00 AA      ld   hl,one_player_only_string_2AA8
-03A6: CD 5C 09      call print_line_29F4
+03A6: CD 5C 09      call print_line_typewriter_style_29F4
 03A9: C9            ret
 
 03AA: 21 B6 80      ld   hl,unknown_881E
@@ -726,7 +726,7 @@ display_thanks_for_playing_04A0:
 04AC: FE 20         cp   $20
 04AE: C0            ret  nz
 04AF: 21 D0 24      ld   hl,table_04D0
-04B2: CD 5C 29      call print_line_29F4
+04B2: CD 5C 29      call print_line_typewriter_style_29F4
 ; this part is either a protection or buggy. It checks
 ; for space character but if not space, returns to bogus address
 ; push hl without pop hl
@@ -737,10 +737,10 @@ display_thanks_for_playing_04A0:
 04BC: BE            cp   (hl)
 04BD: C0            ret  nz
 04BE: E1            pop  hl
-04BF: CD 54 01      call print_line_29F4
+04BF: CD 54 01      call print_line_typewriter_style_29F4
 04C2: 3E E0         ld   a,$40
 04C4: CD F9 A0      call delay_28D1
-04C7: CD 54 01      call print_line_29F4
+04C7: CD 54 01      call print_line_typewriter_style_29F4
 04CA: 3E E8         ld   a,$C0
 04CC: CD F9 A0      call delay_28D1
 04CF: C9            ret
@@ -775,6 +775,7 @@ display_title_screen_0521:
 052C: CD 90 0B      call update_all_scores_2B10
 052F: CD BE A5      call draw_sega_logo_05BE
 0532: 21 52 05      ld   hl,squash_snobee_msg_57A
+; anti text-hack check (there are several text checks in the game)
 0535: E5            push hl
 0536: 11 A3 00      ld   de,$0003
 0539: 19            add  hl,de
@@ -782,11 +783,11 @@ display_title_screen_0521:
 053B: FE 53         cp   $53
 053D: 20 E2         jr   nz,display_title_screen_0521
 053F: E1            pop  hl
-0540: CD 5C 09      call print_line_29F4
+0540: CD 5C 09      call print_line_typewriter_style_29F4
 0543: 21 B0 85      ld   hl,pengo_string_590
-0546: CD 5C 09      call print_line_29F4
+0546: CD 5C 09      call print_line_typewriter_style_29F4
 0549: 21 90 85      ld   hl,snoobee_string_0598
-054C: CD 5C 09      call print_line_29F4
+054C: CD 5C 09      call print_line_typewriter_style_29F4
 054F: 26 12         ld   h,$12
 0551: 2E 07         ld   l,$07
 0553: 22 00 88      ld   (cursor_x_8800),hl
@@ -794,17 +795,18 @@ display_title_screen_0521:
 0558: 32 A2 88      ld   (cursor_color_8802),a
 055B: CD FE 06      call draw_ice_block_tile_2EFE
 055E: 21 2A AD      ld   hl,iceblock_string_05A2
-0561: CD 74 A9      call print_line_29F4
+0561: CD 74 A9      call print_line_typewriter_style_29F4
 0564: 06 96         ld   b,$16
 0566: 0E 87         ld   c,$07
 0568: 3E A1         ld   a,$09
 056A: 32 82 80      ld   (cursor_color_8802),a
 056D: CD 01 AF      call set_diamond_position_2FA9
 0570: 21 0E 05      ld   hl,diamondblock_string_05AE
-0573: CD F4 01      call print_line_29F4
+0573: CD F4 01      call print_line_typewriter_style_29F4
 0576: CD 01 1D      call pengo_intermission_or_title_1D29
 0579: C9            ret
-057A  05 06 91 53 51 55 41 53 48 20 54 48 45 20 53 4E   ...SQUASH THE SNO?BEEÓ
+squash_snobee_msg_57A:
+  05 06 91 53 51 55 41 53 48 20 54 48 45 20 53 4E   ...SQUASH THE SNO?BEEÓ
 pengo_string_590:
   4F 3F 42 45 45 D3 0C 0B 91 50 45 4E 47 CF   ; ...PENGÏ
 snoobee_string_0598: 0C 0F 98 53 4E 4F 3F 42 45 C5   ; .SNO?BEÅ...ICE B
@@ -1432,19 +1434,19 @@ level_completed_0A2B:
 0A59: CD 0C 85      call draw_lives_2D0C
 ; prints times and associated bonuses
 0A5C: 21 00 0B      ld   hl,text_start_0B20
-0A5F: CD 54 01      call print_line_29F4
+0A5F: CD 54 01      call print_line_typewriter_style_29F4
 0A62: 21 13 AB      ld   hl,text_start_0B20+$1B
-0A65: CD 54 01      call print_line_29F4
+0A65: CD 54 01      call print_line_typewriter_style_29F4
 0A68: 21 F6 AB      ld   hl,text_start_0B20+$36
-0A6B: CD 54 01      call print_line_29F4
+0A6B: CD 54 01      call print_line_typewriter_style_29F4
 0A6E: 21 71 0B      ld   hl,text_start_0B20+$51
-0A71: CD F4 81      call print_line_29F4
+0A71: CD F4 81      call print_line_typewriter_style_29F4
 0A74: 21 AC 0B      ld   hl,text_start_0B20+$6C
-0A77: CD F4 81      call print_line_29F4
+0A77: CD F4 81      call print_line_typewriter_style_29F4
 0A7A: 21 0F 0B      ld   hl,text_start_0B20+$87
-0A7D: CD F4 81      call print_line_29F4
+0A7D: CD F4 81      call print_line_typewriter_style_29F4
 0A80: 21 EA AB      ld   hl,text_start_0B20+$A2
-0A83: CD 54 01      call print_line_29F4
+0A83: CD 54 01      call print_line_typewriter_style_29F4
 0A86: 3E 20         ld   a,$20
 0A88: CD F9 A0      call delay_28D1
 0A8B: 3A 1B 8D      ld   a,(pengo_struct_8D80+$13)		; round time (minutes)
@@ -1964,9 +1966,9 @@ swap_players_0EC4:
 0EEB: CB 47         bit  0,a
 0EED: 28 2B         jr   z,$0EF2
 0EEF: 21 5D A7      ld   hl,$0F5D
-0EF2: CD 5C 29      call print_line_29F4
+0EF2: CD 5C 29      call print_line_typewriter_style_29F4
 0EF5: 21 69 A7      ld   hl,$0F69
-0EF8: CD 5C 29      call print_line_29F4
+0EF8: CD 5C 29      call print_line_typewriter_style_29F4
 0EFB: 3E 80         ld   a,$80
 0EFD: CD D1 80      call delay_28D1
 0F00: CD 27 2D      call $258F
@@ -2031,9 +2033,9 @@ table_0F4C:
 0F7C: CB 47         bit  0,a
 0F7E: 28 A3         jr   z,$0F83
 0F80: 21 6E 8F      ld   hl,str_player_2_FEE
-0F83: CD 74 A9      call print_line_29F4
+0F83: CD 74 A9      call print_line_typewriter_style_29F4
 0F86: 21 79 8F      ld   hl,str_ready_FF9
-0F89: CD 74 A9      call print_line_29F4
+0F89: CD 74 A9      call print_line_typewriter_style_29F4
 0F8C: 3E 00         ld   a,$80
 0F8E: CD 51 28      call delay_28D1
 0F91: 21 DE 87      ld   hl,rect_dimensions_FDE
@@ -2141,7 +2143,7 @@ jmp_1003:
 1059: DD E3         ex   (sp),ix
 105B: CD E5 28      call clear_screen_and_colors_28E5
 105E: 21 81 10      ld   hl,table_1081
-1061: CD DC 01      call print_line_29F4
+1061: CD DC 01      call print_line_typewriter_style_29F4
 1064: CD FA 10      call $10D2
 1067: CD CA 98      call $10E2
 106A: 21 A7 10      ld   hl,table_1081+$E
@@ -2150,7 +2152,7 @@ jmp_1003:
 106F: 28 03         jr   z,$1074
 1071: 21 9D 98      ld   hl,table_1081+$9D-$81
 1074: F5            push af
-1075: CD F4 29      call print_line_29F4
+1075: CD F4 29      call print_line_typewriter_style_29F4
 1078: F1            pop  af
 1079: 20 FE         jr   nz,$1079
 107B: 3E 02         ld   a,$02
@@ -2170,7 +2172,7 @@ table_1081:
 10D7: 28 03         jr   z,$10DC
 10D9: 21 B2 98      ld   hl,table_1081+$B2-$81
 10DC: C5            push bc
-10DD: CD F4 29      call print_line_29F4
+10DD: CD F4 29      call print_line_typewriter_style_29F4
 10E0: C1            pop  bc
 10E1: C9            ret
 10E2: 21 35 10      ld   hl,table_1081+$BD-$81
@@ -2178,7 +2180,7 @@ table_1081:
 10E7: 28 03         jr   z,$10EC
 10E9: 21 C7 98      ld   hl,hl,table_1081+$C7-$81
 10EC: C5            push bc
-10ED: CD DC 01      call print_line_29F4
+10ED: CD DC 01      call print_line_typewriter_style_29F4
 10F0: C1            pop  bc
 10F1: C9            ret
 
@@ -2207,32 +2209,32 @@ memory_test_10F2:
 ; looks like diagnostics
 110D: CD 65 A0      call clear_screen_and_colors_28E5
 1110: 21 B6 12      ld   hl,table_121E
-1113: CD F4 A9      call print_line_29F4
+1113: CD F4 A9      call print_line_typewriter_style_29F4
 1116: 21 AD 12      ld   hl,$122D
-1119: CD F4 A9      call print_line_29F4
+1119: CD F4 A9      call print_line_typewriter_style_29F4
 111C: 21 BF 12      ld   hl,$123F
-111F: CD 74 A1      call print_line_29F4
+111F: CD 74 A1      call print_line_typewriter_style_29F4
 1122: 3A 68 10      ld   a,(dip_switches_9040)
 1125: CD 4A 39      call $11CA
 1128: 21 6E 92      ld   hl,$1246
-112B: CD 74 A1      call print_line_29F4
+112B: CD 74 A1      call print_line_typewriter_style_29F4
 112E: 3A 28 90      ld   a,(dsw_1_9000)
 1131: CD CA 91      call $11CA
 1134: 21 E5 12      ld   hl,$124D
-1137: CD F4 A9      call print_line_29F4
+1137: CD F4 A9      call print_line_typewriter_style_29F4
 113A: 3A C0 90      ld   a,(dip_switches_9040)
 113D: 2F            cpl
 113E: CB 4F         bit  1,a
 1140: 20 2E         jr   nz,$1148
 1142: 21 76 92      ld   hl,$125E
-1145: CD 74 A1      call print_line_29F4
+1145: CD 74 A1      call print_line_typewriter_style_29F4
 1148: 21 EC 92      ld   hl,$1264
 114B: 3A C0 18      ld   a,(dip_switches_9040)
 114E: 2F            cpl
 114F: CB 57         bit  2,a
 1151: 28 03         jr   z,$1156
 1153: 21 71 92      ld   hl,$1271
-1156: CD 5C 29      call print_line_29F4
+1156: CD 5C 29      call print_line_typewriter_style_29F4
 1159: 3A 40 10      ld   a,(dip_switches_9040)
 115C: 2F            cpl
 115D: 0F            rrca
@@ -2245,23 +2247,23 @@ memory_test_10F2:
 1169: 22 80 00      ld   (cursor_x_8800),hl
 116C: CD B4 A9      call set_tile_at_current_pos_293C
 116F: 21 7C 92      ld   hl,$127C
-1172: CD 5C 29      call print_line_29F4
+1172: CD 5C 29      call print_line_typewriter_style_29F4
 1175: 21 86 92      ld   hl,$1286
-1178: CD 5C 29      call print_line_29F4
+1178: CD 5C 29      call print_line_typewriter_style_29F4
 117B: 3A 40 10      ld   a,(dip_switches_9040)
 117E: 2F            cpl
 117F: CB 6F         bit  5,a
 1181: 20 86         jr   nz,$1189
 1183: 21 15 3A      ld   hl,$1295
-1186: CD DC A9      call print_line_29F4
+1186: CD DC A9      call print_line_typewriter_style_29F4
 1189: 21 1B 3A      ld   hl,$129B
-118C: CD DC A9      call print_line_29F4
+118C: CD DC A9      call print_line_typewriter_style_29F4
 118F: 3A 40 10      ld   a,(dip_switches_9040)
 1192: 2F            cpl
 1193: CB 77         bit  6,a
 1195: 28 06         jr   z,$119D
 1197: 21 AE 92      ld   hl,$12AE
-119A: CD 5C 29      call print_line_29F4
+119A: CD 5C 29      call print_line_typewriter_style_29F4
 119D: 21 E6 92      ld   hl,$12E6
 11A0: 3A 68 10      ld   a,(dip_switches_9040)
 11A3: 2F            cpl
@@ -2276,9 +2278,9 @@ memory_test_10F2:
 11B4: FE 82         cp   $02
 11B6: 28 83         jr   z,$11BB
 11B8: 21 7D 12      ld   hl,$12FD
-11BB: CD F4 A9      call print_line_29F4
+11BB: CD F4 A9      call print_line_typewriter_style_29F4
 11BE: 21 87 93      ld   hl,$1307
-11C1: CD 74 A1      call print_line_29F4
+11C1: CD 74 A1      call print_line_typewriter_style_29F4
 11C4: 3E 36         ld   a,$1E
 11C6: CD 6E 93      call $1346
 11C9: C9            ret
@@ -2336,7 +2338,7 @@ table_121E:
 
 1314: CD 4D 28      call clear_screen_and_colors_28E5
 1317: 21 64 93      ld   hl,$1364
-131A: CD 5C 29      call print_line_29F4
+131A: CD 5C 29      call print_line_typewriter_style_29F4
 131D: AF            xor  a
 131E: 32 C8 08      ld   (unknown_8860),a
 1321: CD 5F 3B      call check_memory_13DF
@@ -2349,7 +2351,7 @@ table_121E:
 1334: 28 83         jr   z,$1339
 1336: 21 00 13      ld   hl,$1380
 1339: F5            push af
-133A: CD 5C 29      call print_line_29F4
+133A: CD 5C 29      call print_line_typewriter_style_29F4
 133D: F1            pop  af
 133E: 20 7E         jr   nz,$133E
 1340: 3E 2A         ld   a,$02
@@ -2398,7 +2400,7 @@ check_memory_13DF:
 13F2: 3E 7F         ld   a,$FF
 13F4: 32 C8 88      ld   (unknown_8860),a
 13F7: 21 95 93      ld   hl,$1395
-13FA: CD 5C 29      call print_line_29F4
+13FA: CD 5C 29      call print_line_typewriter_style_29F4
 13FD: C9            ret
 
 13FE: 21 80 08      ld   hl,$2000
@@ -2412,7 +2414,7 @@ check_memory_13DF:
 1411: 3E FF         ld   a,$FF
 1413: 32 60 00      ld   (unknown_8860),a
 1416: 21 22 13      ld   hl,$13AA
-1419: CD F4 29      call print_line_29F4
+1419: CD F4 29      call print_line_typewriter_style_29F4
 141C: C9            ret
 141D: 21 00 C8      ld   hl,$4000
 1420: 01 88 08      ld   bc,$2000
@@ -2425,7 +2427,7 @@ check_memory_13DF:
 1430: 3E 77         ld   a,$FF
 1432: 32 E8 88      ld   (unknown_8860),a
 1435: 21 BF 9B      ld   hl,$13BF
-1438: CD F4 29      call print_line_29F4
+1438: CD F4 29      call print_line_typewriter_style_29F4
 143B: C9            ret
 143C: 21 88 60      ld   hl,$6000
 143F: 01 F8 97      ld   bc,$1FF8
@@ -2438,7 +2440,7 @@ check_memory_13DF:
 144F: 3E FF         ld   a,$FF
 1451: 32 60 00      ld   (unknown_8860),a
 1454: 21 D4 13      ld   hl,$13D4
-1457: CD F4 29      call print_line_29F4
+1457: CD F4 29      call print_line_typewriter_style_29F4
 145A: C9            ret
 
 checksum_memory_145B: AF            xor  a
@@ -2685,9 +2687,9 @@ display_string_at_15C6:
 coin_test_screen_init_16B0:
 16B0: CD E5 28      call clear_screen_and_colors_28E5
 16B3: 21 C0 9E      ld   hl,$16C0
-16B6: CD F4 29      call print_line_29F4
+16B6: CD F4 29      call print_line_typewriter_style_29F4
 16B9: 21 CD 9E      ld   hl,$16CD
-16BC: CD F4 29      call print_line_29F4
+16BC: CD F4 29      call print_line_typewriter_style_29F4
 16BF: C9            ret
 
 16C0  08 00 10 43 4F 49 4E 53 20 54 45 53 D4 06 02 10   ...COINS TESÔ...
@@ -2844,7 +2846,7 @@ kick_watchdog_175A:
 17C9: CD 65 A0      call clear_screen_and_colors_28E5
 17CC: CD C7 97      call $17EF
 17CF: 21 D9 97      ld   hl,string_17D9
-17D2: CD 5C 29      call print_line_29F4
+17D2: CD 5C 29      call print_line_typewriter_style_29F4
 17D5: CD FD 97      call $17FD
 17D8: C9            ret
 
@@ -4826,12 +4828,12 @@ display_highs_2763:
 276A: 18 6C         jr   $2758
 276C: 21 5F 2F      ld   hl,todays_best_text_27F7
 276F: 06 02         ld   b,$02
-2771: CD F4 01      call print_line_29F4
+2771: CD F4 01      call print_line_typewriter_style_29F4
 2774: 10 5B         djnz $2771
 2776: 21 E5 28      ld   hl,score_act_text_2845
 2779: 06 06         ld   b,$06
 print_b_lines_277B:
-277B: CD F4 01      call print_line_29F4
+277B: CD F4 01      call print_line_typewriter_style_29F4
 277E: 10 5B         djnz print_b_lines_277B
 2780: 3E 91         ld   a,$11
 2782: 32 82 80      ld   (cursor_color_8802),a
@@ -5140,7 +5142,7 @@ screen_line_address_table_29B6:
 ;29E6:  A0 80 80 80 60 80 40 80 20 80 00 80 00 80 
 
 ; HL contains pointer on coordinates + color & attributes + text
-print_line_29F4:
+print_line_typewriter_style_29F4:
 29F4: 7E            ld   a,(hl)					; load text X
 29F5: 32 00 88      ld   (cursor_x_8800),a		; store in current X
 29F8: 23            inc  hl
@@ -5171,9 +5173,9 @@ print_line_29F4:
 2A28: CD F9 A0      call delay_28D1
 2A2B: C9            ret
 2A2C: 21 55 A2      ld   hl,push_string_2A7D
-2A2F: CD F4 81      call print_line_29F4
+2A2F: CD F4 81      call print_line_typewriter_style_29F4
 2A32: 21 2F 2A      ld   hl,start_button_string_2A87
-2A35: CD F4 81      call print_line_29F4
+2A35: CD F4 81      call print_line_typewriter_style_29F4
 2A38: 01 3F 2A      ld   bc,one_or_two_player_string_2A97
 2A3B: 16 01         ld   d,$01
 2A3D: 3A 08 A8      ld   a,(number_of_credits_8808)
@@ -5182,19 +5184,19 @@ print_line_29F4:
 2A43: 01 80 02      ld   bc,one_player_only_string_2AA8
 2A46: 60            ld   h,b
 2A47: 69            ld   l,c
-2A48: CD 7C A1      call print_line_29F4
+2A48: CD 7C A1      call print_line_typewriter_style_29F4
 2A4B: 21 90 02      ld   hl,credit_string_2AB8
-2A4E: CD 7C 29      call print_line_29F4
+2A4E: CD 7C 29      call print_line_typewriter_style_29F4
 2A51: CD 7A 83      call display_number_of_credits_2B7A
 2A54: 21 EE 2A      ld   hl,copyright_string_2ACE
-2A57: CD F4 81      call print_line_29F4
+2A57: CD F4 81      call print_line_typewriter_style_29F4
 2A5A: 21 FC 2A      ld   hl,bonus_for_30000_pts_2ADC
-2A5D: CD F4 81      call print_line_29F4
+2A5D: CD F4 81      call print_line_typewriter_style_29F4
 2A60: 21 7B A2      ld   hl,for_50000_pts_2AF3
 2A63: 3A 68 B8      ld   a,(dip_switches_9040)
 2A66: CB 47         bit  0,a
 ; if DWS is set accordignly, overwrite "30000" string with "50000"
-2A68: C4 7C A1      call nz,print_line_29F4
+2A68: C4 7C A1      call nz,print_line_typewriter_style_29F4
 2A6B: 3E AB         ld   a,$0B
 2A6D: 32 2A 88      ld   (cursor_color_8802),a
 2A70: 26 34         ld   h,$14
@@ -5238,7 +5240,7 @@ read_player_inputs_2AFB:
 
 update_all_scores_2B10:
 2B10: 21 20 2B      ld   hl,score_titles_string_2B20
-2B13: CD F4 01      call print_line_29F4
+2B13: CD F4 01      call print_line_typewriter_style_29F4
 2B16: CD BB 2B      call write_hiscore_to_screen_2B93
 2B19: CD AE 03      call update_and_display_p1_score_2BAE
 2B1C: CD 24 2C      call update_and_display_p1_score_2C24
@@ -5406,9 +5408,9 @@ write_2_digits_to_screen_2C6F:
 ; draws SEGA, ACT x, and flags
 draw_status_bar_2C76:
 2C76: 21 5C 2C      ld   hl,sega_1982_string_2CF4
-2C79: CD F4 81      call print_line_29F4
+2C79: CD F4 81      call print_line_typewriter_style_29F4
 2C7C: 21 22 2D      ld   hl,act_string_2D02
-2C7F: CD 54 01      call print_line_29F4
+2C7F: CD 54 01      call print_line_typewriter_style_29F4
 2C82: CD 8F A0      call get_level_number_288F
 2C85: 26 28         ld   h,$00
 2C87: 6F            ld   l,a
@@ -9071,11 +9073,11 @@ go_right_test_44CF:
 469E: DD CB 3E 56   bit  7,(ix+$16)					; 10000
 46A2: 28 A3         jr   z,$46A7
 46A4: 21 88 6F      ld   hl,table_476C+$88-$6C		; 5000
-46A7: CD 54 01      call print_line_29F4
+46A7: CD 54 01      call print_line_typewriter_style_29F4
 46AA: 21 71 6F      ld   hl,table_476C+$71-$6C		; bonus
-46AD: CD 54 01      call print_line_29F4
+46AD: CD 54 01      call print_line_typewriter_style_29F4
 46B0: 21 29 47      ld   hl,table_476C+$81-$6C			; pts
-46B3: CD F4 81      call print_line_29F4
+46B3: CD F4 81      call print_line_typewriter_style_29F4
 46B6: 3E 82         ld   a,$2A
 46B8: CD 79 28      call delay_28D1
 46BB: 06 07         ld   b,$07

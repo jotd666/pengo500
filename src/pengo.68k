@@ -437,8 +437,7 @@ loop_0478:
  * loop
 
 loop_0480:
-	bsr	osd_break
-	*jbsr	display_title_screen_0521         	| [call display_title_screen_0521]
+	jbsr	display_title_screen_0521         	| [call display_title_screen_0521]
 	*jbsr	pack_ice_screen_22CB              	| [call pack_ice_screen_22CB]
 	*jbsr	display_demo_and_top_scores_6E1   	| [call display_demo_and_top_scores_6E1]
 	move.b	#0x80,d0                        	| [ld   a,0x80]
@@ -454,7 +453,7 @@ display_thanks_for_playing_04A0:
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
 	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
 
-	lea	str_thanks_for_playing_try_once_more(pc),a0                      	| [ld   hl,0x04D0]
+	lea	str_thanks_for_playing_try_once_more_4D0(pc),a0                      	| [ld   hl,0x04D0]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
 	move.b	#0x40,d0                        	| [ld   a,0x40]
@@ -463,12 +462,95 @@ display_thanks_for_playing_04A0:
 	move.b	#0xC0,d0                        	| [ld   a,0xC0]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	rts   	| [ret]
-str_thanks_for_playing_try_once_more:
+str_thanks_for_playing_try_once_more_4D0:
      dc.b	0x02,0x0A,0x90,0x20,0x20,0x20,0x20,0x20,0xA0,0x02,0x0D,0x90,0x20,0x20,0x20,0x54   | ......   T
      dc.b	0x48,0x41,0x4E,0x4B,0x53,0x20,0x46,0x4F,0x52,0x20,0x50,0x4C,0x41,0x59,0x49,0x4E   | HANKS FOR PLAYIN
      dc.b	0x47,0x3A,0x20,0xA0,0x02,0x10,0x90,0x20,0x20,0x20,0x20,0x20,0x54,0x52,0x59,0x20   | G:...     TRY
      dc.b	0x4F,0x4E,0x43,0x45,0x20,0x4D,0x4F,0x52,0x45,0x20,0x3D,0x20,0x20,0x20,0x20,0xA0   | ONCE MORE =
 
+
+display_title_screen_0521:
+	clr.b	d0                               	| [ld   a,$00]
+	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]
+	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
+	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
+	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
+	jbsr	draw_sega_logo_05BE               	| [call draw_sega_logo_05BE]
+	lea	squash_snobee_msg_57A(pc),a0       	| [ld   hl,squash_snobee_msg_57A]
+	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
+	lea	pengo_string_590(pc),a0            	| [ld   hl,pengo_string_590]
+	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
+	lea	snoobee_string_0598(pc),a0         	| [ld   hl,snoobee_string_0598]
+	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
+	*move.b	#0x12,d5                        	| [ld   h,$12]
+	*move.b	#0x07,d6                        	| [ld   l,$07]
+	move.w	#0x0712,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	move.b	#0x09,d0                        	| [ld   a,$09]
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	jbsr	draw_ice_block_tile_2EFE          	| [call draw_ice_block_tile_2EFE]
+	lea	iceblock_string_05A2(pc),a0        	| [ld   hl,iceblock_string_05A2]
+	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
+	move.b	#0x16,d1                        	| [ld   b,$16]
+	move.b	#0x07,d2                        	| [ld   c,$07]
+	move.b	#0x09,d0                        	| [ld   a,$09]
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
+	lea	diamondblock_string_05AE(pc),a0    	| [ld   hl,diamondblock_string_05AE]
+	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
+	**jbsr	pengo_intermission_or_title_1D29  	| [call pengo_intermission_or_title_1D29]
+	rts                                    	| [ret]
+squash_snobee_msg_57A:
+	.byte	0x05,0x06,0x91,0x53,0x51,0x55,0x41,0x53,0x48,0x20,0x54,0x48,0x45,0x20,0x53,0x4E  |  ...SQUASH THE SNOBEES
+	.byte	0x4F,0x3F,0x42,0x45,0x45,0xD3
+pengo_string_590:
+	.byte	0x0C,0x0B,0x91,0x50,0x45,0x4E,0x47,0xCF   | ...PENG0
+snoobee_string_0598:
+	.byte	0x0C,0x0F,0x98,0x53,0x4E,0x4F,0x3F,0x42,0x45,0xC5   | .SNO BEE...ICE B
+iceblock_string_05A2:
+	.byte	0x0C,0x13,0x91,0x49,0x43,0x45,0x20,0x42,0x4C,0x4F,0x43,0xCB
+diamondblock_string_05AE:
+	.byte	0x0C,0x17,0x98,0x44,0x49,0x41,0x4D,0x4F,0x4E,0x44,0x20,0x42,0x4C,0x4F,0x43,0xCB   | ...DIAMOND BLOCK
+
+
+draw_sega_logo_05BE:
+	                        	| [ld   a,$09]
+	move.b	#0x09,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	move.b	#0xF0,d0                        	| [ld   a,$F0]
+											| [ld   hl,$1B09]
+	move.w	#0x091B,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
+											| [ld   hl,$1B0B]
+	move.w	#0x0B1B,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
+											| [ld   hl,$1B0D]
+	move.w	#0x0D1B,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
+											| [ld   hl,$1B0F]
+	move.w	#0x0F1B,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
+	move.b	#0x9C,d0                        	| [ld   a,$9C]
+											| [ld   hl,$1D09]
+	move.w	#0x091D,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	jbsr	set_4_consecutive_tiles_in_a_row_060C	| [call set_4_consecutive_tiles_in_a_row_060C]
+	move.b	#0x5C,d0                        	| [ld   a,$5C]
+	jbsr	set_4_consecutive_tiles_in_a_row_060C	| [call set_4_consecutive_tiles_in_a_row_060C]
+												| [ld   hl,$1B11]
+	move.w	#0x111B,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	move.b	#0x22,d0                        	| (R) registered char [ld   a,$22]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	addq.b	#1,d0                           	| bottom of (R) char [inc  a]
+	jbsr	move_cursor_1_2919        	| [call move_cursor_1_2919]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	rts                                    	| [ret]
+
+set_4_consecutive_tiles_in_a_row_060C:
+	move.b	#0x04,d1                        	| [ld   b,$04]
+l_060e:
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	addq.b	#1,d0                           	| [inc  a]
+	subq.b	#1,d1                           	| [...]
+	jne	l_060e                             	| [djnz $060E]
+	rts                                    	| [ret]
 
 * control chars + PLAYER 1
 rect_dimensions_FDE:
@@ -1100,6 +1182,14 @@ set_2x2_tile_2F00:
 	addq.b	#1,d0                           	| [inc  a]
 	rts                                    	| [ret]
 
+
+* < BC: X,Y where to draw diamond
+set_diamond_position_2FA9:
+	move.b	d2,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d1,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
+	move.b	#0x1C,d0                        	| [ld   a,$1C]
+	jra	set_2x2_tile_2F00                  	| [jp   set_2x2_tile_2F00]
+	
 clear_sprites_31B7:
 	lea	sprite_ram_9020,a0             	| [ld   hl,sprite_ram_9020]
 	move.b	#0x10,d1                        	| [ld   b,$10]
