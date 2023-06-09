@@ -498,6 +498,7 @@ _vblank:
 	subq.w	#1,d0
 	move.w	d0,intro_sound_lock
 222:
+	bsr		update_rows
 	jbsr		pengo_irq
 	.ifne  OPT_ENABLE_DOUBLE_BUFFERING_BG
 	bsr		switch_screen_buffers
@@ -766,17 +767,8 @@ platform_init:
 	swap	d0
 	addq.w	#8,a1
 	dbf		d1,0b
-		
-	* yellow
-	lea		sprite_cols,a1		| color 17
-	move.w	#0xFF0,d0
-	move.w	d0,(2,a1)
-	move.w	d0,(6,a1)
-	move.w	d0,(10,a1)
-	
 	
 	bsr		set_bg_bitplanes
-
 	
 	* load palette
 	bsr		load_palette_in_copperlist
@@ -2146,6 +2138,7 @@ bg_screen_data_2:
 	.rept	NB_PLAYFIELD_PLANES
 	dc.w  0xe0+bpoff,0
 	dc.w  0xe2+bpoff,0
+	.set	bpoff,bpoff+4
 	.endr
 	.endm
 

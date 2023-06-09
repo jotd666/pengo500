@@ -358,7 +358,7 @@ check_coin_inserted_0010:
 0165: 3E A9         ld   a,$01
 0167: 32 99 20      ld   (currently_playing_8819),a
 016A: 31 58 87      ld   sp,stack_pointer_8FF0
-016D: 21 B0 84      ld   hl,$0490
+016D: 21 B0 84      ld   hl,coin_has_been_inserted_0490
 0170: E5            push hl
 0171: 3E 01         ld   a,$01
 0173: 32 40 B8      ld   (dip_switches_9040),a

@@ -206,10 +206,10 @@ pengo_reset:
 	move.b	#1,vb_ticks_count
 
 	
-	bra		INITIALISE_SYSTEM
+	jra		INITIALISE_SYSTEM
 
 	
-	
+	nop
 INITIALISE_SYSTEM:
 	                      	| [ld   hl,0x0000]
 	clr.w	unknown_8830     | [ld   (unknown_8830),hl]
@@ -289,7 +289,7 @@ l_015b:
 	move.b	#0x01,d0                        	| [ld   a,$01]
 	move.b	d0,currently_playing_8819       	| [ld   (currently_playing_8819),a]
 *ld   sp,stack_pointer_8FF0
-	lea	0x0490,a0                      	| [ld   hl,$0490]
+	lea	coin_has_been_inserted_0490(pc),a0                      	| [ld   hl,$0490]
 	move.l	a0,-(sp)                        	| [push hl]
 	**move.b	#0x01,d0                        	| [ld   a,$01]
 	**move.b	d0,dip_switches_9040            	| [ld   (dip_switches_9040),a]
@@ -342,8 +342,8 @@ l_03d4:
 	move.b	#0xFC,weird_variable_882A          	| [ld   (weird_variable_882A),a]
 
 loop_0478:
-	clr.b	d0                               	| [ld   a,0x00]
-	move.b	d0,currently_playing_8819       	| [ld   (currently_playing_8819),a]
+	                               	| [ld   a,0x00]
+	clr.b	currently_playing_8819       	| [ld   (currently_playing_8819),a]
 	jbsr	display_thanks_for_playing_04A0   	| [call display_thanks_for_playing_04A0]
 
  * loop
@@ -357,13 +357,14 @@ loop_0480:
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jeq	loop_0480                          	| [jr   z,loop_0480]
 	
-* coin has been inserted	
-
+coin_has_been_inserted_0490:
+	
 	bsr		osd_break
 
 display_thanks_for_playing_04A0:
 	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
+	bsr		osd_break
 	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
 	move.b	table_04D0+3(pc),d0                       	| [ld   a,(0x04D3)]
 	cmp.b	#0x20,d0                         	| [cp   0x20]
