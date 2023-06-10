@@ -56,6 +56,8 @@
 ;	+ 07:	current period counter (increased automatically)
 ;	+ 09:
 ;	+ 0A:	stunned counter (used for stun/blinking stun)
+;	+ 0B:	intermission related counter (used for animating pengos in intermission)
+;   + 0C:   alive/walk counter (increases when pengo walks, snobee is alive)
 ;	+ 1B:	 ?????
 ;	+ 1C:	move period for this level
 ;		pengo move period is 0A
@@ -111,6 +113,9 @@ current_period_counter = $07
 unknown_09 = $09
 ; stunned counter for snobees, push block counter for pengo
 stunned_push_block_counter = $0A
+; maybe used for other misc snobees animations as well
+intermission_dance_counter = $0B
+alive_walk_counter = $0C
 unknown_1A = $1A
 unknown_1B = $1B
 move_period = $1C
@@ -856,7 +861,7 @@ set_4_consecutive_tiles_in_a_row_060C:
 
 0615: 3E 00         ld   a,$00
 0617: 32 02 A8      ld   (cursor_color_8802),a
-061A: 21 50 06      ld   hl,$0670
+061A: 21 50 06      ld   hl,table_0670
 061D: 16 A0         ld   d,$A0
 061F: 06 A8         ld   b,$08
 0621: C5            push bc
@@ -889,7 +894,7 @@ set_4_consecutive_tiles_in_a_row_060C:
 0651: E6 0F         and  $0F
 0653: E5            push hl
 0654: D5            push de
-0655: 21 64 26      ld   hl,$0664
+0655: 21 64 26      ld   hl,table_0664
 0658: 16 20         ld   d,$00
 065A: 5F            ld   e,a
 065B: 19            add  hl,de
@@ -898,73 +903,20 @@ set_4_consecutive_tiles_in_a_row_060C:
 065E: E1            pop  hl
 065F: CD B4 01      call set_tile_at_current_pos_293C
 0662: 18 CA         jr   $062E
-0664: 03            inc  bc
-0665: 08            ex   af,af'
-0666: 48            ld   c,b
-0667: CD 5B 6C      call $E4D3
-066A: C0            ret  nz
-066B: 49            ld   c,c
-066C: C1            pop  bc
-066D: 10 12         djnz $0621
-066F: C9            ret
-0670: 06 20         ld   b,$00
-0672: 04            inc  b
-0673: 61            ld   h,c
-0674: 01 A8 03      ld   bc,$0388
-0677: 20 02         jr   nz,$067B
-0679: 61            ld   h,c
-067A: 0A            ld   a,(bc)
-067B: 60            ld   h,b
-067C: 04            inc  b
-067D: 20 01         jr   nz,$0680
-067F: 61            ld   h,c
-0680: 2B            dec  hl
-0681: E1            pop  hl
-0682: 2B            dec  hl
-0683: E1            pop  hl
-0684: 69            ld   l,c
-0685: A2            and  d
-0686: 69            ld   l,c
-0687: A4            and  h
-0688: 28 A1         jr   z,$068B
-068A: 69            ld   l,c
-068B: E1            pop  hl
-068C: 29            add  hl,hl
-068D: E1            pop  hl
-068E: 29            add  hl,hl
-068F: E1            pop  hl
-0690: 01 61 01      ld   bc,$0141
-0693: 61            ld   h,c
-0694: 01 61 02      ld   bc,$0241
-0697: 61            ld   h,c
-0698: 41            ld   b,c
-0699: 21 00 21      ld   hl,$0100
-069C: 41            ld   b,c
-069D: 61            ld   h,c
-069E: 01 61 2B      ld   bc,$0341
-06A1: E1            pop  hl
-06A2: 2B            dec  hl
-06A3: E1            pop  hl
-06A4: 69            ld   l,c
-06A5: A2            and  d
-06A6: 69            ld   l,c
-06A7: A1            and  c
-06A8: 28 A1         jr   z,$06AB
-06AA: 69            ld   l,c
-06AB: A2            and  d
-06AC: 69            ld   l,c
-06AD: E1            pop  hl
-06AE: 2E E3         ld   l,$43
-06B0: 41            ld   b,c
-06B1: 64            ld   h,h
-06B2: 02            ld   (bc),a
-06B3: 20 01         jr   nz,$06B6
-06B5: 62            ld   h,d
-06B6: 01 29 46      ld   bc,$4681
-06B9: 67            ld   h,a
-06BA: 84            add  a,h
-06BB: 22 42 65      ld   ($4542),hl
-06BE: 01 20 3E      ld   bc,$1600
+table_0664:
+	A3 A8 C0 CD D3 E4 E8 E9
+	
+066C: C1			pop  bc                                             
+066D: 10 12			djnz $0621                                          
+066F: C9			ret                                                 
+	
+table_0670:
+     0670  06 00 04 41 01 88 03 00 02 41 0A 40 04 00 01 41
+     0680  03 41 03 41 41 02 41 04 00 01 41 41 01 41 01 41
+     0690  01 41 01 41 01 41 02 41 41 01 00 01 41 41 01 41
+     06A0  03 41 03 41 41 02 41 01 00 01 41 02 41 41 06 43
+     06B0  41 44 02 00 01 42 01 81 46 47 84 02 42 45 01 00
+
 
 ;;;
 display_top_scores_6C0: 
@@ -1072,7 +1024,7 @@ wait_for_start_and_play_072D:
 0787: DD 36 84 AA   ld   (ix+facing_direction),$02	; facing direction
 078B: DD 36 85 AD   ld   (ix+char_id),$05	; ID of Pengo is 5
 078F: DD 36 81 00   ld   (ix+$09),$00
-0793: DD 36 83 00   ld   (ix+$0b),$00
+0793: DD 36 83 00   ld   (ix+intermission_dance_counter),$00
 0797: CD CE 33      call display_snobee_sprite_33CE
 079A: CD 0B 39      call display_character_sprite_39AB
 079D: CD 75 80      call increase_counter_0875
@@ -1145,7 +1097,7 @@ wait_for_start_and_play_072D:
 0817: 71            ld   (hl),c
 0818: C9            ret
 	
-0819: DD 7E A3      ld   a,(ix+$0b)
+0819: DD 7E A3      ld   a,(ix+intermission_dance_counter)
 081C: 11 02 08      ld   de,table_0822
 081F: C3 8F 05      jp   indirect_jump_2D8F
 
@@ -1165,7 +1117,7 @@ table_0822:
 083A: CD B1 29      call move_cursor_1_2919
 083D: 3E 4E         ld   a,$4E
 083F: CD B4 01      call set_tile_at_current_pos_293C
-0842: DD 34 AB      inc  (ix+$0b)
+0842: DD 34 AB      inc  (ix+intermission_dance_counter)
 0845: C9            ret
 
 0846: 26 84         ld   h,$0C
@@ -1175,7 +1127,7 @@ table_0822:
 084F: CD 3C 81      call set_tile_at_current_pos_293C
 0852: CD B1 29      call move_cursor_1_2919
 0855: CD 00 81      call put_blank_at_current_pos_2900
-0858: DD 34 0B      inc  (ix+$0b)
+0858: DD 34 0B      inc  (ix+intermission_dance_counter)
 085B: C9            ret
 
 085C: DD CB 09 66   bit  0,(ix+$09)
@@ -1187,7 +1139,7 @@ table_0822:
 086B: DD 36 81 AF   ld   (ix+$09),$0F
 086F: C9            ret
 
-0870: DD 36 0B 20   ld   (ix+$0b),$00
+0870: DD 36 0B 20   ld   (ix+intermission_dance_counter),$00
 0874: C9            ret
 	
 increase_counter_0875:
@@ -1635,7 +1587,7 @@ pengo_walks_out_the_screen_0C55:
 0C93: DD 7E 20      ld   a,(ix+x_pos)
 0C96: FE 80         cp   $28
 0C98: CC 99 0C      call z,handle_pengo_stumble_0CB9
-0C9B: CD D7 95      call $3DD7
+0C9B: CD D7 95      call move_character_according_to_direction_3DD7
 0C9E: 18 78         jr   $0C70
 
 handle_pengo_stumble_0CA0:
@@ -3191,10 +3143,10 @@ update_sound_channel_1A99:
 1AC3: DD BE 80      cp   (ix+$08)
 1AC6: D8            ret  c
 1AC7: DD 36 81 00   ld   (ix+$09),$00
-1ACB: DD 7E 84      ld   a,(ix+$0c)
+1ACB: DD 7E 84      ld   a,(ix+alive_walk_counter)
 1ACE: CB 47         bit  0,a
 1AD0: 28 0C         jr   z,$1ADE
-1AD2: DD 36 0C 88   ld   (ix+$0c),$00
+1AD2: DD 36 0C 88   ld   (ix+alive_walk_counter),$00
 1AD6: CB 7F         bit  7,a
 1AD8: 28 8C         jr   z,$1ADE
 1ADA: DD 36 0E 77   ld   (ix+$0e),$FF
@@ -3214,7 +3166,7 @@ update_sound_channel_1A99:
 1AFA: DD CB 0E CE   bit  0,(ix+$0e)
 1AFE: 28 8A         jr   z,$1B02
 1B00: 3E D7         ld   a,$FF
-1B02: DD 77 8C      ld   (ix+$0c),a
+1B02: DD 77 8C      ld   (ix+alive_walk_counter),a
 1B05: DD 36 26 80   ld   (ix+$0e),$00
 1B09: 3E 80         ld   a,$00
 1B0B: CD 96 32      call $1A16
@@ -3550,7 +3502,7 @@ pengo_intermission_or_title_1D29:
 1D43: CD 2E 35      call move_snobee_3_title_1DAE	; 3
 1D46: CD 9C 9D      call move_snobee_4_title_1DB4	; 4
 1D49: CD 3A 35      call move_character_following_path_1DBA	; pengo
-1D4C: CD 48 9D      call move_character_following_path_1DC0	; moving block
+1D4C: CD 48 9D      call move_character_intermission_path_1DC0	; moving block
 1D4F: DD 21 08 8D   ld   ix,moving_block_struct_8DA0
 1D53: 3E 05         ld   a,$05
 1D55: DD BE B7      cp   (ix+char_state)
@@ -3603,13 +3555,16 @@ move_character_following_path_1DBA:
 1DBA: DD 21 80 25   ld   ix,pengo_struct_8D80
 1DBE: 18 84         jr   $1DC4
 
-move_character_following_path_1DC0:
+move_character_intermission_path_1DC0:
 1DC0: DD 21 20 05   ld   ix,moving_block_struct_8DA0
 
 1DC4: 11 D1 9D      ld   de,table_1DF9
 1DC7: 3A 99 00      ld   a,(currently_playing_8819)
 1DCA: A7            and  a
-1DCB: 28 8D         jr   z,$1DDA		; not playing, skip
+; not playing, skip (we can branch that test in demo mode with invincibility on
+; otherwise it can't be false)
+1DCB: 28 8D         jr   z,$1DDA
+; get level number to know what dance to do
 1DCD: CD 0F A0      call get_level_number_288F
 1DD0: 11 49 1D      ld   de,table_1DE1
 1DD3: FE 0A         cp   $0A
@@ -3623,51 +3578,53 @@ do_nothing_1DE0:
 1DE0: C9            ret
 
 table_1DE1:
-	dc.w	$1E05
+	dc.w	init_characters_for_intermission_1E05
 	dc.w	do_nothing_1DE0
-	dc.w	$1EC4
-	dc.w	$20DC
-	dc.w	$1EC4
+	dc.w	move_character_intermission_1EC4
+	dc.w	how_to_dance_20DC
+	dc.w	move_character_intermission_1EC4
 	dc.w	do_nothing_1DE0
 table_1DED:
 	dc.w	move_during_title_screen_1E54
 	dc.w	do_nothing_1DE0
-	dc.w	$1F52
+	dc.w	move_character_intermission_1F52
 	dc.w	do_nothing_1DE0
-	dc.w	$20DC
+	dc.w	how_to_dance_20DC
 	dc.w	do_nothing_1DE0
 table_1DF9:
-	dc.w	$1E9C
+	dc.w	change_character_intermission_phase_1E9C
 	dc.w	do_nothing_1DE0
-	dc.w	$1F90
-	dc.w	$204E
+	dc.w	move_character_intermission_1F90
+	dc.w	move_character_intermission_204E
 	dc.w	do_nothing_1DE0
 	dc.w	do_nothing_1DE0
-	dc.w	$1E55
-
 
 	
-1E05: DD 36 88 00   ld   (ix+x_pos),$00
-1E09: DD 36 89 B0   ld   (ix+y_pos),$98
+init_characters_for_intermission_1E05:
+1E05: DD 36 88 00   ld   (ix+x_pos),$00		; left
+1E09: DD 36 89 B0   ld   (ix+y_pos),$98		; center
 1E0D: DD 36 8A 08   ld   (ix+animation_frame),$08
 1E11: DD 7E 8D      ld   a,(ix+char_id)
+;  differently colored pengos: yellow, cyan, yellow, pink, yellow
 1E14: 3C            inc  a
 1E15: 3C            inc  a
-1E16: DD 77 03      ld   (ix+$03),a
-1E19: CD 26 1E      call $1E26
+1E16: DD 77 03      ld   (ix+char_color),a
+1E19: CD 26 1E      call init_characters_for_auto_mode_1E26
 1E1C: DD 7E 05      ld   a,(ix+char_id)
 1E1F: FE 01         cp   $01
 1E21: C0            ret  nz
 1E22: DD 34 37      inc  (ix+char_state)
 1E25: C9            ret
 
+; called in intermission, in menu ...
+init_characters_for_auto_mode_1E26:
 1E26: DD 36 04 8B   ld   (ix+facing_direction),$03
 1E2A: DD 36 06 82   ld   (ix+instant_move_period),$0A
 1E2E: DD 36 07 88   ld   (ix+current_period_counter),$00
 1E32: DD 36 08 77   ld   (ix+$08),$FF
 1E36: DD 36 09 88   ld   (ix+$09),$00
 1E3A: DD 36 0A 88   ld   (ix+stunned_push_block_counter),$00
-1E3E: DD 36 23 88   ld   (ix+$0b),$00
+1E3E: DD 36 23 88   ld   (ix+intermission_dance_counter),$00
 1E42: CD A7 28      call get_level_number_288F
 1E45: 0F            rrca
 1E46: 3D            dec  a
@@ -3706,13 +3663,14 @@ next_auto_move_1E64:
 1E7D: 7E            ld   a,(hl)
 1E7E: 23            inc  hl
 1E7F: DD 77 8B      ld   (ix+char_color),a
-1E82: 18 2A         jr   $1E26
+1E82: 18 2A         jr   init_characters_for_auto_mode_1E26
 
 
 table_1E84:
   00 98 08 09 70 88 70 10 80 88 70 10 70 98 70 10  
 1E94  80 98 70 10 70 90 F0 0B
 
+change_character_intermission_phase_1E9C:
 1E9C: 21 24 1E      ld   hl,table_1EAC
 1E9F: CD 4C 96      call next_auto_move_1E64
 1EA2: DD 7E 05      ld   a,(ix+char_id)
@@ -3724,7 +3682,8 @@ table_1E84:
 table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 1EBC  00 18 08 0D 00 38 08 0C
 
-1EC4: CD 78 36      call $1EF0
+move_character_intermission_1EC4:
+1EC4: CD 78 36      call animate_intermission_penguins_1ef0
 1EC7: DD 34 8F      inc  (ix+current_period_counter)
 1ECA: DD 7E 07      ld   a,(ix+current_period_counter)
 1ECD: DD BE 8E      cp   (ix+instant_move_period)
@@ -3739,8 +3698,9 @@ table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 1EE5: 3E D8         ld   a,$F0
 1EE7: DD BE 88      cp   (ix+x_pos)
 1EEA: CC C6 37      call z,$1F4E
-1EED: C3 D7 15      jp   $3DD7
+1EED: C3 D7 15      jp   move_character_according_to_direction_3DD7
 
+animate_intermission_penguins_1ef0:
 1EF0: 3A AC 88      ld   a,(counter_lsb_8824)
 1EF3: E6 1F         and  $1F
 1EF5: C0            ret  nz
@@ -3749,15 +3709,16 @@ table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 1EF8: DD 7E 1F      ld   a,(ix+char_state)
 1EFB: FE 04         cp   $04
 1EFD: 20 09         jr   nz,$1F08
+; this is reached only when penguins dance during the intermission
 1EFF: DD 7E 36      ld   a,(ix+ai_mode)
 1F02: FE 2B         cp   $03
 1F04: 20 2A         jr   nz,$1F08
 1F06: 06 B2         ld   b,$3A
-1F08: DD 34 8C      inc  (ix+$0c)
-1F0B: DD 7E 24      ld   a,(ix+$0c)
+1F08: DD 34 8C      inc  (ix+alive_walk_counter)
+1F0B: DD 7E 24      ld   a,(ix+alive_walk_counter)
 1F0E: E6 2B         and  $03
 1F10: C0            ret  nz
-1F11: DD 34 A4      inc  (ix+$0c)
+1F11: DD 34 A4      inc  (ix+alive_walk_counter)
 1F14: C3 05 39      jp   $3985
 
 1F17: DD E5         push ix
@@ -3788,9 +3749,10 @@ table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 1F4E: DD 34 1F      inc  (ix+char_state)
 1F51: C9            ret
 
+move_character_intermission_1F52:
 1F52: DD 7E 05      ld   a,(ix+char_id)
 1F55: FE 01         cp   $01
-1F57: CC F0 B6      call z,$1EF0
+1F57: CC F0 B6      call z,animate_intermission_penguins_1ef0
 1F5A: DD 34 07      inc  (ix+current_period_counter)
 1F5D: DD 7E 87      ld   a,(ix+current_period_counter)
 1F60: DD BE 86      cp   (ix+instant_move_period)
@@ -3802,7 +3764,7 @@ table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 1F70: 3E 58         ld   a,$F0
 1F72: DD BE 00      cp   (ix+x_pos)
 1F75: CC 4E B7      call z,$1F4E
-1F78: C3 57 3D      jp   $3DD7
+1F78: C3 57 3D      jp   move_character_according_to_direction_3DD7
 1F7B: CD 24 B7      call $1F24
 1F7E: DD E5         push ix
 1F80: DD 21 20 05   ld   ix,moving_block_struct_8DA0
@@ -3812,6 +3774,7 @@ table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 1F8C: DD 35 9F      dec  (ix+char_state)
 1F8F: C9            ret
 
+move_character_intermission_1F90:
 1F90: CD 4C 1F      call $1FE4
 1F93: DD 34 87      inc  (ix+current_period_counter)
 1F96: DD 7E 07      ld   a,(ix+current_period_counter)
@@ -3821,7 +3784,7 @@ table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 1FA1: CD 45 37      call $1FC5
 1FA4: 3E D7         ld   a,$FF
 1FA6: DD BE 80      cp   (ix+x_pos)
-1FA9: CC 8A A8      call z,$200A
+1FA9: CC 8A A8      call z,change_last_3_characters_char_states_200a
 1FAC: 3E 60         ld   a,$48
 1FAE: DD BE 00      cp   (ix+x_pos)
 1FB1: CC 32 88      call z,$2032
@@ -3830,7 +3793,7 @@ table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 1FBA: 01 93 00      ld   bc,$0013
 1FBD: ED B1         cpir
 1FBF: CC BD A8      call z,$203D
-1FC2: C3 5F BD      jp   $3DD7
+1FC2: C3 5F BD      jp   move_character_according_to_direction_3DD7
 1FC5: DD 7E 2D      ld   a,(ix+char_id)
 1FC8: FE 29         cp   $01
 1FCA: C0            ret  nz
@@ -3848,7 +3811,7 @@ table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 
 1FE4: DD 7E 85      ld   a,(ix+char_id)
 1FE7: FE 82         cp   $02
-1FE9: CA 70 36      jp   z,$1EF0
+1FE9: CA 70 36      jp   z,animate_intermission_penguins_1ef0
 1FEC: 3A AC 08      ld   a,(counter_lsb_8824)
 1FEF: E6 1F         and  $1F
 1FF1: C0            ret  nz
@@ -3858,7 +3821,8 @@ table_1EAC:  00 28 08 0A 00 50 08 0B 00 70 08 01 00 08 08 0B
 table_1FF7:
   38 40 48 50 58 60 68 70 78 80 88 90 98 A0 A8 B0
   B8 C0 C8
-
+ ; used during intermission, no game logic
+change_last_3_characters_char_states_200a:
 200A: DD E5         push ix
 200C: DD 34 BF      inc  (ix+char_state)
 200F: DD 21 40 8D   ld   ix,snobee_4_struct_8D60
@@ -3892,6 +3856,7 @@ table_1FF7:
 204A: CD A0 A1      call put_blank_at_current_pos_2900
 204D: C9            ret
 
+move_character_intermission_204E:
 204E: CD 6C 1F      call $1FE4
 2051: DD 34 27      inc  (ix+current_period_counter)
 2054: DD 7E 07      ld   a,(ix+current_period_counter)
@@ -3911,7 +3876,7 @@ table_1FF7:
 207A: DD 7E 00      ld   a,(ix+x_pos)
 207D: FE F8         cp   $F8
 207F: CC 98 20      call z,$2098
-2082: C3 FF B5      jp   $3DD7
+2082: C3 FF B5      jp   move_character_according_to_direction_3DD7
 
 2085: DD 7E 81      ld   a,(ix+$09)
 2088: A7            and  a
@@ -3953,6 +3918,8 @@ table_1FF7:
 20CD: C1            pop  bc
 20CE: 10 7E         djnz $20C6
 20D0: C9            ret
+
+select_proper_jump_table_20D1:
 20D1: 26 00         ld   h,$00
 20D3: DD 6E B6      ld   l,(ix+ai_mode)
 20D6: 29            add  hl,hl
@@ -3962,9 +3929,10 @@ table_1FF7:
 20DA: 56            ld   d,(hl)
 20DB: C9            ret
 
+how_to_dance_20DC:
 20DC: 11 C8 20      ld   de,jump_table_table_20E8
-20DF: CD 59 20      call $20D1
-20E2: DD 7E AB      ld   a,(ix+$0b)
+20DF: CD 59 20      call select_proper_jump_table_20D1
+20E2: DD 7E AB      ld   a,(ix+intermission_dance_counter)
 20E5: C3 8F 05      jp   indirect_jump_2D8F
 
 jump_table_table_20E8:
@@ -4009,15 +3977,15 @@ jump_table_20F8:
 
 
 2130: DD 36 04 A1   ld   (ix+facing_direction),$01
-2134: DD 34 0B      inc  (ix+$0b)
+2134: DD 34 0B      inc  (ix+intermission_dance_counter)
 2137: C9            ret
 
 2138: DD 36 04 A2   ld   (ix+facing_direction),$02
-213C: DD 34 0B      inc  (ix+$0b)
+213C: DD 34 0B      inc  (ix+intermission_dance_counter)
 213F: C9            ret
 
 2140: DD 36 AC 83   ld   (ix+facing_direction),$03
-2144: DD 34 8B      inc  (ix+$0b)
+2144: DD 34 8B      inc  (ix+intermission_dance_counter)
 2147: C9            ret
 
 2148: DD 34 9F      inc  (ix+char_state)
@@ -4046,7 +4014,7 @@ jump_table_214C
 2170: 06 50         ld   b,$78
 2172: DD 70 02      ld   (ix+animation_frame),b
 2175: CD AB 11      call display_character_sprite_39AB
-2178: DD 34 0B      inc  (ix+$0b)
+2178: DD 34 0B      inc  (ix+intermission_dance_counter)
 217B: C9            ret
 217C: 06 54         ld   b,$7C
 217E: 18 7A         jr   $2172
@@ -4072,12 +4040,12 @@ jump_table_2180:
 
 21A2: DD 36 AA 14   ld   (ix+animation_frame),$94
 21A6: CD 2B 19      call display_character_sprite_39AB
-21A9: DD 34 A3      inc  (ix+$0b)
+21A9: DD 34 A3      inc  (ix+intermission_dance_counter)
 21AC: C9            ret
 
 21AD: DD 36 82 12   ld   (ix+animation_frame),$12
 21B1: CD AB 11      call display_character_sprite_39AB
-21B4: DD 34 0B      inc  (ix+$0b)
+21B4: DD 34 0B      inc  (ix+intermission_dance_counter)
 21B7: C9            ret
 
 jump_table_21B8:
@@ -4088,8 +4056,8 @@ jump_table_21B8:
 	.word	$21C4 
 	.word	$2148 
 
-21C4: DD 36 8C 80   ld   (ix+$0c),$00
-21C8: DD 34 8B      inc  (ix+$0b)
+21C4: DD 36 8C 80   ld   (ix+alive_walk_counter),$00
+21C8: DD 34 8B      inc  (ix+intermission_dance_counter)
 21CB: C9            ret
 
 ; 32 values
@@ -4130,21 +4098,21 @@ jump_table_21CC:
 220C: DD 36 28 72   ld   (ix+x_pos),$72
 2210: DD 36 01 3A   ld   (ix+y_pos),$92
 2214: CD EE 33      call display_snobee_sprite_33CE
-2217: DD 34 A3      inc  (ix+$0b)
+2217: DD 34 A3      inc  (ix+intermission_dance_counter)
 221A: C9            ret
 
 221B: DD 36 20 70   ld   (ix+x_pos),$70
 221F: DD 36 A1 18   ld   (ix+y_pos),$90
 2223: CD CE 33      call display_snobee_sprite_33CE
-2226: DD 34 AB      inc  (ix+$0b)
+2226: DD 34 AB      inc  (ix+intermission_dance_counter)
 2229: C9            ret
 222A: DD 36 2A 7C   ld   (ix+animation_frame),$F4
 222E: CD 0B 39      call display_character_sprite_39AB
-2231: DD 34 A3      inc  (ix+$0b)
+2231: DD 34 A3      inc  (ix+intermission_dance_counter)
 2234: C9            ret
 2235: DD 36 22 F0   ld   (ix+animation_frame),$F0
 2239: CD AB 91      call display_character_sprite_39AB
-223C: DD 34 0B      inc  (ix+$0b)
+223C: DD 34 0B      inc  (ix+intermission_dance_counter)
 223F: C9            ret
 
 2240: 26 B3         ld   h,$13
@@ -4162,7 +4130,7 @@ jump_table_21CC:
 225B: CD 3C 81      call set_tile_at_current_pos_293C
 225E: 3C            inc  a
 225F: 10 D2         djnz $225B
-2261: DD 34 83      inc  (ix+$0b)
+2261: DD 34 83      inc  (ix+intermission_dance_counter)
 2264: C9            ret
 
 
@@ -4196,22 +4164,22 @@ jump_table_2265:
 2297: DD 36 20 00   ld   (ix+x_pos),$00
 229B: DD 36 21 00   ld   (ix+y_pos),$00
 229F: CD CE 33      call display_snobee_sprite_33CE
-22A2: DD 34 AB      inc  (ix+$0b)
+22A2: DD 34 AB      inc  (ix+intermission_dance_counter)
 22A5: C9            ret
 
 22A6: DD 36 28 56   ld   (ix+x_pos),$7E
 22AA: DD 36 29 88   ld   (ix+y_pos),$88
 22AE: CD CE 33      call display_snobee_sprite_33CE
-22B1: DD 34 A3      inc  (ix+$0b)
+22B1: DD 34 A3      inc  (ix+intermission_dance_counter)
 22B4: C9            ret
 
 22B5: DD 36 22 E8   ld   (ix+animation_frame),$E8
 22B9: CD AB 91      call display_character_sprite_39AB
-22BC: DD 34 0B      inc  (ix+$0b)
+22BC: DD 34 0B      inc  (ix+intermission_dance_counter)
 22BF: C9            ret
 22C0: DD 36 2A 4C   ld   (ix+animation_frame),$EC
 22C4: CD 0B B1      call display_character_sprite_39AB
-22C7: DD 34 83      inc  (ix+$0b)
+22C7: DD 34 83      inc  (ix+intermission_dance_counter)
 22CA: C9            ret
 
 pack_ice_screen_22CB:
@@ -4365,10 +4333,10 @@ table_23B7:
 2402: E6 A7         and  $07
 2404: C0            ret  nz
 	;; counter 1 out of 8 xxx
-2405: DD 34 84      inc  (ix+$0c)
+2405: DD 34 84      inc  (ix+alive_walk_counter)
 2408: DD 7E 2A      ld   a,(ix+animation_frame)
 240B: E6 D0         and  $F8
-240D: DD CB 84 56   bit  2,(ix+$0c)
+240D: DD CB 84 56   bit  2,(ix+alive_walk_counter)
 2411: 20 02         jr   nz,$2415
 2413: CB D7         set  2,a
 2415: DD 77 22      ld   (ix+animation_frame),a
@@ -5746,7 +5714,7 @@ table_2E55:
 	dc.w	_03_path_draw_down_306D
 
 draw_borders_2E5D:
-2Z5D: 3A 19 A8 		ld   a,(currently_playing_8819)
+2E5D: 3A 19 A8 		ld   a,(currently_playing_8819)
 2E60: A7            and  a
 2E61: 28 2F         jr   z,$2E6A
 2E63: 3E 28         ld   a,$00
@@ -5766,6 +5734,7 @@ draw_borders_2E7A:
 2E7D: CD 92 86      call draw_horizontal_walls_2E92
 2E80: C9            ret
 
+draw_vertical_walls_2E81:
 2E81: 01 28 A1      ld   bc,$0100
 2E84: 16 94         ld   d,$1C
 2E86: CD 2B A6      call write_character_and_code_at_xy_2EA3
@@ -5774,6 +5743,7 @@ draw_borders_2E7A:
 2E8E: CD 2B 2E      call write_character_and_code_at_xy_2EA3
 2E91: C9            ret
 
+draw_horizontal_walls_2E92:
 2E92: 01 20 01      ld   bc,$0100
 2E95: 16 20         ld   d,$20
 2E97: CD B8 86      call fill_line_with_character_current_color_2EB8
@@ -6741,7 +6711,7 @@ chicken_mode_go_up_to_corner_34D0:
 34EF: CD D6 38      call $38D6
 34F2: C9            ret
 34F3: DD 36 8A C8   ld   (ix+animation_frame),$C8
-34F7: DD 36 0B 06   ld   (ix+$0b),$06
+34F7: DD 36 0B 06   ld   (ix+intermission_dance_counter),$06
 34FB: DD 77 1C      ld   (ix+move_period),a
 34FE: DD 36 9F 39   ld   (ix+char_state),$11
 3502: C9            ret
@@ -7347,8 +7317,8 @@ animate_pengo_39A4:
 395F: E6 9F         and  $1F
 3961: C0            ret  nz
 	;; counter 1 out of 32 snobees animation moves
-3962: DD 34 8C      inc  (ix+$0c)
-3965: DD 7E 24      ld   a,(ix+$0c)
+3962: DD 34 8C      inc  (ix+alive_walk_counter)
+3965: DD 7E 24      ld   a,(ix+alive_walk_counter)
 3968: E6 2B         and  $03
 396A: C0            ret  nz
 396B: 06 80         ld   b,$00
@@ -7363,13 +7333,13 @@ animate_pengo_39A4:
 397F: FE 89         cp   $09
 3981: 30 82         jr   nc,$3985
 3983: 06 92         ld   b,$12
-3985: DD 34 24      inc  (ix+$0c)
+3985: DD 34 24      inc  (ix+alive_walk_counter)
 3988: DD 7E 84      ld   a,(ix+facing_direction)
 398B: FE 83         cp   $03
 398D: 20 81         jr   nz,$3990
 398F: 3D            dec  a
 3990: 87            add  a,a
-3991: DD CB A4 56   bit  2,(ix+$0c)
+3991: DD CB A4 56   bit  2,(ix+alive_walk_counter)
 3995: 20 01         jr   nz,$3998
 3997: 3C            inc  a
 3998: 80            add  a,b
@@ -7405,8 +7375,8 @@ _04_snobee_stunned_39B5:
 39D6: C0            ret  nz
 	;; counter 1 out of 128 xxx
 39D7: 3E 60         ld   a,$60
-39D9: DD 34 A4      inc  (ix+$0c)
-39DC: DD CB 0C C6   bit  0,(ix+$0c)
+39D9: DD 34 A4      inc  (ix+alive_walk_counter)
+39DC: DD CB 0C C6   bit  0,(ix+alive_walk_counter)
 39E0: 20 2A         jr   nz,$39E4
 39E2: 3E EC         ld   a,$64
 39E4: DD CB 84 6E   bit  0,(ix+facing_direction)
@@ -7749,7 +7719,7 @@ table_3C1E:
 3C9A: DD 7E 1C      ld   a,(ix+move_period)
 3C9D: DD 77 8E      ld   (ix+instant_move_period),a
 3CA0: DD 36 21 88   ld   (ix+$09),$00
-3CA4: DD 36 23 8E   ld   (ix+$0b),$06
+3CA4: DD 36 23 8E   ld   (ix+intermission_dance_counter),$06
 3CA8: CD 54 2D      call get_random_value_2D7C
 3CAB: E6 07         and  $07
 3CAD: 3C            inc  a
@@ -7809,10 +7779,10 @@ table_3C1E:
 3D09: 28 84         jr   z,$3D0F
 3D0B: DD 77 22      ld   (ix+stunned_push_block_counter),a
 3D0E: C9            ret
-3D0F: DD 7E A3      ld   a,(ix+$0b)
+3D0F: DD 7E A3      ld   a,(ix+intermission_dance_counter)
 3D12: 3D            dec  a
 3D13: 28 13         jr   z,$3D28
-3D15: DD 77 A3      ld   (ix+$0b),a
+3D15: DD 77 A3      ld   (ix+intermission_dance_counter),a
 3D18: DD 36 09 80   ld   (ix+$09),$00
 3D1C: DD 7E 02      ld   a,(ix+animation_frame)
 3D1F: D6 84         sub  $04
@@ -7834,10 +7804,10 @@ table_3C1E:
 3D41: 28 84         jr   z,$3D47
 3D43: DD 77 22      ld   (ix+stunned_push_block_counter),a
 3D46: C9            ret
-3D47: DD 7E 23      ld   a,(ix+$0b)
+3D47: DD 7E 23      ld   a,(ix+intermission_dance_counter)
 3D4A: 3D            dec  a
 3D4B: 28 93         jr   z,$3D60
-3D4D: DD 77 23      ld   (ix+$0b),a
+3D4D: DD 77 23      ld   (ix+intermission_dance_counter),a
 3D50: DD 36 09 80   ld   (ix+$09),$00
 3D54: DD 7E 02      ld   a,(ix+animation_frame)
 3D57: C6 04         add  a,$04
@@ -7898,12 +7868,15 @@ pengo_nominal_move_3DBF: DD 21 08 0D   ld   ix,pengo_struct_8D80
 	;; can move
 3DD0: DD 36 07 80   ld   (ix+current_period_counter),$00
 3DD4: CD 86 3E      call $3E06
-3DD7: 21 E4 BD      ld   hl,$3DE4
+
+move_character_according_to_direction_3DD7:
+3DD7: 21 E4 BD      ld   hl,l_3de4
 3DDA: E5            push hl
 3DDB: DD 7E 84      ld   a,(ix+facing_direction)
 3DDE: 11 6E BD      ld   de,jump_table_3DEE
 3DE1: C3 0F A5      jp   indirect_jump_2D8F
 
+l_3de4:
 3DE4: DD 7E 85      ld   a,(ix+char_id)
 3DE7: DD E5         push ix
 3DE9: E1            pop  hl
@@ -8167,7 +8140,7 @@ get_div8_iy_coords_3E8F: FD 7E 88      ld   a,(iy+$00)
 3FA0: 3E 29         ld   a,$01
 3FA2: 32 97 0D      ld   (block_moving_flag_8DBF),a
 3FA5: DD 36 37 83   ld   (ix+char_state),$03
-3FA9: DD 36 23 80   ld   (ix+$0b),$00
+3FA9: DD 36 23 80   ld   (ix+intermission_dance_counter),$00
 3FAD: C9            ret
 3FAE: DD 36 0F 80   ld   (ix+$0f),$00
 3FB2: C9            ret
@@ -8207,7 +8180,7 @@ hide_snobee_sprites_3FDA:
 3FE7: 77            ld   (hl),a
 3FE8: C9            ret
 
-3FE9: DD 7E 23      ld   a,(ix+$0b)
+3FE9: DD 7E 23      ld   a,(ix+intermission_dance_counter)
 3FEC: 11 DA BF      ld   de,table_3FF2
 3FEF: C3 8F AD      jp   indirect_jump_2D8F
 
@@ -8233,7 +8206,7 @@ table_3FF2:
 4012: 20 24         jr   nz,$4018
 4014: DD CB 02 EE   set  1,(ix+animation_frame)
 4018: CD 8B 39      call display_character_sprite_39AB
-401B: DD 34 A3      inc  (ix+$0b)
+401B: DD 34 A3      inc  (ix+intermission_dance_counter)
 401E: C9            ret
 
 401F: 06 29         ld   b,$01
@@ -8255,11 +8228,11 @@ table_3FF2:
 4042: DD 77 AA      ld   (ix+stunned_push_block_counter),a
 4045: C9            ret
 4046: DD 36 A9 A0   ld   (ix+$09),$00
-404A: DD 34 AB      inc  (ix+$0b)
+404A: DD 34 AB      inc  (ix+intermission_dance_counter)
 404D: C9            ret
 404E: DD 36 1F 22   ld   (ix+char_state),$02
 4052: C9            ret
-4053: DD 7E A3      ld   a,(ix+$0b)
+4053: DD 7E A3      ld   a,(ix+intermission_dance_counter)
 4056: 11 F4 40      ld   de,table_405C
 4059: C3 8F 85      jp   indirect_jump_2D8F
 table_405C:
@@ -8290,9 +8263,9 @@ table_405C:
 408E: DD 77 0A      ld   (ix+stunned_push_block_counter),a
 4091: C9            ret
 4092: DD 36 09 20   ld   (ix+$09),$00
-4096: DD 34 0B      inc  (ix+$0b)
+4096: DD 34 0B      inc  (ix+intermission_dance_counter)
 4099: C9            ret
-409A: DD 7E 0B      ld   a,(ix+$0b)
+409A: DD 7E 0B      ld   a,(ix+intermission_dance_counter)
 409D: 11 A3 60      ld   de,jump_table_40A3
 40A0: C3 8F A5      jp   indirect_jump_2D8F
  
