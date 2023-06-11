@@ -228,7 +228,7 @@ unknown_09 = 0x09
 * stunned counter for snobees, push block counter for pengo
 stunned_push_block_counter = 0x0A
 * maybe used for other misc snobees animations as well
-intermission_dance_counter = 0x0B
+intermission_dance_push_anim_counter = 0x0B
 alive_walk_counter = 0x0C
 path_address_pointer_or_misc_flags = 0x10
 unknown_1A = 0x1A
@@ -307,6 +307,12 @@ cpir:
     cmp.b   #1,d1
 1:
     rts
+
+load_maze_data:
+	move.w	maze_data_8C20,d2           	| [ld   bc,(maze_data_8C20)]
+	move.w	maze_data_8C20+1,d1           	| [ld   bc,(maze_data_8C20)]
+	rts
+	
 	
 pengo_reset:
 	* default: 1 update/irq call
@@ -736,11 +742,14 @@ l_08f0:
 	jbsr	l_0e77                            	| [call $0E77]
 	move.b	#0x09,d0                        	| [ld   a,$09]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
-	move.w	diamond_block_1_xy_8DB0(pc),a4  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	move.w	diamond_block_1_xy_8DB0,d2  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	move.w	diamond_block_1_xy_8DB0+1,d1  	| [ld   bc,(diamond_block_1_xy_8DB0)]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
-	move.w	diamond_block_2_xy_8DB2(pc),a4  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+	move.w	diamond_block_2_xy_8DB2,d2  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+	move.w	diamond_block_2_xy_8DB2+1,d1  	| [ld   bc,(diamond_block_2_xy_8DB2)]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
-	move.w	diamond_block_3_xy_8DB4(pc),a4  	| [ld   bc,(diamond_block_3_xy_8DB4)]
+	move.w	diamond_block_3_xy_8DB4,d2  	| [ld   bc,(diamond_block_3_xy_8DB4)]
+	move.w	diamond_block_3_xy_8DB4+1,d1  	| [ld   bc,(diamond_block_3_xy_8DB4)]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
 	jbsr	l_0d66                            	| [call $0D66]
 	jbsr	l_0dd0                            	| [call $0DD0]
@@ -984,7 +993,7 @@ l_0b03:
 	subq.b	#1,d1                           	| [...]
 	jne	l_0b03                             	| [djnz $0B03]
 	move.l	(sp)+,a1                        	| [pop  de]
-	jbsr	l_28af                            	| [call $28AF]
+	jbsr	add_to_current_player_score_28AF                            	| [call $28AF]
 	move.b	#0x80,d0                        	| [ld   a,$80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
@@ -1556,7 +1565,7 @@ l_0ed7:
 	lea	table_0F4C+0x51-0x4C(pc),a0                      	| [ld   hl,$0F51]
 	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
 	btst.b	#0,d0                           	| [bit  0,a]
-	jeq	l_0ef21055                            	| [jr   z,$0EF2]
+	jeq	l_0ef2	                            	| [jr   z,$0EF2]
 	lea	table_0F4C+0X5D-0x4C(pc),a0                      	| [ld   hl,$0F5D]
 l_0ef2:
 	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
@@ -1728,6 +1737,9 @@ play_sfx_1889:
 	rts
 	
 
+update_sound_18c7:
+	rts
+	
 enable_sound_18EC:
 	jra		osd_sound_enable
 
@@ -2272,7 +2284,7 @@ select_proper_jump_table_20D1:
 how_to_dance_20DC:
 	lea	jump_table_table_20E8(pc),a1       	| [ld   de,jump_table_table_20E8]
 	jbsr	select_proper_jump_table_20D1     	| [call select_proper_jump_table_20D1]
-	move.b	(intermission_dance_counter,a2),d0	| [ld   a,(ix+intermission_dance_counter)]
+	move.b	(intermission_dance_push_anim_counter,a2),d0	| [ld   a,(ix+intermission_dance_push_anim_counter)]
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
 
 jump_table_table_20E8:
@@ -2287,48 +2299,48 @@ jump_table_table_20E8:
 
 jump_table_20F8:
 	.long	l_2130
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
 	.long	l_2138
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
 	.long	l_2140
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
 	.long	l_2148
 
 
 l_2130:
 	move.b	#0x01,(facing_direction,a2)     	| [ld   (ix+facing_direction),$01]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 l_2138:
 	move.b	#0x02,(facing_direction,a2)     	| [ld   (ix+facing_direction),$02]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 l_2140:
 	move.b	#0x03,(facing_direction,a2)     	| [ld   (ix+facing_direction),$03]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 l_2148:
@@ -2337,22 +2349,22 @@ l_2148:
 
 jump_table_214C:
 	.long	l_2140
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
 	.long	l_2170
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_217c
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_2170
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_217c
-	.long	l_406e
+	.long	block_broken_406E
 
 
 l_2170:
@@ -2360,7 +2372,7 @@ l_2170:
 l_2172:
 	move.b	d1,(animation_frame,a2)         	| [ld   (ix+animation_frame),b]
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 l_217c:
 	move.b	#0x7C,d1                        	| [ld   b,$7C]
@@ -2392,13 +2404,13 @@ l_2199:
 l_21a2:
 	move.b	#0x94,(animation_frame,a2)      	| [ld   (ix+animation_frame),$94]
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 l_21ad:
 	move.b	#0x12,(animation_frame,a2)      	| [ld   (ix+animation_frame),$12]
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 jump_table_21B8:
@@ -2411,7 +2423,7 @@ jump_table_21B8:
 
 l_21c4:
 	clr.b	(alive_walk_counter,a2)          	| [ld   (ix+alive_walk_counter),$00]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 * 32 values
@@ -2419,19 +2431,19 @@ jump_table_21CC:
 	.long	l_2240
 	.long	l_218e
 	.long	l_220c
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_221b
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_220c
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_221b
 	.long	l_218e
 	.long	l_220c
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_221b
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_220c
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_221b
 	.long	l_218e
 	.long	l_218e
@@ -2439,11 +2451,11 @@ jump_table_21CC:
 	.long	l_218e
 	.long	l_2235
 	.long	l_220c
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_221b
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_220c
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_221b
 	.long	l_218e
 	.long	l_2297
@@ -2453,24 +2465,24 @@ l_220c:
 	move.b	#0x72,(x_pos,a2)                	| [ld   (ix+x_pos),$72]
 	move.b	#0x92,(y_pos,a2)                	| [ld   (ix+y_pos),$92]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 l_221b:
 	move.b	#0x70,(x_pos,a2)                	| [ld   (ix+x_pos),$70]
 	move.b	#0x90,(y_pos,a2)                	| [ld   (ix+y_pos),$90]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 l_222a:
 	move.b	#0xF4,(animation_frame,a2)      	| [ld   (ix+animation_frame),$F4]
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 l_2235:
 	move.b	#0xF0,(animation_frame,a2)      	| [ld   (ix+animation_frame),$F0]
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 l_2240:
@@ -2493,7 +2505,7 @@ l_225b:
 	addq.b	#1,d0                           	| [inc  a]
 	subq.b	#1,d1                           	| [...]
 	jne	l_225b                             	| [djnz $225B]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 
@@ -2505,22 +2517,22 @@ jump_table_2265:
 	.long	l_218e
 	.long	l_22a6
 	.long	l_22b5
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_22c0
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_22b5
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_2297
 	.long	l_218e
 	.long	l_218e
 	.long	l_22a6
 	.long	l_22b5
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_22c0
 	.long	l_218e
 	.long	l_218e
 	.long	l_22b5
-	.long	l_406e
+	.long	block_broken_406E
 	.long	l_2297
 	.long	l_2148
 
@@ -2528,25 +2540,25 @@ l_2297:
 	clr.b	(x_pos,a2)                       	| [ld   (ix+x_pos),$00]
 	clr.b	(y_pos,a2)                       	| [ld   (ix+y_pos),$00]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 l_22a6:
 	move.b	#0x7E,(x_pos,a2)                	| [ld   (ix+x_pos),$7E]
 	move.b	#0x88,(y_pos,a2)                	| [ld   (ix+y_pos),$88]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 l_22b5:
 	move.b	#0xE8,(animation_frame,a2)      	| [ld   (ix+animation_frame),$E8]
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 l_22c0:
 	move.b	#0xEC,(animation_frame,a2)      	| [ld   (ix+animation_frame),$EC]
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 
@@ -3043,12 +3055,35 @@ l_28ab:
 	and.b	#0x7F,d0                         	| [and  $7F]
 	rts                        
 
+
+add_to_current_player_score_28AF:
+	tst.b	currently_playing_8819       	| [ld   a,(currently_playing_8819)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
+	btst.b	#0,d0                           	| [bit  0,a]
+	jeq	l_28c6                             	| [jr   z,$28C6]
+	move.w	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
+	add.w	d3,d6							| [add  hl,de]
+	move.w	d6,player_2_score_8810          	| [ld   (player_2_score_8810),hl]
+	jbsr	update_and_display_p1_score_2C24  	| [call update_and_display_p1_score_2C24]
+	rts                                    	| [ret]
+
+* add de to player 1 score
+l_28c6:
+	move.w	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
+	add.w	d3,d6							| [add  hl,de]
+	move.w	d6,player_1_score_880E          	| [ld   (player_1_score_880E),hl]
+	jbsr	update_and_display_p1_score_2BAE  	| [call update_and_display_p1_score_2BAE]
+	rts                                    	| [ret]
+
+
  * a:	value to wait (1 = 1/5th of seconds roughly speaking)
 delay_28D1:
 	move.b	d0,delay_timer_8820             	| [ld   (delay_timer_8820),a]
 l_28d4:
 	move.b	delay_timer_8820,d0             	| [ld   a,(delay_timer_8820)]
-	tst.b	d0                               	| [and  a]
 	jne	l_28d4                             	| [jr   nz,0x28D4]
 	rts                                    	| [ret]
 
@@ -3275,15 +3310,13 @@ l_2a2c:
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
 	lea	push_string_2A7D+0x87-0x7D(pc),a0    	| [ld   hl,start_button_string_2A87]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
-	lea	push_string_2A7D+0x97-0x7D(pc),a4	| [ld   bc,one_or_two_player_string_2A97]
+	lea	push_string_2A7D+0x97-0x7D(pc),a0	| [ld   bc,one_or_two_player_string_2A97]
 	move.b	#0x01,d3                        	| [ld   d,0x01]
 	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
 	cmp.b	d3,d0                            	| [cp   d]
 	jne	l_2a46                             	| [jr   nz,0x2A46]
-	lea	push_string_2A7D+0xA8-0x7D(pc),a4 	| [ld   bc,one_player_only_string_2AA8]
+	lea	push_string_2A7D+0xA8-0x7D(pc),a0 	| [ld   bc,one_player_only_string_2AA8]
 l_2a46:
-	move.b	d1,d5                           	| [ld   h,b]
-	move.b	d2,d6                           	| [ld   l,c]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
 	lea	push_string_2A7D+0xB8-0x7D(pc),a0          	| [ld   hl,credit_string_2AB8]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
@@ -3544,12 +3577,12 @@ l_2c9c:
 l_2ca4:
 	move.b	d0,d1                           	| [ld   b,a]
 l_2ca5:
-	move.l	a4,-(sp)                        	| [push bc]
+	move.w	d1,-(sp)                    	| [push bc]
 	move.b	#0x0E,d0                        	| [ld   a,$0E]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	move.b	#0x0F,d0                        	| [ld   a,$0F]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
-	move.l	(sp)+,a4                        	| [pop  bc]
+	move.w	(sp)+,d1                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2ca5                             	| [djnz $2CA5]
 	clr.b	d1                               	| [ld   b,$00]
@@ -3567,7 +3600,7 @@ l_2cc1:
 	rts                                    	| [ret  z]
 0:
 l_2cc4:
-	move.l	a4,-(sp)                        	| [push bc]
+	movem.w	d1/d2,-(sp)                    	| [push bc]
 	move.b	d1,d0                           	| [ld   a,b]
 	subq.b	#1,d0                           	| [dec  a]
 	clr.w	d3                               	| [ld   d,$00]
@@ -3593,7 +3626,7 @@ l_2cc4:
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	move.b	#0x0B,d0                        	| [ld   a,$0B]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
-	move.l	(sp)+,a4                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2cc4                             	| draws flags as long as needed [djnz $2CC4]
 	rts                                    	| [ret]
@@ -3798,14 +3831,14 @@ l_2dd7:
 
 * draw one path
 l_2dda:
-	move.l	a4,-(sp)                        	| [push bc]
+	movem.w	d1/d2,-(sp)                    	| [push bc]
 	move.b	#0x09,d0                        	| [ld   a,$09]
 	sub.b	d1,d0                            	| [sub  b]
 	move.b	d0,(0x01,a2)                    	| [ld   (ix+$01),a]
 	move.b	#0x08,d0                        	| [ld   a,$08]
 	sub.b	d2,d0                            	| [sub  c]
 	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
-	move.w	maze_data_8C20(pc),a4           	| [ld   bc,(maze_data_8C20)]
+	bsr		load_maze_data
  * can something be drawn from this point?
 	jbsr	is_way_clear_30CA                 	| [call is_way_clear_30CA]
 	jne	l_2e19                             	| blocked:	 OK [jr   nz,$2E19]
@@ -3819,7 +3852,7 @@ l_2dda:
 	jeq	l_2e19                             	| clear in all directions:	cannot draw [jr   z,$2E19]
 
 draw_it_2E04:
-	move.w	maze_data_8C20(pc),a4           	| [ld   bc,(maze_data_8C20)]
+	bsr		load_maze_data
 	move.b	d2,d0                           	| [ld   a,c]
 	subq.b	#0x01,d0                        	| [sub  $01]
 	add.b	d0,d0                            	| [add  a,a]
@@ -3830,10 +3863,10 @@ draw_it_2E04:
 	move.b	d0,(0x03,a2)                    	| [ld   (ix+$03),a]
 	jbsr	draw_one_path_in_maze_2E46        	| [call draw_one_path_in_maze_2E46]
 l_2e19:
-	move.l	(sp)+,a4                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d2                           	| [dec  c]
 	jne	l_2dda                             	| [jr   nz,$2DDA]
-	move.l	(sp)+,a4                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2dd7                             	| [djnz $2DD7]
 
@@ -3882,17 +3915,17 @@ table_2E55:
 	.long	_00_path_draw_up_3040
 	.long	_01_path_draw_down_304F
 	.long	_02_path_draw_left_305E
-	.long	_03_path_draw_down_306D
+	.long	_03_path_draw_right_306D
 	
 draw_borders_2E5D:
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
 	tst.b	d0                               	| [and  a]
-	jeq	l_2e6a                             	| [jr   z,$2E6A]
+	jeq	draw_borders_2E6A                             	| [jr   z,$2E6A]
 	clr.b	d0                               	| [ld   a,$00]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	jra	l_2e6f                             	| [jr   $2E6F]
 
-l_2e6a:
+draw_borders_2E6A:
 	move.b	#0x09,d0                        	| [ld   a,$09]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 l_2e6f:
@@ -4063,46 +4096,46 @@ handle_path_end_307C:
 
 
 is_way_up_clear_308E:
-	move.w	maze_data_8C20(pc),a4           	| [ld   bc,(maze_data_8C20)]
+	bsr		load_maze_data
 	addq.b	#1,d1                           	| [inc  b]
 l_3093:
 	jbsr	is_way_clear_30CA                 	| [call is_way_clear_30CA]
 	rts                                    	| [ret]
 
 is_way_down_clear_3097:
-	move.w	maze_data_8C20(pc),a4           	| [ld   bc,(maze_data_8C20)]
+	bsr		load_maze_data
 	subq.b	#1,d1                           	| [dec  b]
 	jra	l_3093                             	| [jr   $3093]
 
 is_way_left_clear_309E:
-	move.w	maze_data_8C20(pc),a4           	| [ld   bc,(maze_data_8C20)]
+	bsr		load_maze_data
 	subq.b	#1,d2                           	| [dec  c]
 	jra	l_3093                             	| [jr   $3093]
 
 is_way_right_clear_30A5:
-	.byte	0xED,0x4B,0x08,0xA4   ld,0xbc,(maze_data_8C20)
+	bsr		load_maze_data
 	addq.b	#1,d2                           	| [inc  c]
 	jra	l_3093                             	| [jr   $3093]
 
 set_way_up_clear_30AC:
-	move.w	maze_data_8C20(pc),a4           	| [ld   bc,(maze_data_8C20)]
+	bsr		load_maze_data
 	addq.b	#1,d1                           	| [inc  b]
 l_30b1:
 	jbsr	set_way_clear_30D2                	| [call set_way_clear_30D2]
 	rts                                    	| [ret]
 
 set_way_down_clear_30B5:
-	move.w	maze_data_8C20(pc),a4           	| [ld   bc,(maze_data_8C20)]
+	bsr		load_maze_data
 	subq.b	#1,d1                           	| [dec  b]
 	jra	l_30b1                             	| [jr   $30B1]
 
 set_way_left_clear_30BC:
-	move.w	maze_data_8C20(pc),a4           	| [ld   bc,(maze_data_8C20)]
+	bsr		load_maze_data
 	subq.b	#1,d2                           	| [dec  c]
 	jra	l_30b1                             	| [jr   $30B1]
 
 set_way_right_clear_30C3:
-	move.w	maze_data_8C20(pc),a4           	| [ld   bc,(maze_data_8C20)]
+	bsr		load_maze_data
 	addq.b	#1,d2                           	| [inc  c]
 	jra	l_30b1                             	| [jr   $30B1]
 
@@ -4134,7 +4167,7 @@ l_30d4:
 	clr.b	d3                               	| [ld   d,$00]
 	move.b	d1,d4                           	| [ld   e,b]
 	*add  hl,de
-	illegal
+	illegal			| TODO handle this mess
 	*jra	ram_code_8C24                      	| calls self-modifying code bit/res test routine!! [jp   ram_code_8C24]
 
 * 8C24:
@@ -4176,7 +4209,8 @@ draw_2_holes_right_3110:
 	rts                                    	| [ret]
 
 draw_one_hole_311D:
-	move.w	maze_data_8C20+2(pc),a4         	| [ld   bc,(maze_data_8C20+2)]
+	move.w	maze_data_8C20+2,d2           
+	move.w	maze_data_8C20+3,d1           	| | [ld   bc,(maze_data_8C20+2)]
 	move.b	d2,d0                           	| [ld   a,c]
 	add.b	d0,d0                            	| [add  a,a]
 	addq.b	#1,d0                           	| [inc  a]
@@ -4186,12 +4220,14 @@ draw_one_hole_311D:
 	sub.b	#0x1E,d0                         	| [sub  $1E]
 	neg.b	d0                               	| [neg]
 	move.b	d0,d1                           	| [ld   b,a]
-	move.b	a4,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d2,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d1,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
 	move.b	#0x20,d0                        	| [ld   a,$20]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	addq.b	#1,d1                           	| [inc  b]
-	move.b	a4,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d2,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d1,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	addq.b	#1,(0x3f,a2)                    	| [inc  (ix+$3f)]
@@ -4436,16 +4472,1015 @@ l_3308:
 	jne	l_3308                             	| [djnz 0x3308]
 	rts       	
 
+l_330e:
+	lea	snobee_1_struct_8D00(pc),a2        	| [ld   ix,snobee_1_struct_8D00]
+	jra	l_3324                             	| [jr   $3324]
+l_3314:
+	lea	snobee_2_struct_8D20(pc),a2        	| [ld   ix,snobee_2_struct_8D20]
+	jra	l_3324                             	| [jr   $3324]
+l_331a:
+	lea	snobee_3_struct_8D40(pc),a2        	| [ld   ix,snobee_3_struct_8D40]
+	jra	l_3324                             	| [jr   $3324]
+l_3320:
+	lea	snobee_4_struct_8D60(pc),a2        	| [ld   ix,snobee_4_struct_8D60]
+l_3324:
+	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
+	lea	snobee_jump_table_332D(pc),a1      	| [ld   de,snobee_jump_table_332D]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+
+snobee_jump_table_332D:
+	.long	_00_snobee_do_nothing_3353
+	.long	_01_snobee_not_moving_3377
+	.long	_02_snobee_moving_33A5
+	.long	_03_snobee_aligns_for_stunned_3AAD
+	.long	_04_snobee_stunned_39B5
+	.long	_05_snobee_blinking_stunned_39F3
+	.long	_06_stunned_picked_3A6C
+	.long	disable_snobee_3359
+	.long	chicken_mode_3372
+	.long	l_3ad7
+	.long	l_3b46
+	.long	l_3b7d
+	.long	l_3bb4
+	.long	disable_snobee_3359
+	.long	l_3c4b
+	.long	l_3ceb
+	.long	l_336d
+	.long	l_3d2c
+	.long	chicken_mode_3372
+
+_00_snobee_do_nothing_3353:
+ * active loop to keep roughly the same game speed
+ * regardless of the number of currently active monsters
+	move.b	#0x05,d1                        	| [ld b,$05]
+	subq.b	#1,d1                           	| [dec  b]
+l_3355:
+	subq.b	#1,d1                           	| [...]
+	jne	l_3355                             	| [djnz $3355]
+	rts                                           	| [ret]
+
+do_nothing_3358:
+	rts                                    	| [ret]
+
+disable_snobee_3359:
+	clr.b	(x_pos,a2)                       	| [ld   (ix+x_pos),$00]
+	clr.b	(y_pos,a2)                       	| [ld   (ix+y_pos),$00]
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	rts                                    	| [ret]
+
+reset_state_to_default_3368:
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	rts                                    	| [ret]
+
+l_336d:
+	move.b	#0x01,(char_state,a2)           	| [ld   (ix+char_state),$01]
+	rts                                    	| [ret]
+
+chicken_mode_3372:
+	move.b	#0x0E,(char_state,a2)           	| [ld   (ix+char_state),$0E]
+	rts                                    	| [ret]
+
+_01_snobee_not_moving_3377:
+	jbsr	l_3957                            	| [call $3957]
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_3385                            	| [call z,$3385]
+0:
+	jbsr	l_338e                            	| [call $338E]
+	rts                                    	| [ret]
+
+l_3385:
+	move.b	#0x04,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$04]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	rts                                    	| [ret]
+l_338e:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	tst.b	d0                               	| [and  a]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(stunned_push_block_counter,a2),d0	| [ld   a,(ix+stunned_push_block_counter)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_339d                             	| [jr   z,$339D]
+	move.b	d0,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),a]
+	rts                                    	| [ret]
+l_339d:
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	rts                                    	| [ret]
+
+_02_snobee_moving_33A5:
+ * is period time reached?
+	jbsr	l_3957                            	| [call $3957]
+	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
+	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
+	cmp.b	(instant_move_period,a2),d0      	|  snobee period (copied from ix+move_period) [cp   (ix+instant_move_period)]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+ * period time reached:	 time to move the snobee
+	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
+ * call the main A.I. routine
+
+	jbsr	handle_snobee_direction_change_33D8	| [call handle_snobee_direction_change_33D8]
+move_snobee_forward_33B9:
+	lea	display_snobee_sprite_33CE(pc),a0  	| [ld   hl,display_snobee_sprite_33CE]
+	move.l	a0,-(sp)                        	| [push hl]
+	move.b	(facing_direction,a2),d0        	| snobee direction [ld   a,(ix+facing_direction)]
+	lea	snobee_move_table_33C6(pc),a1      	| [ld   de,snobee_move_table_33C6]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+snobee_move_table_33C6:
+	.long	snobee_try_to_move_up_3922
+	.long	snobee_try_to_move_down_392C
+	.long	snobee_try_to_move_left_3936
+	.long	snobee_try_to_move_right_3940
+	
 display_snobee_sprite_33CE:
 	move.b	(char_id,a2),d0                 	| load sprite index [ld   a,(ix+char_id)]
 	move.l	a2,a0                        	| [push ix]
 											| [pop  hl]
 	jbsr	display_sprite_3154               	| [call display_sprite_3154]
 	rts
+
+
+handle_snobee_direction_change_33D8:
+	move.b	(x_pos,a2),d0                   	| load X [ld   a,(ix+x_pos)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	cmp.b	#0x08,d0                         	| not at the limit [cp   $08]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+
+	move.b	(y_pos,a2),d0                   	| load Y [ld   a,(ix+y_pos)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	beq.b	0f
+	rts                                    	| not at the limit [ret  nz]
+0:
+
+ * x and y coords are aligned for possible direction change
+ * direction change can take place
+
+	move.b	elapsed_minutes_since_start_of_round_8C5D,d0	| [ld   a,(elapsed_minutes_since_start_of_round_8C5D)]
+	cmp.b	#0x02,d0                         	| [cp   $02]
+	jcc	snobees_play_chicken_3403          	| after 2 minutes, snobees run to the corners and disappear [jr   nc,snobees_play_chicken_3403]
+
+	move.b	remaining_alive_snobees_8D98,d0 	| [ld   a,(remaining_alive_snobees_8D98)]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+	jcc	l_342e                             	| > 3 :	go [jr   nc,$342E]
+	cmp.b	#0x02,d0                         	| [cp   $02]
+	jne	l_33fc                             	| [jr   nz,$33FC]
+ * only 2 snobees remaining
+ * reset counter
+	clr.b	d0                               	| [xor  a]
+	move.b	d0,five_second_counter_8823     	| [ld   (five_second_counter_8823),a]
+l_33fc:
+	move.b	five_second_counter_8823,d0     	| [ld   a,(five_second_counter_8823)]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+	jcs	l_342e                             	| [jr   c,$342E]
+ * after 15 seconds, the last snobee runs and disappears
+snobees_play_chicken_3403:
+	move.b	(ai_mode,a2),d0                 	| [ld   a,(ix+ai_mode)]
+	cmp.b	#0x09,d0                         	| [cp   $09]
+	jcc	apply_snobee_behaviour_3461        	| already in one of the "chicken" states [jr   nc,apply_snobee_behaviour_3461]
+ * set chicken state
+	move.b	#0x07,(move_period,a2)          	| set speed to very fast fleeing snobee [ld   (ix+move_period),$07]
+ * choose a corner to flee to
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x03,d0                         	| [and  $03]
+	add.b	#0x09,d0                         	| [add  a,$09]
+	move.b	d0,(ai_mode,a2)                 	| set A.I. "flee" mode [ld   (ix+ai_mode),a]
+
+	move.b	#0x03,d0                        	| [ld   a,$03]
+	move.b	d0,game_phase_8CBB              	| [ld   (game_phase_8CBB),a]
+	st.b	d1                                	| [ld   b,$FF]
+	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
+	move.b	#0x09,d1                        	| super fast game music [ld   b,$09]
+	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
+	move.b	#0x01,d1                        	| [ld   b,$01]
+	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	jra	apply_snobee_behaviour_3461        	| [jr   apply_snobee_behaviour_3461]
+
+ * normal movement
+
+ * compute difficulty level from level number
+ * level 01:	3
+ * level 08:	4
+ * level 12:	5
+ * level 15:	6
+
+l_342e:
+	jbsr	get_level_number_288F             	| [call get_level_number_288F]
+	subq.b	#1,d0                           	| level - 1 [dec  a]
+	ror.b	#1,d0                            	| level * 64 [rrca]
+	ror.b	#1,d0                            	| [rrca]
+	and.b	#0x03,d0                         	| level & 0x3 [and  $03]
+	addq.b	#0x03,d0                        	| level += 3 [add  a,$03]
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	remaining_alive_snobees_8D98,d0 	| [ld   a,(remaining_alive_snobees_8D98)]
+	cmp.b	d1,d0                            	| [cp   b]
+	jcc	l_344b                             	| jump if more alive snobees than the difficulty value [jr   nc,$344B]
+ * all snobees take A.I. mode "block breaking"
+	jbsr	compute_snobee_speed_324E         	| [call compute_snobee_speed_324E]
+	subq.b	#0x01,d0                        	| [sub  $01]
+	move.b	d0,(move_period,a2)             	| change/adjust speed [ld   (ix+move_period),a]
+	move.b	#0x02,(ai_mode,a2)              	| breaking block mode [ld   (ix+ai_mode),$02]
+
+l_344b:
+	move.b	elapsed_minutes_since_start_of_round_8C5D,d0	| [ld   a,(elapsed_minutes_since_start_of_round_8C5D)]
+	cmp.b	#0x01,d0                         	| [cp   $01]
+	jcs	apply_snobee_behaviour_3461        	| [jr   c,apply_snobee_behaviour_3461]
+	move.w	d0,-(sp)                        	| [push af]
+ * after 1 minute, accelerate snobees & set A.I. mode to breaking block mode
+	jbsr	compute_snobee_speed_324E         	| [call compute_snobee_speed_324E]
+	subq.b	#0x01,d0                        	| [sub  $01]
+	move.l	(sp)+,a4                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	sub.b	d1,d0                            	| [sub  b]
+	move.b	d0,(move_period,a2)             	| change/adjust speed [ld   (ix+move_period),a]
+	move.b	#0x02,(ai_mode,a2)              	| breaking block mode [ld   (ix+ai_mode),$02]
+
+apply_snobee_behaviour_3461:
+	move.b	(ai_mode,a2),d0                 	| [ld   a,(ix+ai_mode)]
+	lea	snobee_behaviour_table_346A(pc),a1 	| [ld   de,snobee_behaviour_table_346A]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+
+snobee_behaviour_table_346A:
+	.long	_00_snobee_mode_block_avoid_351E
+	.long	_01_snobee_mode_roaming_3649
+	.long	_02_snobee_mode_block_eat_3843   	|   block breaking mode
+	.long	_03_snobee_mode_pengo_hunt_1_on_x_378A
+	.long	_04_snobee_mode_pengo_hunt_2_on_y_37C2
+	.long	_05_snobee_mode_pengo_hunt_3_37FA	|  the most aggressive mode
+	.long	_01_snobee_mode_roaming_3649
+	.long	_01_snobee_mode_roaming_3649
+	.long	_05_snobee_mode_pengo_hunt_3_37FA
+	.long	chicken_mode_reach_border_348C
+	.long	chicken_mode_reach_border_348C
+	.long	chicken_mode_reach_border_348C
+	.long	chicken_mode_reach_border_348C
+	.long	chicken_mode_go_up_to_corner_34D0
+	.long	chicken_mode_go_down_to_corner_3503
+	.long	chicken_mode_go_left_to_corner_350C
+	.long	chicken_mode_go_right_to_corner_3515
+
+
+chicken_mode_reach_border_348C:
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	cmp.b	#0xF0,d0                         	| [cp   $F0]
+	jeq	l_34bf                             	| [jr   z,$34BF]
+	cmp.b	#0x10,d0                         	| [cp   $10]
+	jeq	l_34bf                             	| [jr   z,$34BF]
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	cmp.b	#0xD8,d0                         	| [cp   $D8]
+	jeq	l_34b0                             	| [jr   z,$34B0]
+	cmp.b	#0x18,d0                         	| [cp   $18]
+	jeq	l_34b0                             	| [jr   z,$34B0]
+	move.b	(ai_mode,a2),d0                 	| [ld   a,(ix+ai_mode)]
+	sub.b	#0x09,d0                         	| [sub  $09]
+	and.b	#0x03,d0                         	| [and  $03]
+	move.b	d0,(facing_direction,a2)        	| [ld   (ix+facing_direction),a]
+	jbsr	l_38d6                            	| [call $38D6]
+	rts                                    	| [ret]
+
+l_34b0:
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x01,d0                         	| [and  $01]
+	move.b	d0,(facing_direction,a2)        	| [ld   (ix+facing_direction),a]
+	add.b	#0x0D,d0                         	| [add  a,$0D]
+	move.b	d0,(ai_mode,a2)                 	|  select corner to flee [ld   (ix+ai_mode),a]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	rts                                    	| [ret]
+
+ * change direction by a random value but only left/right
+l_34bf:
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x01,d0                         	| [and  $01]
+	addq.b	#0x02,d0                        	| [add  a,$02]
+	move.b	d0,(facing_direction,a2)        	| [ld   (ix+facing_direction),a]
+	add.b	#0x0D,d0                         	| [add  a,$0D]
+	move.b	d0,(ai_mode,a2)                 	|  select corner to flee [ld   (ix+ai_mode),a]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	rts                                    	| [ret]
+
+chicken_mode_go_up_to_corner_34D0:
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	cmp.b	#0x10,d0                         	| [cp   $10]
+	jeq	l_34f3                             	| [jr   z,$34F3]
+l_34d7:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	lea	is_grid_free_jump_table_43A1(pc),a1	| [ld   de,is_grid_free_jump_table_43A1]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	cmp.b	#0x1C,d0                         	| [cp   $1C]
+	jeq	l_34f3                             	| [jr   z,$34F3]
+	cmp.b	#0x1D,d0                         	| [cp   $1D]
+	jeq	l_34f3                             	| [jr   z,$34F3]
+	cmp.b	#0x1E,d0                         	| [cp   $1E]
+	jeq	l_34f3                             	| [jr   z,$34F3]
+	jbsr	l_38d6                            	| [call $38D6]
+	rts                                    	| [ret]
+
+l_34f3:
+	move.b	#0xC8,(animation_frame,a2)      	| [ld   (ix+animation_frame),$C8]
+	move.b	#0x06,(intermission_dance_push_anim_counter,a2)	| [ld   (ix+intermission_dance_push_anim_counter),$06]
+	move.b	d0,(move_period,a2)             	| [ld   (ix+move_period),a]
+	move.b	#0x11,(char_state,a2)           	| [ld   (ix+char_state),$11]
+	rts                                    	| [ret]
+
+chicken_mode_go_down_to_corner_3503:
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	cmp.b	#0xF0,d0                         	| [cp   $F0]
+	jeq	l_34f3                             	| [jr   z,$34F3]
+	jra	l_34d7                             	| [jr   $34D7]
+chicken_mode_go_left_to_corner_350C:
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	cmp.b	#0x18,d0                         	| [cp   $18]
+	jeq	l_34f3                             	| [jr   z,$34F3]
+	jra	l_34d7                             	| [jr   $34D7]
+chicken_mode_go_right_to_corner_3515:
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	cmp.b	#0xD8,d0                         	| [cp   $D8]
+	jeq	l_34f3                             	| [jr   z,$34F3]
+	jra	l_34d7                             	| [jr   $34D7]
+
+_00_snobee_mode_block_avoid_351E:
+	jbsr	find_an_empty_space_3608          	| [call find_an_empty_space_3608]
+	move.b	(path_address_pointer_or_misc_flags,a2),d2	| [ld   c,(ix+path_address_pointer_or_misc_flags)]
+	lea	moving_block_struct_8DA0(pc),a3    	| [ld   iy,moving_block_struct_8DA0]
+	move.b	(facing_direction,a3),d0        	| [ld   a,(iy+facing_direction)]
+	lea	table_3531(pc),a1                  	| [ld   de,table_3531]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+table_3531:
+	.long	snobee_avoids_block_up_3539
+	.long	snobee_avoids_block_down_355D
+	.long	snobee_avoids_block_left_3573
+	.long	snobee_avoids_block_right_3589
+
+snobee_avoids_block_up_3539:
+	move.b	#0x03,d1                        	| [ld   b,$03]
+	btst.b	#7,d2                           	| [bit  7,c]
+	jne	l_354d                             	| [jr   nz,$354D]
+	move.b	#0x02,d1                        	| [ld   b,$02]
+	btst.b	#6,d2                           	| [bit  6,c]
+	jne	l_354d                             	| [jr   nz,$354D]
+	clr.b	d1                               	| [ld   b,$00]
+	btst.b	#4,d2                           	| [bit  4,c]
+	jne	l_3559                             	| [jr   nz,$3559]
+	move.b	#0x01,d1                        	| [ld   b,$01]
+l_354d:
+	move.b	(backup_ai_mode,a2),d0          	| [ld   a,(ix+backup_ai_mode)]
+	move.b	d0,(ai_mode,a2)                 	| sets saved A.I. mode [ld   (ix+ai_mode),a]
+	move.b	(move_period,a2),d0             	| [ld   a,(ix+move_period)]
+	move.b	d0,(instant_move_period,a2)     	| [ld   (ix+instant_move_period),a]
+l_3559:
+	move.b	d1,(facing_direction,a2)        	| [ld   (ix+facing_direction),b]
+	rts                                    	| [ret]
+
+snobee_avoids_block_down_355D:
+	move.b	#0x02,d1                        	| [ld   b,$02]
+	btst.b	#6,d2                           	| [bit  6,c]
+	jne	l_354d                             	| [jr   nz,$354D]
+	move.b	#0x03,d1                        	| [ld   b,$03]
+	btst.b	#7,d2                           	| [bit  7,c]
+	jne	l_354d                             	| [jr   nz,$354D]
+	move.b	#0x01,d1                        	| [ld   b,$01]
+	btst.b	#5,d2                           	| [bit  5,c]
+	jne	l_3559                             	| [jr   nz,$3559]
+	clr.b	d1                               	| [ld   b,$00]
+	jra	l_354d                             	| [jr   $354D]
+
+snobee_avoids_block_left_3573:
+	clr.b	d1                               	| [ld   b,$00]
+	btst.b	#4,d2                           	| [bit  4,c]
+	jne	l_354d                             	| [jr   nz,$354D]
+	move.b	#0x01,d1                        	| [ld   b,$01]
+	btst.b	#5,d2                           	| [bit  5,c]
+	jne	l_354d                             	| [jr   nz,$354D]
+	move.b	#0x02,d1                        	| [ld   b,$02]
+	btst.b	#6,d2                           	| [bit  6,c]
+	jne	l_3559                             	| [jr   nz,$3559]
+	move.b	#0x03,d1                        	| [ld   b,$03]
+	jra	l_354d                             	| [jr   $354D]
+
+snobee_avoids_block_right_3589:
+	move.b	#0x01,d1                        	| [ld   b,$01]
+	btst.b	#5,d2                           	| [bit  5,c]
+	jne	l_354d                             	| [jr   nz,$354D]
+	clr.b	d1                               	| [ld   b,$00]
+	btst.b	#4,d2                           	| [bit  4,c]
+	jne	l_354d                             	| [jr   nz,$354D]
+	move.b	#0x03,d1                        	| [ld   b,$03]
+	btst.b	#7,d2                           	| [bit  7,c]
+	jne	l_3559                             	| [jr   nz,$3559]
+	move.b	#0x02,d1                        	| [ld   b,$02]
+	jra	l_354d                             	| [jr   $354D]
+
+avoids_moving_block_359F:
+	lea	moving_block_struct_8DA0(pc),a3    	| [ld   iy,moving_block_struct_8DA0]
+	move.b	(facing_direction,a3),d0        	| block direction [ld   a,(iy+facing_direction)]
+	lea	jump_table_35AC(pc),a1             	| [ld   de,jump_table_35AC]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+jump_table_35AC:
+	.long	snobee_threatened_by_moving_block_up_35B4
+	.long	snobee_threatened_by_moving_block_down_35D8
+	.long	snobee_threatened_by_moving_block_left_35E8
+	.long	snobee_threatened_by_moving_block_right_35F8
+
+
+snobee_threatened_by_moving_block_up_35B4:
+	move.b	(0x00,a3),d0                    	| [ld   a,(iy+$00)]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+	beq.b	0f
+	rts                                    	| not same x:	no danger [ret  nz]
+0:
+	move.b	(0x01,a3),d0                    	| [ld   a,(iy+$01)]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	bcc.b	0f
+	rts                                    	| y block > y snobee no danger [ret  c]
+0:
+ * danger: try to avoid the block (block has speed 3, snobee has speed 5 which is slower but can be enough to avoid the block in some cases)
+
+snobee_tries_to_avoid_block_35C2:
+	move.b	(ai_mode,a2),d0                 	| [ld   a,(ix+ai_mode)]
+	move.b	d0,(backup_ai_mode,a2)                    	| backup A.I. mode [ld   (ix+$1d),a]
+	clr.b	(ai_mode,a2)                     	| set block avoidance mode [ld   (ix+ai_mode),$00]
+	move.b	#0x05,d0                        	| fast speed [ld   a,$05]
+	move.b	d0,(instant_move_period,a2)     	| set speed [ld   (ix+instant_move_period),a]
+	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	rts                                    	| [ret]
+
+snobee_threatened_by_moving_block_down_35D8:
+	move.b	(x_pos,a3),d0                   	| [ld   a,(iy+x_pos)]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	bcs.b	0f
+	rts                                    	| [ret  nc]
+0:
+	jra	snobee_tries_to_avoid_block_35C2   	| [jr   snobee_tries_to_avoid_block_35C2]
+
+snobee_threatened_by_moving_block_left_35E8:
+	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(x_pos,a3),d0                   	| [ld   a,(iy+x_pos)]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	jra	snobee_tries_to_avoid_block_35C2   	| [jr   snobee_tries_to_avoid_block_35C2]
+
+snobee_threatened_by_moving_block_right_35F8:
+	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(x_pos,a3),d0                   	| [ld   a,(iy+x_pos)]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+	bcs.b	0f
+	rts                                    	| [ret  nc]
+0:
+	jra	snobee_tries_to_avoid_block_35C2   	| [jr   snobee_tries_to_avoid_block_35C2]
+
+* look for a possible escape slot for snobee
+find_an_empty_space_3608:
+	clr.b	(path_address_pointer_or_misc_flags,a2)	| [ld   (ix+path_address_pointer_or_misc_flags),$00]
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	jbsr	is_upper_grid_free_390F           	| [call is_upper_grid_free_390F]
+	jne	l_361b                             	| [jr   nz,$361B]
+	bset.b	#4,(path_address_pointer_or_misc_flags,a2)	| [set  4,(ix+path_address_pointer_or_misc_flags)]
+	addq.b	#1,(path_address_pointer_or_misc_flags,a2)	| [inc  (ix+path_address_pointer_or_misc_flags)]
+l_361b:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	jbsr	is_lower_grid_free_3917           	| [call is_lower_grid_free_3917]
+	jne	l_362a                             	| [jr   nz,$362A]
+	bset.b	#5,(path_address_pointer_or_misc_flags,a2)	| [set  5,(ix+path_address_pointer_or_misc_flags)]
+	addq.b	#1,(path_address_pointer_or_misc_flags,a2)	| [inc  (ix+path_address_pointer_or_misc_flags)]
+l_362a:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	jbsr	is_left_grid_free_391B            	| [call is_left_grid_free_391B]
+	jne	l_3639                             	| [jr   nz,$3639]
+	bset.b	#6,(path_address_pointer_or_misc_flags,a2)	| [set  6,(ix+path_address_pointer_or_misc_flags)]
+	addq.b	#1,(path_address_pointer_or_misc_flags,a2)	| [inc  (ix+path_address_pointer_or_misc_flags)]
+l_3639:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	jbsr	is_right_grid_free_391E           	| [call is_right_grid_free_391E]
+	jne	l_3648                             	| [jr   nz,$3648]
+	bset.b	#7,(path_address_pointer_or_misc_flags,a2)	| [set  7,(ix+path_address_pointer_or_misc_flags)]
+	addq.b	#1,(path_address_pointer_or_misc_flags,a2)	| [inc  (ix+path_address_pointer_or_misc_flags)]
+l_3648:
+	rts                                    	| [ret]
+
+_01_snobee_mode_roaming_3649:
+	move.b	block_moving_flag_8DBF,d0     	| [ld   a,($block_moving_flag_8DBF)]
+	cmp.b	#0x02,d0                         	| [cp   $02]
+	bne	0f
+	jbsr	avoids_moving_block_359F          	| [call z,avoids_moving_block_359F]
+0:
+ * update speed
+	move.b	(move_period,a2),d0             	| [ld   a,(ix+move_period)]
+	move.b	d0,(instant_move_period,a2)     	| [ld   (ix+instant_move_period),a]
+	jbsr	l_3608                            	| [call $3608]
+	move.b	(path_address_pointer_or_misc_flags,a2),d0	| [ld   a,(ix+path_address_pointer_or_misc_flags)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	lea	table_3665(pc),a1                  	| [ld   de,table_3665]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+table_3665:
+	.long	l_366f
+	.long	l_3675
+	.long	l_36e0
+	.long	l_371d
+	.long	l_3752
+
+l_366f:
+	move.b	#0x02,(ai_mode,a2)              	|  sets block breaking mode [ld   (ix+ai_mode),$02]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	rts                                    	| [ret]
+
+l_3675:
+	move.b	(path_address_pointer_or_misc_flags,a2),d0	| [ld   a,(ix+path_address_pointer_or_misc_flags)]
+	move.b	#0x03,d1                        	| [ld   b,$03]
+l_367a:
+	rol.b	#1,d0                            	| [rlca]
+	jcs	l_367f                             	| [jr   c,$367F]
+	subq.b	#1,d1                           	| [...]
+	jne	l_367a                             	| [djnz $367A]
+l_367f:
+	move.b	d1,(facing_direction,a2)        	| [ld   (ix+facing_direction),b]
+	addq.b	#1,(0x15,a2)                    	| [inc  (ix+$15)]
+	move.b	(0x15,a2),d0                    	| [ld   a,(ix+$15)]
+	lea	table_368E(pc),a1                  	| [ld   de,table_368E]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+
+table_368E:
+	.long	l_3696
+	.long	l_36a0
+	.long	l_36aa
+	.long	l_36be
+
+
+l_3696:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	d2,(0x16,a2)                    	| [ld   (ix+$16),c]
+	move.b	d1,(0x17,a2)                    	| [ld   (ix+$17),b]
+	rts                                    	| [ret]
+
+l_36a0:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	d2,(0x18,a2)                    	| [ld   (ix+$18),c]
+	move.b	d1,(0x19,a2)                    	| [ld   (ix+$19),b]
+	rts                                    	| [ret]
+
+l_36aa:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	d2,d6                           	| [ld   l,c]
+	move.b	d1,d5                           	| [ld   h,b]
+	move.b	(0x16,a2),d4                    	| [ld   e,(ix+$16)]
+	move.b	(0x17,a2),d3                    	| [ld   d,(ix+$17)]
+	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	move.b	#0xFF,(0x15,a2)                 	| [ld   (ix+$15),$FF]
+	rts                                    	| [ret]
+
+l_36be:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	d2,d6                           	| [ld   l,c]
+	move.b	d1,d5                           	| [ld   h,b]
+	move.b	(0x18,a2),d4                    	| [ld   e,(ix+$18)]
+	move.b	(0x19,a2),d3                    	| [ld   d,(ix+$19)]
+	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
+	jeq	l_36d3                             	| [jr   z,$36D3]
+	move.b	#0xFF,(0x15,a2)                 	| [ld   (ix+$15),$FF]
+	rts                                    	| [ret]
+
+l_36d3:
+	move.b	#0x02,(0x1b,a2)                 	| [ld   (ix+$1b),$02]
+	move.b	#0x02,(ai_mode,a2)              	|  sets block breaking mode [ld   (ix+ai_mode),$02]
+	move.b	#0xFF,(0x15,a2)                 	| [ld   (ix+$15),$FF]
+	rts                                    	| [ret]
+
+l_36e0:
+	jbsr	l_3706                            	| [call $3706]
+	jbsr	l_36f6                            	| [call $36F6]
+
+	move.l	a2,a0                        	| [push ix] [pop  hl]
+	                      	| [ld   de,$0011]
+	add.w	#0x11,a0						| [add  hl,de]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	jne	l_36f1                             	| [jr   nz,$36F1]
+	addq.w	#1,a0                           	| [inc  hl]
+l_36f1:
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	d0,(facing_direction,a2)        	| [ld   (ix+facing_direction),a]
+	rts                                    	| [ret]
+
+l_36f6:
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	clr.w	d3                               	| [ld   d,$00]
+	move.b	d0,d3                           	| [ld   e,a]
+	lea	table_3702(pc),a0                  	| [ld   hl,table_3702]
+	add.w	d3,a0							| [add  hl,de]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	rts                                    	| [ret]
+
+table_3702:
+	.byte	0x01,0x00,0x03,0x02
+
+l_3706:
+	move.b	(path_address_pointer_or_misc_flags,a2),d0	| [ld   a,(ix+path_address_pointer_or_misc_flags)]
+	move.b	#0x04,d1                        	| [ld   b,$04]
+	move.b	#0x03,d2                        	| [ld   c,$03]
+
+	move.l	a2,a0                        	| [push ix] [pop  hl]
+	                      	| [ld   de,$0011]
+	add.w	#0x11,a0						| [add  hl,de]
+l_3714:
+	rol.b	#1,d0                            	| [rlca]
+	jcc	l_3719                             	| [jr   nc,$3719]
+	move.b	d2,(a0)+                         	| [ld   (hl),c]
+												| [inc  hl]
+l_3719:
+	subq.b	#1,d2                           	| [dec  c]
+	subq.b	#1,d1                           	| [...]
+	jne	l_3714                             	| [djnz $3714]
+	rts                                    	| [ret]
+
+l_371d:
+	jbsr	l_3706                            	| [call $3706]
+* completely useless call, probably buggy
+l_3720:
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x03,d0                         	| [and  $03]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+* test always succeeds, else it would loop????
+	jcc	l_3720                             	| [jr   nc,$3720]
+
+	move.l	a2,-(sp)                        	| [push ix]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	move.w	#0x11,d3                        	| [ld   e,$11]
+	add.b	d0,d3                            	| [add  a,e]
+												| [ld   e,a]
+	add.w	d3,a0								| [add  hl,de]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.w	d0,-(sp)                        	| [push af]
+	jbsr	l_36f6                            	| [call $36F6]
+	move.b	d0,d1                           	| [ld   b,a]
+	move.w	(sp)+,d0                        	| [pop  af]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	l_3720                             	| [jr   z,$3720]
+	move.b	(facing_direction,a2),d1        	| [ld   b,(ix+facing_direction)]
+	move.b	d0,(facing_direction,a2)        	| [ld   (ix+facing_direction),a]
+	cmp.b	d1,d0                            	| [cp   b]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	move.b	#0x01,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$01]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	move.b	#0x01,(char_state,a2)           	| [ld   (ix+char_state),$01]
+	rts                                    	| [ret]
+
+l_3752:
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x01,d0                         	| [and  $01]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+* 50% chance
+	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	clr.b	(facing_direction,a2)            	| [ld   (ix+facing_direction),$00]
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	sub.b	(x_pos,a3),d0                    	| [sub  (iy+x_pos)]
+	jcc	l_376e                             	| [jr   nc,$376E]
+	bset.b	#0,(facing_direction,a2)        	| [set  0,(ix+facing_direction)]
+	neg.b	d0                               	| [neg]
+l_376e:
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	sub.b	(y_pos,a3),d0                    	| [sub  (iy+y_pos)]
+	jcc	l_377d                             	| [jr   nc,$377D]
+	bset.b	#1,(facing_direction,a2)        	| [set  1,(ix+facing_direction)]
+	neg.b	d0                               	| [neg]
+l_377d:
+	sub.b	d1,d0                            	| [sub  b]
+	jcc	l_3785                             	| [jr   nc,$3785]
+	bset.b	#1,(facing_direction,a2)        	| [set  1,(ix+facing_direction)]
+	rts                                    	| [ret]
+l_3785:
+	move.b	(facing_direction,a2),d7
+	lsr.b	#1,d7
+	move.b	d7,(facing_direction,a2)         	| [srl  (ix+facing_direction)]
+	rts                                    	| [ret]
+
+ * *** hunt mode 1 ***
+ * if same x, change y direction to follow pengo
+ * else
+ *    1 chance out of 8 to go (temporarily) in roaming mode
+ * if no roaming mode, then
+ *    if snobee x is near pengo x (next/previous column), change y direction too
+ *    else go (temporarily) in roaming mode
+
+_03_snobee_mode_pengo_hunt_1_on_x_378A:
+	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	move.b	(x_pos,a3),d0                   	| pengo X [ld   a,(iy+x_pos)]
+	cmp.b	(x_pos,a2),d0                    	| same X as snobee? [cp   (ix+x_pos)]
+	jeq	change_vertical_direction_to_follow_pengo_37B0	| [jr   z,change_vertical_direction_to_follow_pengo_37B0]
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x07,d0                         	| [and  $07]
+ * 1 chance out of 8 to go in roaming mode in this case
+ * (and thus avoids pushed blocks)
+	jeq	_01_snobee_mode_roaming_3649     	| [jp   z,$_01_snobee_mode_roaming_3649]
+
+	move.b	(x_pos,a3),d0                   	| [ld   a,(iy+x_pos)]
+	sub.b	#0x10,d0                         	| [sub  $10]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+	jeq	change_vertical_direction_to_follow_pengo_37B0	| [jr   z,change_vertical_direction_to_follow_pengo_37B0]
+	add.b	#0x20,d0                         	| [add  a,$20]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+ * far from pengo (not in the next row): go roaming
+	jne	_01_snobee_mode_roaming_3649       	| [jp   nz,_01_snobee_mode_roaming_3649]
+
+ * just one row above or one row below pengo
+ * change direction to up or down to try to get pengo
+change_vertical_direction_to_follow_pengo_37B0:
+	clr.b	d1                               	| [ld   b,$00]
+	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	jcs	l_37bb                             	| [jr   c,$37BB]
+	addq.b	#1,d1                           	| [inc  b]
+l_37bb:
+	move.b	d1,(facing_direction,a2)        	| [ld   (ix+facing_direction),b]
+	jbsr	l_38d6                            	| [call $38D6]
+	rts                                    	| [ret]
+
+ * *** hunt mode 2 ***
+ * if same y, change x direction to follow pengo
+ * else
+ *    1 chance out of 8 to go in roaming mode
+ * if no roaming mode, then
+ *    if snobee y is near pengo y (next/previous row), change x direction too
+ *    else go (temporarily) in roaming mode
+
+_04_snobee_mode_pengo_hunt_2_on_y_37C2:
+	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	jeq		change_lateral_direction_to_follow_pengo_37E8	| [jr   z,$change_lateral_direction_to_follow_pengo_37E8]
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x07,d0                         	| [and  $07]
+	jeq		_01_snobee_mode_roaming_3649     	| [jp   z,$_01_snobee_mode_roaming_3649]
+	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
+	sub.b	#0x10,d0                         	| [sub  $10]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	jeq	change_lateral_direction_to_follow_pengo_37E8	| [jr   z,$change_lateral_direction_to_follow_pengo_37E8]
+	add.b	#0x20,d0                         	| [add  a,$20]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	jne	_01_snobee_mode_roaming_3649     	| [jp   nz,$_01_snobee_mode_roaming_3649]
+
+change_lateral_direction_to_follow_pengo_37E8:
+	move.b	#0x02,d1                        	| [ld   b,$02]
+	move.b	(x_pos,a3),d0                   	| [ld   a,(iy+x_pos)]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+	jcs	l_37f3                             	| pengo x < snobee x ? [jr   c,$37F3]
+	addq.b	#1,d1                           	| [inc  b]
+l_37f3:
+	move.b	d1,(facing_direction,a2)        	|  set left or right to be closer to pengo [ld   (ix+facing_direction),b]
+	jbsr	l_38d6                            	| [call $38D6]
+	rts                                    	| [ret]
+
+ * *** hunt mode 3 ***
+ * if same x, change y direction to follow pengo
+ * else
+ *    1 chance out of 8 to go in roaming mode (and thus breaks the chase)
+ * if no roaming mode, then
+ *    if snobee x is near pengo x (next/previous column), change y direction too
+ * else if same y, change x direction to follow pengo
+ * else
+ *    1 chance out of 8 to go (temporarily) in roaming mode
+ * if no roaming mode, then
+ *    if snobee y is near pengo y (next/previous row), change x direction too
+ *    else go in roaming mode
+
+_05_snobee_mode_pengo_hunt_3_37FA:
+	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	move.b	(x_pos,a3),d0                   	| [ld   a,(iy+x_pos)]
+	cmp.b	(x_pos,a2),d0                    	|  same X ? [cp   (ix+x_pos)]
+	jeq		change_vertical_direction_to_follow_pengo_37B0	| [jr   z,$change_vertical_direction_to_follow_pengo_37B0]
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x07,d0                         	| [and  $07]
+ * 1 chance out of 8 to go in roaming mode in this case
+ * (and thus avoids pushed blocks)
+	jeq	_01_snobee_mode_roaming_3649     	| [jp   z,$_01_snobee_mode_roaming_3649]
+
+	move.b	(x_pos,a3),d0                   	|  pengo X [ld   a,(iy+x_pos)]
+	sub.b	#0x10,d0                         	| [sub  $10]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+	jeq	change_vertical_direction_to_follow_pengo_37B0	| [jr   z,change_vertical_direction_to_follow_pengo_37B0]
+	add.b	#0x20,d0                         	| [add  a,$20]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+ * near pengo (in the next column left or right): follow pengo
+	jeq	change_vertical_direction_to_follow_pengo_37B0	| [jr   z,change_vertical_direction_to_follow_pengo_37B0]
+ * same y as pengo ??
+	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	jeq	change_lateral_direction_to_follow_pengo_37E8	| [jr   z,change_lateral_direction_to_follow_pengo_37E8]
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x07,d0                         	| [and  $07]
+	jeq	_01_snobee_mode_roaming_3649     	| [jp   z,$_01_snobee_mode_roaming_3649]
+	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
+	sub.b	#0x10,d0                         	| [sub  $10]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	jeq	change_lateral_direction_to_follow_pengo_37E8	| [jr   z,change_lateral_direction_to_follow_pengo_37E8]
+	add.b	#0x20,d0                         	| [add  a,$20]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	jeq	change_lateral_direction_to_follow_pengo_37E8	| [jr   z,change_lateral_direction_to_follow_pengo_37E8]
+	jra	_01_snobee_mode_roaming_3649     	| [jp   $_01_snobee_mode_roaming_3649]
 	
+ * block breaking mode
+ * avoids moving blocks
+
+_02_snobee_mode_block_eat_3843:
+	move.b	block_moving_flag_8DBF,d0       	| [ld   a,(block_moving_flag_8DBF)]
+	cmp.b	#0x02,d0                         	| [cp   $02]
+	bne	0f
+	jbsr	avoids_moving_block_359F          	| block is moving [call z,avoids_moving_block_359F]
+0:
+
+	jbsr	get_random_value_2D7C             	| [call	get_random_value_2D7C]
+	and.b	#0x01,d0                         	| [and  $01]
+	jne	l_38b4                             	|  1/2 chance [jr   nz,$38B4]
+
+	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
+	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
+	jne	l_3866                             	| [jr   nz,$3866]
+ * if same y, 1 chance out of 8 to stop following pengo
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x07,d0                         	| [and  $07]
+	jeq	_01_snobee_mode_roaming_3649       	| [jp   z,_01_snobee_mode_roaming_3649]
+l_3866:
+	move.b	(x_pos,a3),d0                   	| [ld   a,(iy+x_pos)]
+	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
+	jeq	l_3876                             	| [jr   z,$3876]
+ * if not same x, 1 chance out of 8 to stop following pengo
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x07,d0                         	| [and  $07]
+	jeq	_01_snobee_mode_roaming_3649       	| [jp   z,_01_snobee_mode_roaming_3649]
+
+l_3876:
+	move.b	(y_pos,a3),d3                   	| [ld   d,(iy+y_pos)]
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x10,d0                         	| [and  $10]
+	add.b	d3,d0                            	| [add  a,d]
+	move.b	d0,d3                           	| rand(16)+pengo_y [ld   d,a]
+	move.b	(x_pos,a3),d4                   	| [ld   e,(iy+x_pos)]
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x10,d0                         	| [and  $10]
+	add.b	d4,d0                            	| [add  a,e]
+	move.b	d0,d4                           	|  rand(16)+pengo_x [ld   e,a]
+	clr.b	(facing_direction,a2)            	| set direction up (clear) [ld   (ix+facing_direction),$00]
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	sub.b	d4,d0                            	| [sub  e]
+	jcc	l_389a                             	| [jr   nc,$389A]
+	bset.b	#0,(facing_direction,a2)        	| set direction down [set  0,(ix+facing_direction)]
+	neg.b	d0                               	| [neg]
+l_389a:
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	sub.b	d3,d0                            	| [sub  d]
+	jcc	l_38a7                             	| [jr   nc,$38A7]
+	bset.b	#1,(facing_direction,a2)        	| set direction left or right (depends on above) [set  1,(ix+facing_direction)]
+	neg.b	d0                               	| [neg]
+l_38a7:
+	sub.b	d1,d0                            	| [sub  b]
+	jcc	l_38b0                             	| [jr   nc,$38B0]
+	bset.b	#1,(facing_direction,a2)        	| [set  1,(ix+facing_direction)]
+	jra	l_38b4                             	| [jr   $38B4]
+l_38b0:
+	move.b	(facing_direction,a2),d7
+	lsr.b	#1,d7
+	move.b	d7,(facing_direction,a2)         	| [srl  (ix+facing_direction)]
+
+l_38b4:
+	bclr.b	#7,(0x1b,a2)                    	| [res  7,(ix+$1b)]
+	jbsr	l_38d6                            	| [call $38D6]
+	btst.b	#7,(0x1b,a2)                    	| [bit  7,(ix+$1b)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	subq.b	#1,(0x1b,a2)                    	| [dec  (ix+$1b)]
+	move.b	(0x1b,a2),d0                    	| [ld   a,(ix+$1b)]
+	and.b	#0x7F,d0                         	| [and  $7F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	#0x01,(ai_mode,a2)              	|  set A.I. mode to roaming mode [ld   (ix+ai_mode),$01]
+	rts                                    	| [ret]
+
+l_38ce:
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x03,d0                         	| [and  $03]
+	move.b	d0,(facing_direction,a2)        	| [ld   (ix+facing_direction),a]
+
+l_38d6:
+	move.b	(move_period,a2),d0             	| [ld   a,(ix+move_period)]
+	move.b	d0,(instant_move_period,a2)     	| set snobee speed to normal speed [ld   (ix+instant_move_period),a]
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	(facing_direction,a2),d0        	| direction [ld   a,(ix+facing_direction)]
+	lea	is_grid_free_jump_table_43A1(pc),a1	| [ld   de,is_grid_free_jump_table_43A1]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+ * there is a block in front the snobee way. which one?
+	cmp.b	#0x10,d0                         	| [cp   $10]
+	jcs	l_38f0                             	| [jr   c,$38F0]
+	cmp.b	#0x16,d0                         	| [cp   $16]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+l_38f0:
+	move.b	(move_period,a2),d0             	| [ld   a,(ix+move_period)]
+	add.b	#0x18,d0                         	| [add  a,$18]
+	move.b	d0,(instant_move_period,a2)     	| [ld   (ix+instant_move_period),a]
+	jbsr	move_snobee_current_direction_4378	| [call move_snobee_current_direction_4378]
+	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
+	move.b	#0x1C,d0                        	| [ld   a,$1C]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	jeq	l_38ce                             	| [jr   z,$38CE]
+	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
+	jcs	l_38ce                             	| [jr   c,$38CE]
+	bset.b	#7,(0x1b,a2)                    	| [set  7,(ix+$1b)]
+	jra	find_breaking_block_free_slot_42c6                             	| [jp   $42C6]
+
+is_upper_grid_free_390F:
+	subq.b	#1,d1                           	| [dec  b]
+l_3910:
+	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	cmp.b	#0x20,d0                         	| [cp   $20]
+	rts                                    	| [ret]
+
+is_lower_grid_free_3917:
+	addq.b	#2,d1                           	| [inc  b]
+	                           	| [inc  b]
+	jra	l_3910                             	| [jr   $3910]
+is_left_grid_free_391B:
+	subq.b	#1,d2                           	| [dec  c]
+	jra	l_3910                             	| [jr   $3910]
+is_right_grid_free_391E:
+	addq.b	#2,d2                           	| [inc  c]
+	                           	| [inc  c]
+	jra	l_3910                             	| [jr   $3910]
+
+snobee_try_to_move_up_3922:
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	cmp.b	#0x11,d0                         	| [cp   $11]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	subq.b	#1,(y_pos,a2)                   	| [dec  (ix+y_pos)]
+	rts                                    	| [ret]
+
+snobee_try_to_move_down_392C:
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	cmp.b	#0xF0,d0                         	| [cp   $F0]
+	bcs.b	0f
+	rts                                    	| [ret  nc]
+0:
+	addq.b	#1,(y_pos,a2)                   	| [inc  (ix+y_pos)]
+	rts                                    	| [ret]
+
+snobee_try_to_move_left_3936:
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	cmp.b	#0x19,d0                         	| [cp   $19]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	subq.b	#1,(x_pos,a2)                   	| [dec  (ix+x_pos)]
+	rts                                    	| [ret]
+
+snobee_try_to_move_right_3940:
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	cmp.b	#0xD8,d0                         	| [cp   $D8]
+	bcs.b	0f
+	rts                                    	| [ret  nc]
+0:
+	addq.b	#1,(x_pos,a2)                   	| [inc  (ix+x_pos)]
+	rts                                    	| [ret]
+
 animate_pengo_39A4:
 	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
-	tst.b	d0                               	| [and  a]
 	bne.b	0f
 	rts                                    	| returns if a == 0 [ret  z]
 0:
@@ -4459,7 +5494,6 @@ animate_pengo_39A4:
 
 l_3957:
 	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
-	tst.b	d0                               	| [and  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
@@ -4469,8 +5503,8 @@ l_3957:
 	rts                                    	| [ret  nz]
 0:
  * counter 1 out of 32 snobees animation moves
-	addq.b	#1,(0x0c,a2)                    	| [inc  (ix+$0c)]
-	move.b	(0x0c,a2),d0                    	| [ld   a,(ix+$0c)]
+	addq.b	#1,(alive_walk_counter,a2)      	| [inc  (ix+alive_walk_counter)]
+	move.b	(alive_walk_counter,a2),d0      	| [ld   a,(ix+alive_walk_counter)]
 	and.b	#0x03,d0                         	| [and  $03]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -4489,14 +5523,14 @@ l_396b:
 	jcc	l_3985                             	| [jr   nc,$3985]
 	move.b	#0x12,d1                        	| [ld   b,$12]
 l_3985:
-	addq.b	#1,(0x0c,a2)                    	| [inc  (ix+$0c)]
+	addq.b	#1,(alive_walk_counter,a2)      	| [inc  (ix+alive_walk_counter)]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
 	jne	l_3990                             	| [jr   nz,$3990]
 	subq.b	#1,d0                           	| [dec  a]
 l_3990:
 	add.b	d0,d0                            	| [add  a,a]
-	btst.b	#2,(0x0c,a2)                    	| [bit  2,(ix+$0c)]
+	btst.b	#2,(alive_walk_counter,a2)      	| [bit  2,(ix+alive_walk_counter)]
 	jne	l_3998                             	| [jr   nz,$3998]
 	addq.b	#1,d0                           	| [inc  a]
 l_3998:
@@ -4510,12 +5544,623 @@ l_3998:
 	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
 display_character_sprite_39AB:
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
-	move.l	a2,-(sp)                        	| [push ix]
-	move.l	(sp)+,a0                        	| [pop  hl]
+
+	move.l	a2,a0                        	| [push ix]+[pop  hl]
 	jbsr	display_character_sprite_318A     	| [call display_character_sprite_318A]
 	rts                                    	| [ret]
-	
-	
+
+
+_04_snobee_stunned_39B5:
+	jbsr	l_39d1                            	| [call $39D1]
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_39c3                            	| [call z,$39C3]
+0:
+	jbsr	l_338e                            	| [call $338E]
+	rts                                    	| [ret]
+
+l_39c3:
+	move.b	#0x05,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$05]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	move.b	#0x06,d1                        	| [ld   b,$06]
+	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	rts                                    	| [ret]
+
+l_39d1:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	and.b	#0x7F,d0                         	| [and  $7F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * counter 1 out of 128 xxx
+	move.b	#0x60,d0                        	| [ld   a,$60]
+	addq.b	#1,(alive_walk_counter,a2)      	| [inc  (ix+alive_walk_counter)]
+	btst.b	#0,(alive_walk_counter,a2)      	| [bit  0,(ix+alive_walk_counter)]
+	jne	l_39e4                             	| [jr   nz,$39E4]
+	move.b	#0x64,d0                        	| [ld   a,$64]
+l_39e4:
+	btst.b	#0,(facing_direction,a2)        	| [bit  0,(ix+facing_direction)]
+	jeq	l_39ec                             	| [jr   z,$39EC]
+	bset.b	#1,d0                           	| [set  1,a]
+l_39ec:
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	rts                                    	| [ret]
+
+_05_snobee_blinking_stunned_39F3:
+	jbsr	l_39d1                            	| [call $39D1]
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_3a01                            	| [call z,$3A01]
+0:
+	jbsr	l_3a0a                            	| [call $3A0A]
+	rts                                    	| [ret]
+
+l_3a01:
+	move.b	#0x08,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$08]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	rts                                    	| [ret]
+
+l_3a0a:
+	move.b	counter_lsb_8824,d0             	| count mask [ld   a,(counter_lsb_8824)]
+	tst.b	d0                               	| [and  a]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(stunned_push_block_counter,a2),d0	| [ld   a,(ix+stunned_push_block_counter)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_3a2e                             	|  end of stun [jr   z,$3A2E]
+	move.b	d0,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),a]
+	move.b	#0x09,d1                        	| [ld   b,$09]
+	btst.b	#0,d0                           	| [bit  0,a]
+	jne	l_3a27                             	| [jr   nz,$3A27]
+	jbsr	get_level_number_288F             	| [call get_level_number_288F]
+	subq.b	#1,d0                           	| [dec  a]
+	and.b	#0x07,d0                         	| [and  $07]
+	addq.b	#0x01,d0                        	| [add  a,$01]
+	move.b	d0,d1                           	| [ld   b,a]
+l_3a27:
+	move.b	d1,(char_color,a2)              	| [ld   (ix+char_color),b]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	rts                                    	| [ret]
+ * no longer stunned
+l_3a2e:
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	move.b	#0x03,d1                        	| [ld   b,$03]
+	cmp.b	#0x18,d0                         	| [cp   $18]
+	jeq	l_3a52                             	| [jr   z,$3A52]
+	move.b	#0x02,d1                        	| [ld   b,$02]
+	cmp.b	#0xD8,d0                         	| [cp   $D8]
+	jeq	l_3a52                             	| [jr   z,$3A52]
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	move.b	#0x01,d1                        	| [ld   b,$01]
+	cmp.b	#0x10,d0                         	| [cp   $10]
+	jeq	l_3a52                             	| [jr   z,$3A52]
+	clr.b	d1                               	| [ld   b,$00]
+	cmp.b	#0xF0,d0                         	| [cp   $F0]
+	jeq	l_3a52                             	| [jr   z,$3A52]
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x03,d0                         	| [and  $03]
+	move.b	d0,d1                           	| [ld   b,a]
+l_3a52:
+	move.b	d1,(facing_direction,a2)        	| [ld   (ix+facing_direction),b]
+	jbsr	get_level_number_288F             	| [call get_level_number_288F]
+	subq.b	#1,d0                           	| [dec  a]
+	and.b	#0x07,d0                         	| [and  $07]
+	addq.b	#0x01,d0                        	| [add  a,$01]
+	move.b	d0,(char_color,a2)              	| [ld   (ix+char_color),a]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	move.b	#0x02,(ai_mode,a2)              	| wake up from "stunned" -> A.I. mode set to breaking block mode [ld   (ix+ai_mode),$02]
+	move.b	#0x02,(char_state,a2)           	| set state to "alive" [ld   (ix+char_state),$02]
+	rts                                    	| [ret]
+
+_06_stunned_picked_3A6C:
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_3a77                            	| [call z,$3A77]
+0:
+	jbsr	l_3a92                            	| [call $3A92]
+	rts                                    	| [ret]
+
+l_3a77:
+	move.b	#0x08,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$08]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	move.b	#0x80,(animation_frame,a2)      	| [ld   (ix+animation_frame),$80]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	lea	0x000A(pc),a1                      	| [ld   de,$000A]
+	jbsr	add_to_current_player_score_28AF                            	| [call $28AF]
+	move.b	#0x02,d1                        	| [ld   b,$02]
+	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	rts                                    	| [ret]
+
+l_3a92:
+	move.b	counter_lsb_8824,d0             	|  count mask [ld   a,(counter_lsb_8824)]
+	tst.b	d0                               	| [and  a]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(stunned_push_block_counter,a2),d0	| [ld   a,(ix+stunned_push_block_counter)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_3aa1                             	| [jr   z,$3AA1]
+	move.b	d0,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),a]
+	rts                                    	| [ret]
+l_3aa1:
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	lea	remaining_alive_snobees_8D98(pc),a0	| [ld   hl,remaining_alive_snobees_8D98]
+	subq.b	#1,(a0)                         	| one snobee less [dec  (hl)]
+	rts                                    	| [ret]
+
+
+_03_snobee_aligns_for_stunned_3AAD:
+	addq.b	#1,(current_period_counter,a2)  	|  slow down [inc  (ix+current_period_counter)]
+	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
+	cmp.b	(instant_move_period,a2),d0      	| [cp   (ix+instant_move_period)]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	cmp.b	#0x08,d0                         	| [cp   $08]
+	jne	l_3ad3                             	| [jr   nz,$3AD3]
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	jne	l_3ad3                             	| [jr   nz,$3AD3]
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	addq.b	#1,(char_state,a2)              	| next state (stunned) [inc  (ix+char_state)]
+	rts                                    	| [ret]
+l_3ad3:
+	jbsr	move_snobee_forward_33B9          	| [call move_snobee_forward_33B9]
+	rts                                    	| [ret]
+
+l_3ad7:
+	move.b		moving_block_struct_8DA0,d2 	| [ld   bc,(moving_block_struct_8DA0)]
+	move.b		moving_block_struct_8DA0+1,d1 	| [ld   bc,(moving_block_struct_8DA0)]
+	move.b	moving_block_struct_8DA0+4,d0   	| [ld   a,(moving_block_struct_8DA0+4)]
+	lea	jump_table_3B2A(pc),a1             	| [ld   de,jump_table_3B2A]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	move.b	d2,(x_pos,a2)                   	| [ld   (ix+x_pos),c]
+	move.b	d1,(y_pos,a2)                   	| [ld   (ix+y_pos),b]
+	move.b	moving_block_struct_8DA0+4,d0   	| [ld   a,(moving_block_struct_8DA0+4)]
+	move.b	d0,(facing_direction,a2)        	| [ld   (ix+facing_direction),a]
+	and.b	#0x02,d0                         	| [and  $02]
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	moving_block_struct_8DA0+4,d0   	| [ld   a,(moving_block_struct_8DA0+4)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x01,d0                         	| [and  $01]
+	or.b	d1,d0                             	| [or   b]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+	jne	l_3aff                             	| [jr   nz,$3AFF]
+	subq.b	#1,d0                           	| [dec  a]
+l_3aff:
+	add.b	d0,d0                            	| [add  a,a]
+	add.b	#0x12,d0                         	| [add  a,$12]
+	rol.b	#1,d0                            	| [rlca]
+	rol.b	#1,d0                            	| [rlca]
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	cmp.b	#0x02,d0                         	| [cp   $02]
+	jne	l_3b12                             	| [jr   nz,$3B12]
+	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
+l_3b12:
+	move.b	#0x03,(instant_move_period,a2)  	| [ld   (ix+instant_move_period),$03]
+	move.b	moving_block_struct_8DA0+7,d0   	| [ld   a,(moving_block_struct_8DA0+7)]
+	move.b	d0,(current_period_counter,a2)  	| [ld   (ix+current_period_counter),a]
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	rts                                    	| [ret]
+* jump table
+jump_table_3B2A:
+	.long	ice_block_hits_snobee_up_3B32
+	.long	ice_block_hits_snobee_down_3B37
+	.long	ice_block_hits_snobee_left_3B3C
+	.long	ice_block_hits_snobee_right_3B41
+
+ice_block_hits_snobee_up_3B32:
+	move.b	d1,d0                           	| [ld   a,b]
+	sub.b	#0x10,d0                         	| [sub  $10]
+	move.b	d0,d1                           	| [ld   b,a]
+	rts                                    	| [ret]
+
+ice_block_hits_snobee_down_3B37:
+	move.b	d1,d0                           	| [ld   a,b]
+	add.b	#0x10,d0                         	| [add  a,$10]
+	move.b	d0,d1                           	| [ld   b,a]
+	rts                                    	| [ret]
+
+ice_block_hits_snobee_left_3B3C:
+	move.b	d2,d0                           	| [ld   a,c]
+	sub.b	#0x10,d0                         	| [sub  $10]
+	move.b	d0,d2                           	| [ld   c,a]
+	rts                                    	| [ret]
+
+ice_block_hits_snobee_right_3B41:
+	move.b	d2,d0                           	| [ld   a,c]
+	add.b	#0x10,d0                         	| [add  a,$10]
+	move.b	d0,d2                           	| [ld   c,a]
+	rts                                    	| [ret]
+
+l_3b46:
+	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
+	tst.b	d0                               	| [and  a]
+	jeq	l_3b5e                             	| [jr   z,$3B5E]
+	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
+	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
+	cmp.b	(instant_move_period,a2),d0      	| [cp   (ix+instant_move_period)]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
+	jbsr	move_snobee_forward_33B9          	| [call move_snobee_forward_33B9]
+	rts                                    	| [ret]
+
+l_3b5e:
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+	jne	l_3b66                             	| [jr   nz,$3B66]
+	subq.b	#1,d0                           	| [dec  a]
+l_3b66:
+	add.b	d0,d0                            	| [add  a,a]
+	add.b	#0x0C,d0                         	| [add  a,$0C]
+	rol.b	#1,d0                            	| [rlca]
+	rol.b	#1,d0                            	| [rlca]
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+	jne	l_3b79                             	| [jr   nz,$3B79]
+	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
+l_3b79:
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	rts                                    	| [ret]
+l_3b7d:
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_3b88                            	| [call z,$3B88]
+0:
+	jbsr	l_338e                            	| [call $338E]
+	rts                                    	| [ret]
+l_3b88:
+	move.b	#0x01,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$01]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+	jne	l_3b98                             	| [jr   nz,$3B98]
+	subq.b	#1,d0                           	| [dec  a]
+l_3b98:
+	add.b	d0,d0                            	| [add  a,a]
+	addq.b	#1,d0                           	| [inc  a]
+	add.b	#0x0C,d0                         	| [add  a,$0C]
+	rol.b	#1,d0                            	| [rlca]
+	rol.b	#1,d0                            	| [rlca]
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	cmp.b	#0x03,d0                         	| [cp   $03]
+	jne	l_3bac                             	| [jr   nz,$3BAC]
+	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
+l_3bac:
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
+	rts                                    	| [ret]
+l_3bb4:
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_3bbf                            	| [call z,$3BBF]
+0:
+	jbsr	l_3c22                            	| [call $3C22]
+	rts                                    	| [ret]
+l_3bbf:
+	move.b	#0x04,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$04]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	move.b	(0x1a,a2),d0                    	| [ld   a,(ix+$1a)]
+	tst.b	d0                               	| [and  a]
+	jne	l_3bd9                             	| [jr   nz,$3BD9]
+	clr.b	(x_pos,a2)                       	| [ld   (ix+x_pos),$00]
+	clr.b	(y_pos,a2)                       	| [ld   (ix+y_pos),$00]
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	rts                                    	| [ret]
+l_3bd9:
+	jbsr	l_3bee                            	| [call $3BEE]
+	jbsr	l_3c09                            	| [call $3C09]
+	addq.b	#1,(x_pos,a2)                   	| [inc  (ix+x_pos)]
+	addq.b	#1,(y_pos,a2)                   	| [inc  (ix+y_pos)]
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	#0x13,d0                        	| [ld   a,$13]
+	jbsr	set_2x2_tile_color_4BC4           	| [call set_2x2_tile_color_4BC4]
+	rts                                    	| [ret]
+l_3bee:
+	move.b	(0x1a,a2),d0                    	| [ld   a,(ix+$1a)]
+	subq.b	#1,d0                           	| [dec  a]
+	add.b	d0,d0                            	| [add  a,a]
+	clr.w	d3                               	| [ld   d,$00]
+	move.b	d0,d3                           	| [ld   e,a]
+	lea	table_3C01(pc),a0                  	| [ld   hl,table_3C01]
+	add.w	d3,a0							| [add  hl,de]
+	move.b	(a0),d4                         	| [ld   e,(hl)]
+	addq.w	#1,a0                           	| [inc  hl]
+	move.b	(a0),d3                         	| [ld   d,(hl)]
+	jbsr	add_to_current_player_score_28AF                            	| [call $28AF]
+	rts                                    	| [ret]
+
+table_3C01:
+	.byte	0x28,0x00,0xA0,0x00,0x40,0x01,0x80,0x02
+
+l_3c09:
+	move.b	(0x1a,a2),d0                    	| [ld   a,(ix+$1a)]
+	and.b	#0x07,d0                         	| [and  $07]
+	subq.b	#1,d0                           	| [dec  a]
+	clr.w	d3                               	| [ld   d,$00]
+	move.b	d0,d3                           	| [ld   e,a]
+	lea	table_3C1E(pc),a0                  	| [ld   hl,table_3C1E]
+	add.w	d3,a0							| [add  hl,de]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	rts                                    	| [ret]
+
+table_3C1E:
+	.byte	0x84,0x88,0x8C,0x90
+
+
+l_3c22:
+	move.b	counter_lsb_8824,d0             	|  count mask [ld   a,(counter_lsb_8824)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(stunned_push_block_counter,a2),d0	| [ld   a,(ix+stunned_push_block_counter)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_3c31                             	| [jr   z,$3C31]
+	move.b	d0,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),a]
+	rts                                    	| [ret]
+l_3c31:
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	lea	remaining_alive_snobees_8D98(pc),a0	| [ld   hl,remaining_alive_snobees_8D98]
+	subq.b	#1,(a0)                         	| [dec  (hl)]
+	lea	timer_16_bit_8DDE+1(pc),a0         	| [ld   hl,timer_16_bit_8DDE+1]
+	move.b	#0x80,(a0)                      	| [ld   (hl),$80]
+	subq.b	#1,a0                           	| [dec  hl]
+	move.b	#0x08,(a0)                      	| [ld   (hl),$08]
+	rts                                    	| [ret]
+l_3c4b:
+	lea	current_nb_eggs_to_hatch_8DDD(pc),a0	| [ld   hl,current_nb_eggs_to_hatch_8DDD]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	tst.b	d0                               	| [and  a]
+	jne	l_3c6c                             	| [jr   nz,$3C6C]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	jbsr	get_level_number_288F             	| [call get_level_number_288F]
+	subq.b	#1,d0                           	| [dec  a]
+	ror.b	#2,d0                            	| [rrca]
+												| [rrca]
+	and.b	#0x03,d0                         	| [and  $03]
+	addq.b	#0x04,d0                        	| [add  a,$04]
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	remaining_alive_snobees_8D98,d0 	| [ld   a,(remaining_alive_snobees_8D98)]
+	cmp.b	d1,d0                            	| [cp   b]
+	bcs.b	0f
+	rts                                    	| [ret  nc]
+0:
+	move.b	#0x04,d0                        	| [ld   a,$04]
+	move.b	d0,game_phase_8CBB              	| [ld   (game_phase_8CBB),a]
+	rts                                    	| [ret]
+
+l_3c6c:
+	subq.b	#1,(a0)                         	| [dec  (hl)]
+	lea	egg_location_table_8DC2(pc),a0     	| [ld   hl,egg_location_table_8DC2]
+l_3c70:
+	move.b	(a0)+,d2                         	| [ld   c,(hl)]
+	                           	| [inc  hl]
+	move.b	(a0)+,d1                         	| [ld   b,(hl)]
+	                           	| [inc  hl]
+	move.b	d1,d0                           	| [ld   a,b]
+	add.b	d2,d0                            	| [add  a,c]
+	jeq	l_3c70                             	| [jr   z,$3C70]
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	jbsr	find_breaking_block_free_slot_42c6                            	| [call $42C6]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	jbsr	l_3cde                            	| [call $3CDE]
+	move.b	d2,(x_pos,a2)                   	| [ld   (ix+x_pos),c]
+	move.b	d1,(y_pos,a2)                   	| [ld   (ix+y_pos),b]
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	move.b	#0xDC,(animation_frame,a2)      	| [ld   (ix+animation_frame),$DC]
+	jbsr	get_level_number_288F             	| [call get_level_number_288F]
+	subq.b	#1,d0                           	| [dec  a]
+	and.b	#0x07,d0                         	| [and  $07]
+	addq.b	#1,d0                           	| [inc  a]
+	move.b	d0,(char_color,a2)              	|  sets color [ld   (ix+char_color),a]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	move.b	(move_period,a2),d0             	| [ld   a,(ix+move_period)]
+	move.b	d0,(instant_move_period,a2)     	| [ld   (ix+instant_move_period),a]
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	move.b	#0x06,(intermission_dance_push_anim_counter,a2)	| [ld   (ix+intermission_dance_push_anim_counter),$06]
+	jbsr	get_random_value_2D7C             	| [call get_random_value_2D7C]
+	and.b	#0x07,d0                         	| [and  $07]
+	addq.b	#1,d0                           	| [inc  a]
+ * called when egg hatch
+	move.b	d0,(ai_mode,a2)                 	| sets A.I. mode at random from 1 to 8 [ld   (ix+ai_mode),a]
+	move.b	#0x14,(0x1b,a2)                 	| [ld   (ix+$1b),$14]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	move.b	#0x03,d1                        	| [ld   b,$03]
+	jbsr	update_sound_18c7                            	| [call $18C7]
+	lea	snobee_1_struct_8D00+0x1E(pc),a0   	| A.I. mode [ld   hl,snobee_1_struct_8D00+$1E]
+												| [ld   de,$0020]
+	move.b	#0x04,d1                        	| [ld   b,$04]
+	move.b	#0x02,d0                        	| [ld   a,$02]
+l_3cc7:
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+ * no snobee is in "block breaking mode"
+	add.w	#0x20,a0							| [add  hl,de]
+	subq.b	#1,d1                           	| [...]
+	jne	l_3cc7                             	| [djnz $3CC7]
+	lea	snobee_1_struct_8D00+0x1F(pc),a0   	| state [ld   hl,snobee_1_struct_8D00+$1F]
+	move.b	#0x04,d1                        	| [ld   b,$04]
+	move.b	#0x02,d0                        	| [ld   a,$02]
+l_3cd3:
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	jeq	l_3cda                             	| [jr   z,$3CDA]
+	add.w	#0x20,a0							| [add  hl,de]
+	subq.b	#1,d1                           	| [...]
+	jne	l_3cd3                             	| [djnz $3CD3]
+	rts                                    	| [ret]
+l_3cda:
+										| [dec  hl]
+ * change first alive snobee A.I. mode to "block breaking mode"
+ * when a new egg has hatched
+	move.b	#0x02,-(a0)                      	|  changes A.I. mode to block breaking mode [ld   (hl),$02]
+	rts                                    	| [ret]
+l_3cde:
+	move.b	d1,d0                           	| [ld   a,b]
+	rol.b	#3,d0                            	| [rlca]
+												| [rlca]
+												| [rlca]
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	d2,d0                           	| [ld   a,c]
+	addq.b	#0x02,d0                        	| [add  a,$02]
+	rol.b	#3,d0                            	| [rlca]
+												| [rlca]
+												| [rlca]
+	move.b	d0,d2                           	| [ld   c,a]
+	rts                                    	| [ret]
+l_3ceb:
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_3cf6                            	| [call z,$3CF6]
+0:
+	jbsr	l_3cff                            	| [call $3CFF]
+	rts                                    	| [ret]
+l_3cf6:
+	move.b	#0x04,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$04]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	rts                                    	| [ret]
+l_3cff:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	and.b	#0x3F,d0                         	| [and  $3F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * counter 1 out of 64 xxx
+	move.b	(stunned_push_block_counter,a2),d0	| [ld   a,(ix+stunned_push_block_counter)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_3d0f                             	| [jr   z,$3D0F]
+	move.b	d0,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),a]
+	rts                                    	| [ret]
+l_3d0f:
+	move.b	(intermission_dance_push_anim_counter,a2),d0	| [ld   a,(ix+intermission_dance_push_anim_counter)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_3d28                             	| [jr   z,$3D28]
+	move.b	d0,(intermission_dance_push_anim_counter,a2)	| [ld   (ix+intermission_dance_push_anim_counter),a]
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	move.b	(animation_frame,a2),d0         	| [ld   a,(ix+animation_frame)]
+	subq.b	#0x04,d0                        	| [sub  $04]
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	rts                                    	| [ret]
+l_3d28:
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	rts                                    	| [ret]
+l_3d2c:
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_3cf6                            	| [call z,$3CF6]
+0:
+	jbsr	l_3d37                            	| [call $3D37]
+	rts                                    	| [ret]
+l_3d37:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	and.b	#0x3F,d0                         	| [and  $3F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * counter 1 out of 64 xxx
+	move.b	(stunned_push_block_counter,a2),d0	| [ld   a,(ix+stunned_push_block_counter)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_3d47                             	| [jr   z,$3D47]
+	move.b	d0,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),a]
+	rts                                    	| [ret]
+l_3d47:
+	move.b	(intermission_dance_push_anim_counter,a2),d0	| [ld   a,(ix+intermission_dance_push_anim_counter)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_3d60                             	| [jr   z,$3D60]
+	move.b	d0,(intermission_dance_push_anim_counter,a2)	| [ld   (ix+intermission_dance_push_anim_counter),a]
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	move.b	(animation_frame,a2),d0         	| [ld   a,(ix+animation_frame)]
+	addq.b	#0x04,d0                        	| [add  a,$04]
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	rts                                    	| [ret]
+l_3d60:
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	lea	remaining_alive_snobees_8D98(pc),a0	| [ld   hl,remaining_alive_snobees_8D98]
+	subq.b	#1,(a0)                         	| [dec  (hl)]
+	clr.b	(x_pos,a2)                       	| [ld   (ix+x_pos),$00]
+	clr.b	(y_pos,a2)                       	| [ld   (ix+y_pos),$00]
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	rts                                    	| [ret]
+
+
+pengo_moves_3D73:
+	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
+	lea	table_3D80(pc),a1                  	| [ld   de,table_3D80]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+
+table_3D80:
+	.long	do_nothing_3358
+	.long	pengo_not_moving_3D90
+	.long	pengo_nominal_move_3DBF
+	.long	pengo_pushes_block_3FE9
+	.long	pengo_breaks_block_4053
+	.long	pengo_shakes_wall_409A
+	.long	pengo_dies_3FB3
+	.long	reset_state_to_default_3368
+
+pengo_not_moving_3D90:
+	jbsr	animate_pengo_39A4                	| [call animate_pengo_39A4]
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_3d9e                            	| [call z,$3D9E]
+0:
+	jbsr	l_3da7                            	| [call $3DA7]
+	rts                                    	| [ret]
+l_3d9e:
+	move.b	#0x02,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$02]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	rts                                    	| [ret]
+l_3da7:
+	move.b	counter_lsb_8824,d0             	|  count mask [ld   a,(counter_lsb_8824)]
+	tst.b	d0                               	| [and  a]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(stunned_push_block_counter,a2),d0	| [ld   a,(ix+stunned_push_block_counter)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_3db6                             	| [jr   z,$3DB6]
+	move.b	d0,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),a]
+	rts                                    	| [ret]
+l_3db6:
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	move.b	#0x02,(char_state,a2)           	| [ld   (ix+char_state),$02]
+	rts                                    	| [ret]
+
+pengo_nominal_move_3DBF:
+	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	jbsr	animate_pengo_39A4                	| [call animate_pengo_39A4]
+	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
+	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
+	cmp.b	(instant_move_period,a2),d0      	| [cp   (ix+instant_move_period)]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+ * can move
+	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
+	jbsr	l_3e06            	
 move_character_according_to_direction_3DD7:
 	pea	l_3de4(pc)                      	| [ld   hl,$3DE4]
 											| [push hl]
@@ -4554,32 +6199,123 @@ pengo_goes_right_3E02:
 	addq.b	#1,(x_pos,a2)                   	| [inc  (ix+x_pos)]
 	rts                                    	| [ret]
 
+l_3e06:
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	cmp.b	#0x08,d0                         	| [cp   $08]
+	jne	l_3e16                             	| [jr   nz,$3E16]
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	jeq	l_3e1a                             	| [jr   z,$3E1A]
+l_3e16:
+	jbsr	l_3ea6                            	| [call $3EA6]
+	rts                                    	| [ret]
+l_3e1a:
+	jbsr	l_3ef4                            	| [call $3EF4]
+	jbsr	l_3f80                            	| [call $3F80]
+	btst.b	#0,(0x08,a2)                    	| [bit  0,(ix+$08)]
+	jeq	l_3e5c                             	| [jp   z,$3E5C]
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	lea	table_3E36(pc),a1                  	| [ld   de,table_3E36]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+l_3E33: 
+	.byte	0x40,0xE1,0x41,0x00		| unused?
+
+table_3E36:
+	.long	pengo_moves_up_3E3E
+	.long	pengo_moves_down_3E5E
+	.long	pengo_moves_left_3E67
+	.long	pengo_moves_right_3E6F
+
+pengo_moves_up_3E3E:
+	subq.b	#1,d1                           	| [dec  b]
+	jbsr	pengo_moves_xxx_3E44              	| [call pengo_moves_xxx_3E44]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	addq.b	#1,d2                           	| [inc  c]
+pengo_moves_xxx_3E44:
+	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	cmp.b	#0x20,d0                         	| [cp   $20]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	cmp.b	#0x80,d0                         	| [cp   $80]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	cmp.b	#0x90,d0                         	| [cp   $90]
+	jcs	l_3e5a                             	| [jr   c,$3E5A]
+	cmp.b	#0x98,d0                         	| [cp   $98]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	cmp.b	#0x9C,d0                         	| [cp   $9C]
+	jcs	l_3e5a                             	| [jr   c,$3E5A]
+	rts                                    	| [ret]
+l_3e5a:
+	cmp.b	d0,d0                            	| [cp   a]
+	rts                                    	| [ret]
+l_3e5c:
+	move.l	(sp)+,a0                        	| [pop  hl]
+	rts                                    	| [ret]
+
+pengo_moves_down_3E5E:
+	addq.b	#2,d1                           	| [inc  b]
+	                           	| [inc  b]
+	jbsr	pengo_moves_xxx_3E44              	| [call pengo_moves_xxx_3E44]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	addq.b	#1,d2                           	| [inc  c]
+	jra	pengo_moves_xxx_3E44               	| [jr   pengo_moves_xxx_3E44]
+
+pengo_moves_left_3E67:
+	subq.b	#1,d2                           	| [dec  c]
+	jbsr	pengo_moves_xxx_3E44              	| [call pengo_moves_xxx_3E44]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	addq.b	#1,d1                           	| [inc  b]
+	jra	pengo_moves_xxx_3E44               	| [jr   pengo_moves_xxx_3E44]
+
+pengo_moves_right_3E6F:
+	addq.b	#2,d2                           	| [inc  c]
+										| [inc  c]
+	jbsr	pengo_moves_xxx_3E44              	| [call pengo_moves_xxx_3E44]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	addq.b	#1,d1                           	| [inc  b]
+	jra	pengo_moves_xxx_3E44               	| [jr   pengo_moves_xxx_3E44]
 
 get_div8_ix_coords_3E78:
 	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
-	lsr.b	#1,d0                            	| [srl  a]
-	lsr.b	#1,d0                            	| [srl  a]
-	lsr.b	#1,d0                            	| [srl  a]
+	lsr.b	#3,d0                            	| [srl  a]
+											| [srl  a]
+											| [srl  a]
 	subq.b	#0x02,d0                        	| [sub  $02]
 	move.b	d0,d2                           	| [ld   c,a]
 	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
-	lsr.b	#1,d0                            	| [srl  a]
-	lsr.b	#1,d0                            	| [srl  a]
-	lsr.b	#1,d0                            	| [srl  a]
+	lsr.b	#3,d0                            	| [srl  a]
+												| [srl  a]
+												| [srl  a]
 	move.b	d0,d1                           	| [ld   b,a]
 	rts                                    	| [ret]
 
 get_div8_iy_coords_3E8F:
 	move.b	(0x00,a3),d0                    	| [ld   a,(iy+$00)]
-	lsr.b	#1,d0                            	| [srl  a]
-	lsr.b	#1,d0                            	| [srl  a]
-	lsr.b	#1,d0                            	| [srl  a]
+	lsr.b	#3,d0                            	| [srl  a]
+												| [srl  a]
+												| [srl  a]
 	subq.b	#0x02,d0                        	| [sub  $02]
 	move.b	d0,d2                           	| [ld   c,a]
 	move.b	(0x01,a3),d0                    	| [ld   a,(iy+$01)]
-	lsr.b	#1,d0                            	| [srl  a]
-	lsr.b	#1,d0                            	| [srl  a]
-	lsr.b	#1,d0                            	| [srl  a]
+	lsr.b	#3,d0                            	| [srl  a]
+												| [srl  a]
+												| [srl  a]
 	move.b	d0,d1                           	| [ld   b,a]
 	rts                                    	| [ret]
 
@@ -4716,7 +6452,93 @@ l_3f3c:
 	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
 	rts                                    	| [ret]
 	
-l_3ffa:
+l_3f80:
+	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
+	tst.b	d0                               	| [and  a]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+l_3f85:
+	jbsr	read_player_inputs_2AFB           	| [call read_player_inputs_2AFB]
+	not.b	d0                               	| [cpl]
+	btst.b	#7,d0                           	| [bit  7,a]
+	jeq	l_3fae                             	| [jr   z,$3FAE]
+	move.b	(0x0f,a2),d0                    	| [ld   a,(ix+$0f)]
+	addq.b	#1,d0                           	| [inc  a]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	move.b	#0xFF,(0x0f,a2)                 	| [ld   (ix+$0f),$FF]
+	lea	pengo_moving_direction_8CF4(pc),a0 	| [ld   hl,pengo_moving_direction_8CF4]
+	bset.b	#2,(a0)                         	| [set  2,(hl)]
+l_3f9b:
+	move.b	block_moving_flag_8DBF,d0       	| [ld   a,(block_moving_flag_8DBF)]
+	tst.b	d0                               	| [and  a]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	#0x01,d0                        	| [ld   a,$01]
+	move.b	d0,block_moving_flag_8DBF       	| [ld   (block_moving_flag_8DBF),a]
+	move.b	#0x03,(char_state,a2)           	| [ld   (ix+char_state),$03]
+	clr.b	(intermission_dance_push_anim_counter,a2)	| [ld   (ix+intermission_dance_push_anim_counter),$00]
+	rts                                    	| [ret]
+l_3fae:
+	clr.b	(0x0f,a2)                        	| [ld   (ix+$0f),$00]
+	rts                                    	| [ret]
+
+pengo_dies_3FB3:
+	move.b	#0x1E,d0                        	| [ld   a,$1E]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	jbsr	hide_snobee_sprites_3FDA          	| [call hide_snobee_sprites_3FDA]
+	move.b	#0x0C,d1                        	| [ld   b,$0C]
+	move.b	#0x1A,d2                        	| [ld   c,$1A]
+l_3fbf:
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	btst.b	#0,d1                           	| [bit  0,b]
+	jeq	l_3fc5                             	| [jr   z,$3FC5]
+	addq.b	#1,d2                           	| [inc  c]
+l_3fc5:
+	move.b	d2,d0                           	| [ld   a,c]
+	rol.b	#2,d0                            	| [rlca]
+												| [rlca]
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	move.b	#0x08,d0                        	| [ld   a,$08]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	subq.b	#1,d1                           	| [...]
+	jne	l_3fbf                             	| [djnz $3FBF]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	rts                                    	| [ret]
+
+hide_snobee_sprites_3FDA:
+	clr.b	d0                               	| [xor  a]
+* set sprite colors to zero for snobees
+	lea	sprite_ram_8FF2+1(pc),a0                  	| [ld   hl,sound_8FF3]
+	                      	| [ld   de,$0002]
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	addq.w	#2,a0								| [add  hl,de]
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	addq.w	#2,a0								| [add  hl,de]
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	addq.w	#2,a0								| [add  hl,de]
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	rts                                    	| [ret]
+
+pengo_pushes_block_3FE9:
+* 0->3: 3 max push pos
+	move.b	(intermission_dance_push_anim_counter,a2),d0	| [ld   a,(ix+intermission_dance_push_anim_counter)]
+	lea	table_3FF2(pc),a1                  	| [ld   de,table_3FF2]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+
+
+table_3FF2:
+	.long	block_pushed_3FFA
+	.long	block_pushed_start_404E
+	.long	block_pushed_401F
+	.long	block_pushed_start_404E
+	
+block_pushed_3FFA:
 	clr.b	d1                               	| [ld   b,$00]
 l_3ffc:
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
@@ -4736,10 +6558,10 @@ l_4004:
 	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
 l_4018:
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
-l_401f:
+block_pushed_401F:
 	move.b	#0x01,d1                        	| [ld   b,$01]
 	jra	l_3ffc                             	| [jr   $3FFC]
 l_4023:
@@ -4767,28 +6589,28 @@ l_4037:
 	rts                                    	| [ret]
 l_4046:
 	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
-l_404e:
+block_pushed_start_404E:
 	move.b	#0x02,(char_state,a2)           	| [ld   (ix+char_state),$02]
 	rts                                    	| [ret]
-l_4053:
-	move.b	(intermission_dance_counter,a2),d0	| [ld   a,(ix+intermission_dance_counter)]
+pengo_breaks_block_4053:
+	move.b	(intermission_dance_push_anim_counter,a2),d0	| [ld   a,(ix+intermission_dance_push_anim_counter)]
 	lea	table_405C(pc),a1                  	| [ld   de,table_405C]
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
 table_405C:
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
-	.long	l_3ffa
-	.long	l_406e
-	.long	l_401f
-	.long	l_406e
-	.long	l_404e
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
+	.long	block_pushed_3FFA
+	.long	block_broken_406E
+	.long	block_pushed_401F
+	.long	block_broken_406E
+	.long	block_pushed_start_404E
 
 
-l_406e:
+block_broken_406E:
 	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
 	bne	0f
 	jbsr	l_4079                            	| [call z,$4079]
@@ -4813,38 +6635,38 @@ l_4082:
 	rts                                    	| [ret]
 l_4092:
 	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
-	addq.b	#1,(intermission_dance_counter,a2)	| [inc  (ix+intermission_dance_counter)]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
-l_409a:
-	move.b	(intermission_dance_counter,a2),d0	| [ld   a,(ix+intermission_dance_counter)]
+pengo_shakes_wall_409A:
+	move.b	(intermission_dance_push_anim_counter,a2),d0	| [ld   a,(ix+intermission_dance_push_anim_counter)]
 	lea	jump_table_40A3(pc),a1             	| [ld   de,jump_table_40A3]
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
 
 jump_table_40A3:
-	.long	l_40b5
-	.long	l_406e
-	.long	l_40bc
-	.long	l_406e
-	.long	l_40b5
-	.long	l_406e
-	.long	l_40bc
-	.long	l_406e
-	.long	l_40c6
+	.long	wall_push_40B5
+	.long	block_broken_406E
+	.long	wall_push_40BC
+	.long	block_broken_406E
+	.long	wall_push_40B5
+	.long	block_broken_406E
+	.long	wall_push_40BC
+	.long	block_broken_406E
+	.long	wall_push_40C6
 
 
-l_40b5:
+wall_push_40B5:
 	jbsr	l_40d2                            	| [call $40D2]
-	jbsr	l_3ffa                            	| [call $3FFA]
+	jbsr	block_pushed_3FFA                            	| [call $3FFA]
 	rts                                    	| [ret]
 
-l_40bc:
+wall_push_40BC:
 	jbsr	l_40ce                            	| [call $40CE]
-	jbsr	l_401f                            	| [call $401F]
+	jbsr	block_pushed_401F                            	| [call $401F]
 	jbsr	pengo_is_moving_a_wall_4167       	| [call pengo_is_moving_a_wall_4167]
 	rts                                    	| [ret]
 
-l_40c6:
-	jbsr	l_2e6a                            	| [call $2E6A]
+wall_push_40C6:
+	jbsr	draw_borders_2E6A                            	| [call $2E6A]
 	move.b	#0x02,(char_state,a2)           	| [ld   (ix+char_state),$02]
 	rts                                    	| [ret]
 
@@ -4992,6 +6814,1495 @@ l_41b8:
 0:
 	jra	l_41a7                             	| [jr   $41A7]
 	
+pengo_block_push_41BE:
+	lea	moving_block_struct_8DA0(pc),a2    	| [ld   ix,moving_block_struct_8DA0]
+	lea	table_41CB(pc),a1                  	| [ld   de,table_41CB]
+	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+table_41CB:
+	.long	do_nothing_3358
+	.long	l_41d9
+	.long	l_43bd
+	.long	l_44e9
+	.long	l_4529
+	.long	disable_snobee_3359
+	.long	reset_state_to_default_3368
+
+
+l_41d9:
+
+	move.l	a2,-(sp)                        	| [push ix]
+	move.l	(sp)+,a3                        	| [pop  iy]
+	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	clr.b	(0x18,a3)                        	| [ld   (iy+$18),$00]
+	clr.b	(0x19,a3)                        	| [ld   (iy+$19),$00]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	lea	table_431A(pc),a1                  	| [ld   de,table_431A]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	jne	l_426c                             	| [jr   nz,$426C]
+	jbsr	move_snobee_current_direction_4378	| [call move_snobee_current_direction_4378]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	lea	is_grid_free_jump_table_43A1(pc),a1	| [ld   de,is_grid_free_jump_table_43A1]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	jeq	l_420f                             	| [jr   z,$420F]
+	cmp.b	#0x70,d0                         	| [cp   $70]
+	jcs	l_4294                             	| [jp   c,$4294]
+	cmp.b	#0x80,d0                         	| [cp   $80]
+	jcc	l_4294                             	| [jp   nc,$4294]
+l_420f:
+	jbsr	move_snobee_current_direction_4378	| [call move_snobee_current_direction_4378]
+	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
+	btst.b	#4,(0x18,a3)                    	| [bit  4,(iy+$18)]
+	beq	0f
+	jbsr	l_42f9                            	| [call nz,$42F9]
+0:
+	jbsr	l_425e                            	| [call $425E]
+	jbsr	move_snobee_current_direction_4378	| [call move_snobee_current_direction_4378]
+	move.b	d1,d0                           	| [ld   a,b]
+	rol.b	#1,d0                            	| [rlca]
+	rol.b	#1,d0                            	| [rlca]
+	rol.b	#1,d0                            	| [rlca]
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	d2,d0                           	| [ld   a,c]
+	addq.b	#0x02,d0                        	| [add  a,$02]
+	rol.b	#1,d0                            	| [rlca]
+	rol.b	#1,d0                            	| [rlca]
+	rol.b	#1,d0                            	| [rlca]
+	move.b	d0,d2                           	| [ld   c,a]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+
+	move.l	a3,-(sp)                        	| [push iy]
+	move.l	(sp)+,a2                        	| [pop  ix]
+	move.b	d0,(facing_direction,a2)        	| [ld   (ix+facing_direction),a]
+	move.b	d2,(x_pos,a2)                   	| [ld   (ix+x_pos),c]
+	move.b	d1,(y_pos,a2)                   	| [ld   (ix+y_pos),b]
+	jbsr	l_43db                            	| [call $43DB]
+	clr.b	(0x0f,a2)                        	| [ld   (ix+$0f),$00]
+	move.b	#0x70,d0                        	| [ld   a,$70]
+	btst.b	#4,(0x18,a2)                    	| [bit  4,(ix+$18)]
+	jeq	l_424f                             	| [jr   z,$424F]
+	move.b	#0x74,d0                        	| [ld   a,$74]
+l_424f:
+	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	move.b	#0x05,d1                        	| [ld   b,$05]
+	jbsr	l_18af                            	| [call $18AF]
+	rts                                    	| [ret]
+
+l_425e:
+	jbsr	l_42ef                            	| [call $42EF]
+	bcs.b	0f
+	rts                                    	| [ret  nc]
+0:
+	move.b	total_eggs_to_hatch_8DC0,d0     	| [ld   a,(total_eggs_to_hatch_8DC0)]
+	sub.b	d1,d0                            	| [sub  b]
+	bset.b	#7,d0                           	| [set  7,a]
+	move.b	d0,(0x19,a3)                    	| [ld   (iy+$19),a]
+	rts                                    	| [ret]
+l_426c:
+	move.b	#0x10,d0                        	| [ld   a,$10]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	jeq	l_4282                             	| [jr   z,$4282]
+	addq.b	#1,d0                           	| [inc  a]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	jeq	l_4282                             	| [jr   z,$4282]
+	move.b	#0x02,(char_state,a2)           	| [ld   (ix+char_state),$02]
+
+	move.l	a3,-(sp)                        	| [push iy]
+	move.l	(sp)+,a2                        	| [pop  ix]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	rts                                    	| [ret]
+l_4282:
+	move.b	#0x05,(char_state,a2)           	| [ld   (ix+char_state),$05]
+
+	move.l	a3,-(sp)                        	| [push iy]
+	move.l	(sp)+,a2                        	| [pop  ix]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	move.b	#0x03,d1                        	| [ld   b,$03]
+	jbsr	l_18af                            	| [call $18AF]
+	rts                                    	| [ret]
+l_4294:
+	move.b	#0x04,(char_state,a2)           	| [ld   (ix+char_state),$04]
+	btst.b	#4,(0x18,a3)                    	| [bit  4,(iy+$18)]
+	jeq	l_42a3                             	| [jr   z,$42A3]
+	clr.b	(0x1f,a3)                        	| [ld   (iy+$1f),$00]
+	rts                                    	| [ret]
+
+l_42a3:
+	jbsr	move_snobee_current_direction_4378	| [call move_snobee_current_direction_4378]
+
+	move.l	a3,-(sp)                        	| [push iy]
+	move.l	(sp)+,a2                        	| [pop  ix]
+	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	move.b	#0x02,d1                        	| [ld   b,$02]
+	jbsr	l_18af                            	| [call $18AF]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	jbsr	find_breaking_block_free_slot_42c6                            	| [call $42C6]
+	bset.b	#5,(a0)                         	| [set  5,(hl)]
+	btst.b	#6,(a0)                         	| [bit  6,(hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+* egg broken, decrease nb enemies and eggs
+	lea	remaining_alive_snobees_8D98(pc),a0	| [ld   hl,remaining_alive_snobees_8D98]
+	subq.b	#1,(a0)                         	| [dec  (hl)]
+	lea	current_nb_eggs_to_hatch_8DDD(pc),a0	| [ld   hl,current_nb_eggs_to_hatch_8DDD]
+	subq.b	#1,(a0)                         	| [dec  (hl)]
+	rts                                    	| [ret]
+
+find_breaking_block_free_slot_42c6:
+	lea	breaking_block_slots_8CC0(pc),a0   	| [ld   hl,breaking_block_slots_8CC0]
+	move.b	#0x05,d3                        	| [ld   d,$05]
+l_42cb:
+	* try to find free slot
+	btst.b	#7,(a0)                         	| [bit  7,(hl)]
+	jeq	l_42d9                             	| [jr   z,$42D9]
+	* not free: next slot
+	addq.w	#6,a0                           	| [inc  hl]
+												| [inc  hl]
+												| [inc  hl]
+												| [inc  hl]
+												| [inc  hl]
+												| [inc  hl]
+	subq.b	#1,d3                           	| [dec  d]
+	jne	l_42cb                             	| [jr   nz,$42CB]
+	rts                                    	| [ret]
+l_42d9:
+	move.b	#0x80,(a0)                      	| [ld   (hl),$80]
+
+	move.l	a0,-(sp)                        	| [push hl]
+	addq.w	#1,a0                           	| [inc  hl]
+	move.b	#0x09,(a0)+                      	| [ld   (hl),$09]
+	                           	| [inc  hl]
+	move.b	d2,(a0)+                         	| [ld   (hl),c]
+	                           	| [inc  hl]
+	move.b	d1,(a0)                         	| [ld   (hl),b]
+	addq.w	#2,a0                           	| [inc  hl]
+	                           	| [inc  hl]
+	move.b	#0x01,(a0)                      	| [ld   (hl),$01]
+	jbsr	l_42ef                            	| [call $42EF]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	tst.b	d7
+	bne.b	0f
+	rts                                    	| [ret  nc]
+0:
+	move.b	#0xC0,(a0)                      	| [ld   (hl),$C0]
+	rts                                    	| [ret]
+l_42ef:
+	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
+	bcs.b	0f
+	clr.b	d7
+	rts                                    	| [ret  nc]
+0:
+	clr.b	(a0)+                         	| [ld   (hl),a]
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	st.b	d7	| scf		; set carry flag
+	rts                                    	| [ret]
+l_42f9:
+	move.b	d1,d5                           	| [ld   h,b]
+	move.b	d2,d6                           	| [ld   l,c]
+	move.w	diamond_block_1_xy_8DB0(pc),a1  	| [ld   de,(diamond_block_1_xy_8DB0)]
+	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	addq.b	#1,(0x18,a3)                    	| [inc  (iy+$18)]
+	move.w	diamond_block_2_xy_8DB2(pc),a1  	| [ld   de,(diamond_block_2_xy_8DB2)]
+	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	addq.b	#1,(0x18,a3)                    	| [inc  (iy+$18)]
+	move.w	diamond_block_3_xy_8DB4(pc),a1  	| [ld   de,(diamond_block_3_xy_8DB4)]
+	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	rts                                    	| [ret]
+
+table_431A:
+	.long	l_4322
+	.long	l_4337
+	.long	l_434d
+	.long	l_4362
+
+	move.b	d0,d2                           	| [ld   c,a]
+	eor.b	d2,d0                            	| [xor  c]
+	move.b	#0x1A,d0                        	| [ld   a,$1A]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	bset.b	#4,(0x18,a3)                    	| [set  4,(iy+$18)]
+	move.b	#0x1E,d0                        	| [ld   a,$1E]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	bclr.b	#4,(0x18,a3)                    	| [res  4,(iy+$18)]
+	rts                                    	| [ret]
+l_4337:
+	addq.b	#1,d1                           	| [inc  b]
+	addq.b	#1,d1                           	| [inc  b]
+	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
+	move.b	#0x18,d0                        	| [ld   a,$18]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	bset.b	#4,(0x18,a3)                    	| [set  4,(iy+$18)]
+	move.b	#0x1C,d0                        	| [ld   a,$1C]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	bclr.b	#4,(0x18,a3)                    	| [res  4,(iy+$18)]
+	rts                                    	| [ret]
+l_434d:
+	subq.b	#1,d2                           	| [dec  c]
+	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
+	move.b	#0x19,d0                        	| [ld   a,$19]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	bset.b	#4,(0x18,a3)                    	| [set  4,(iy+$18)]
+	move.b	#0x1D,d0                        	| [ld   a,$1D]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	bclr.b	#4,(0x18,a3)                    	| [res  4,(iy+$18)]
+	rts                                    	| [ret]
+l_4362:
+	addq.b	#1,d2                           	| [inc  c]
+	addq.b	#1,d2                           	| [inc  c]
+	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
+	move.b	#0x18,d0                        	| [ld   a,$18]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	bset.b	#4,(0x18,a3)                    	| [set  4,(iy+$18)]
+	move.b	#0x1C,d0                        	| [ld   a,$1C]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	bclr.b	#4,(0x18,a3)                    	| [res  4,(iy+$18)]
+	rts                                    	| [ret]
+
+* < BC: X,Y of snobee
+move_snobee_current_direction_4378:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	(facing_direction,a2),d0        	| facing direction [ld   a,(ix+facing_direction)]
+	lea	table_4385(pc),a1                  	| [ld   de,table_4385]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	rts                                    	| [ret]
+
+table_4385:
+	.long	l_438d
+	.long	l_4392
+	.long	l_4397
+	.long	l_439c
+
+l_438d:
+	move.b	d1,d0                           	| [ld   a,b]
+	subq.b	#0x02,d0                        	| [sub  $02]
+	move.b	d0,d1                           	| [ld   b,a]
+	rts                                    	| [ret]
+
+l_4392:
+	move.b	d1,d0                           	| [ld   a,b]
+	addq.b	#0x02,d0                        	| [add  a,$02]
+	move.b	d0,d1                           	| [ld   b,a]
+	rts                                    	| [ret]
+
+l_4397:
+	move.b	d2,d0                           	| [ld   a,c]
+	subq.b	#0x02,d0                        	| [sub  $02]
+	move.b	d0,d2                           	| [ld   c,a]
+	rts                                    	| [ret]
+
+l_439c:
+	move.b	d2,d0                           	| [ld   a,c]
+	addq.b	#0x02,d0                        	| [add  a,$02]
+	move.b	d0,d2                           	| [ld   c,a]
+	rts                                    	| [ret]
+	
+is_grid_free_jump_table_43A1:
+	.long	is_upper_grid_free_390F
+	.long	is_lower_grid_free_3917
+	.long	is_left_grid_free_391B
+	.long	is_right_grid_free_391E
+
+clear_2x2_tiles_at_current_pos_43A9:
+	move.b	d2,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d1,cursor_y_8800                	| [ld   (cursor_x_8800),bc]
+	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
+	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
+	jbsr	move_cursor_2_291E                	| [call move_cursor_2_291E]
+	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
+	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
+	rts                                    	| [ret]
+
+l_43bd:
+	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
+	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
+	cmp.b	(instant_move_period,a2),d0      	| [cp   (ix+instant_move_period)]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
+	jbsr	l_43e5                            	| [call $43E5]
+	lea	0x43DB(pc),a0                      	| [ld   hl,$43DB]
+
+	move.l	a0,-(sp)                        	| [push hl]
+ * move snobee in the current direction
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	lea	snobee_move_table_33C6(pc),a1      	| [ld   de,snobee_move_table_33C6]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+
+l_43db:
+	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
+
+	move.l	a2,-(sp)                        	| [push ix]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	jbsr	display_sprite_3154               	| [call display_sprite_3154]
+	rts                                    	| [ret]
+
+l_43e5:
+	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	cmp.b	#0x08,d0                         	| [cp   $08]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(y_pos,a2),d0                   	| [ld   a,(ix+y_pos)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	jbsr	check_snobee_collisions_with_block_4431	| [call $check_snobee_collisions_with_block_4431]
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	lea	table_4385(pc),a1                  	| [ld   de,table_4385]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	lea	is_grid_free_jump_table_43A1(pc),a1	| [ld   de,is_grid_free_jump_table_43A1]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	cmp.b	#0x70,d0                         	| [cp   $70]
+	jcs	l_4413                             	| [jr   c,$4413]
+	cmp.b	#0x80,d0                         	| [cp   $80]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+l_4413:
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
+	lea	table_4385(pc),a1                  	| [ld   de,table_4385]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	clr.b	d0                               	| [ld   a,$00]
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	move.b	d2,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d1,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
+	move.b	#0x1C,d0                        	| [ld   a,$1C]
+	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
+	rts                                    	| [ret]
+
+check_snobee_collisions_with_block_4431:
+	lea	snobee_1_struct_8D00(pc),a3        	| [ld   iy,snobee_1_struct_8D00]
+	jbsr	snobee_collision_with_moving_block_test_444E	| [call snobee_collision_with_moving_block_test_444E]
+	lea	snobee_2_struct_8D20(pc),a3        	| [ld   iy,snobee_2_struct_8D20]
+	jbsr	snobee_collision_with_moving_block_test_444E	| [call snobee_collision_with_moving_block_test_444E]
+	lea	snobee_3_struct_8D40(pc),a3        	| [ld   iy,snobee_3_struct_8D40]
+	jbsr	snobee_collision_with_moving_block_test_444E	| [call snobee_collision_with_moving_block_test_444E]
+	lea	snobee_4_struct_8D60(pc),a3        	| [ld   iy,snobee_4_struct_8D60]
+	jbsr	snobee_collision_with_moving_block_test_444E	| [call snobee_collision_with_moving_block_test_444E]
+	rts                                    	| [ret]
+
+snobee_collision_with_moving_block_test_444E:
+	move.b	(0x1f,a3),d0                    	| [ld   a,(iy+$1f)]
+	tst.b	d0                               	| [and  a]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	cmp.b	#0x06,d0                         	| state = 0 or >= 06? don't test anything [cp   $06]
+	bcs.b	0f
+	rts                                    	| [ret  nc]
+0:
+
+ * state is "can collide with block"
+	move.b	(facing_direction,a2),d0        	| moving block direction (ix contains block struct) [ld   a,(ix+facing_direction)]
+	lea	table_445F(pc),a1                  	| [ld   de,table_445F]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+table_445F:
+	.long	go_up_test_4467                  	|  "go up" test
+	.long	go_down_test_448E                	|  "go down" test
+	.long	go_left_test_44A8                	|  "go left" test
+	.long	go_right_test_44CF               	|  "go right" test
+
+go_up_test_4467:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	d1,d3                           	| [ld   d,b]
+	move.b	d2,d4                           	| [ld   e,c]
+	jbsr	get_div8_iy_coords_3E8F           	| [call get_div8_iy_coords_3E8F]
+	move.b	d3,d0                           	| [ld   a,d]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	l_447f                             	| [jr   z,$447F]
+	addq.b	#1,d0                           	| [inc  a]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	l_447f                             	| [jr   z,$447F]
+	subq.b	#1,d0                           	| [dec  a]
+	subq.b	#1,d0                           	| [dec  a]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	l_447f                             	| [jr   z,$447F]
+	subq.b	#1,d0                           	| [dec  a]
+	cmp.b	d1,d0                            	| [cp   b]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+l_447f:
+	move.b	d4,d0                           	| [ld   a,e]
+	cmp.b	d2,d0                            	| [cp   c]
+	jeq	l_4486                             	| [jr   z,$4486]
+	subq.b	#1,d0                           	| [dec  a]
+	cmp.b	d2,d0                            	| [cp   c]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * snobee hit by block
+l_4486:
+	addq.b	#1,(0x0f,a2)                    	|  number of snobee hit by same block (for score) [inc  (ix+$0f)]
+	move.b	#0x09,(0x1f,a3)                 	| change snobee state to "pushed by block" [ld   (iy+$1f),$09]
+	rts                                    	| [ret]
+
+go_down_test_448E:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	d1,d3                           	| [ld   d,b]
+	move.b	d2,d4                           	| [ld   e,c]
+	jbsr	get_div8_iy_coords_3E8F           	| [call get_div8_iy_coords_3E8F]
+	move.b	d3,d0                           	| [ld   a,d]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	l_447f                             	| [jr   z,$447F]
+	subq.b	#1,d0                           	| [dec  a]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	l_447f                             	| [jr   z,$447F]
+	addq.b	#1,d0                           	| [inc  a]
+	addq.b	#1,d0                           	| [inc  a]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	l_447f                             	| [jr   z,$447F]
+	addq.b	#1,d0                           	| [inc  a]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	l_447f                             	| [jr   z,$447F]
+	rts                                    	| [ret]
+
+go_left_test_44A8:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	d1,d3                           	| [ld   d,b]
+	move.b	d2,d4                           	| [ld   e,c]
+	jbsr	get_div8_iy_coords_3E8F           	| [call get_div8_iy_coords_3E8F]
+	move.b	d4,d0                           	| [ld   a,e]
+	cmp.b	d2,d0                            	| [cp   c]
+	jeq	l_44c0                             	| [jr   z,$44C0]
+	addq.b	#1,d0                           	| [inc  a]
+	cmp.b	d2,d0                            	| [cp   c]
+	jeq	l_44c0                             	| [jr   z,$44C0]
+	subq.b	#1,d0                           	| [dec  a]
+	subq.b	#1,d0                           	| [dec  a]
+	cmp.b	d2,d0                            	| [cp   c]
+	jeq	l_44c0                             	| [jr   z,$44C0]
+	subq.b	#1,d0                           	| [dec  a]
+	cmp.b	d2,d0                            	| [cp   c]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+l_44c0:
+	move.b	d3,d0                           	| [ld   a,d]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	l_44c7                             	| [jr   z,$44C7]
+	subq.b	#1,d0                           	| [dec  a]
+	cmp.b	d1,d0                            	| [cp   b]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * hit by block
+l_44c7:
+	addq.b	#1,(0x0f,a2)                    	| [inc  (ix+$0f)]
+	move.b	#0x09,(0x1f,a3)                 	| [ld   (iy+$1f),$09]
+	rts                                    	| [ret]
+
+go_right_test_44CF:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	d1,d3                           	| [ld   d,b]
+	move.b	d2,d4                           	| [ld   e,c]
+	jbsr	get_div8_iy_coords_3E8F           	| [call get_div8_iy_coords_3E8F]
+	move.b	d4,d0                           	| [ld   a,e]
+	cmp.b	d2,d0                            	| [cp   c]
+	jeq	l_44c0                             	| [jr   z,$44C0]
+	subq.b	#1,d0                           	| [dec  a]
+	cmp.b	d2,d0                            	| [cp   c]
+	jeq	l_44c0                             	| [jr   z,$44C0]
+	addq.b	#1,d0                           	| [inc  a]
+	addq.b	#1,d0                           	| [inc  a]
+	cmp.b	d2,d0                            	| [cp   c]
+	jeq	l_44c0                             	| [jr   z,$44C0]
+	addq.b	#1,d0                           	| [inc  a]
+	cmp.b	d2,d0                            	| [cp   c]
+	jeq	l_44c0                             	| [jr   z,$44C0]
+	rts                                    	| [ret]
+
+l_44e9:
+	jbsr	_03_snobee_aligns_for_stunned_3AAD	| [call $03_snobee_aligns_for_stunned_3AAD]
+	lea	snobee_1_struct_8D00(pc),a3        	| [ld   iy,snobee_1_struct_8D00]
+	move.b	(0x1f,a3),d0                    	| [ld   a,(iy+$1f)]
+	cmp.b	#0x0A,d0                         	| [cp   $0A]
+	jne	l_44fb                             	| [jr   nz,$44FB]
+	clr.b	(0x08,a3)                        	| [ld   (iy+$08),$00]
+l_44fb:
+	lea	snobee_2_struct_8D20(pc),a3        	| [ld   iy,snobee_2_struct_8D20]
+	move.b	(0x1f,a3),d0                    	| snobee state [ld   a,(iy+$1f)]
+	cmp.b	#0x0A,d0                         	| [cp   $0A]
+	jne	l_450a                             	| [jr   nz,$450A]
+	clr.b	(0x08,a3)                        	| [ld   (iy+$08),$00]
+l_450a:
+	lea	snobee_3_struct_8D40(pc),a3        	| [ld   iy,snobee_3_struct_8D40]
+	move.b	(0x1f,a3),d0                    	| [ld   a,(iy+$1f)]
+	cmp.b	#0x0A,d0                         	| [cp   $0A]
+	jne	l_4519                             	| [jr   nz,$4519]
+	clr.b	(0x08,a3)                        	| [ld   (iy+$08),$00]
+l_4519:
+	lea	snobee_4_struct_8D60(pc),a3        	| [ld   iy,snobee_4_struct_8D60]
+	move.b	(0x1f,a3),d0                    	| [ld   a,(iy+$1f)]
+	cmp.b	#0x0A,d0                         	| [cp   $0A]
+	jne	l_4528                             	| [jr   nz,$4528]
+	clr.b	(0x08,a3)                        	| [ld   (iy+$08),$00]
+l_4528:
+	rts                                    	| [ret]
+l_4529:
+	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
+	move.b	d2,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d1,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
+	btst.b	#4,(0x18,a2)                    	| [bit  4,(ix+$18)]
+	jne	l_45bc                             	| [jp   nz,$45BC]
+	move.b	(0x19,a2),d0                    	| [ld   a,(ix+$19)]
+	btst.b	#7,d0                           	| [bit  7,a]
+	jeq	l_454f                             	| [jr   z,$454F]
+	and.b	#0x7F,d0                         	| [and  $7F]
+	add.b	d0,d0                            	| [add  a,a]
+	clr.b	d3                               	| [ld   d,$00]
+	move.b	d0,d4                           	| [ld   e,a]
+	lea	egg_location_table_8DC2(pc),a0     	| [ld   hl,egg_location_table_8DC2]
+add  hl,de
+	move.b	d2,(a0)                         	| [ld   (hl),c]
+	addq.w	#1,a0                           	| [inc  hl]
+	move.b	d1,(a0)                         	| [ld   (hl),b]
+	clr.b	(0x19,a2)                        	| [ld   (ix+$19),$00]
+l_454f:
+	move.b	#0x09,d0                        	| [ld   a,$09]
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	jbsr	draw_ice_block_tile_2EFE          	| [call draw_ice_block_tile_2EFE]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+l_455a:
+	move.b	#0x04,d1                        	| [ld   b,$04]
+	jbsr	l_18af                            	| [call $18AF]
+	move.b	(0x0f,a2),d0                    	| [ld   a,(ix+$0f)]
+	tst.b	d0                               	| [and  a]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	move.b	#0x05,d1                        	| [ld   b,$05]
+	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	lea	0x0020(pc),a1                      	| [ld   de,$0020]
+	move.b	#0x0A,d0                        	| [ld   a,$0A]
+	lea	snobee_1_struct_8D00(pc),a3        	| [ld   iy,snobee_1_struct_8D00]
+	cmp.b	(0x1f,a3),d0                     	| [cp   (iy+$1f)]
+	jeq	l_4587                             	| [jr   z,$4587]
+add  iy,de
+	cmp.b	(0x1f,a3),d0                     	| [cp   (iy+$1f)]
+	jeq	l_4587                             	| [jr   z,$4587]
+add  iy,de
+	cmp.b	(0x1f,a3),d0                     	| [cp   (iy+$1f)]
+	jeq	l_4587                             	| [jr   z,$4587]
+add  iy,de
+l_4587:
+	move.b	(0x0f,a2),d1                    	| [ld   b,(ix+$0f)]
+	move.b	d1,(0x1a,a3)                    	| [ld   (iy+$1a),b]
+	addq.b	#1,(0x1f,a3)                    	| [inc  (iy+$1f)]
+	lea	snobee_2_struct_8D20(pc),a3        	| [ld   iy,snobee_2_struct_8D20]
+	cmp.b	(0x1f,a3),d0                     	| [cp   (iy+$1f)]
+	jne	l_45a0                             	| [jr   nz,$45A0]
+	clr.b	(0x1a,a3)                        	| [ld   (iy+$1a),$00]
+	addq.b	#1,(0x1f,a3)                    	| [inc  (iy+$1f)]
+l_45a0:
+add  iy,de
+	cmp.b	(0x1f,a3),d0                     	| [cp   (iy+$1f)]
+	jne	l_45ae                             	| [jr   nz,$45AE]
+	clr.b	(0x1a,a3)                        	| [ld   (iy+$1a),$00]
+	addq.b	#1,(0x1f,a3)                    	| [inc  (iy+$1f)]
+l_45ae:
+add  iy,de
+	cmp.b	(0x1f,a3),d0                     	| [cp   (iy+$1f)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	clr.b	(0x1a,a3)                        	| [ld   (iy+$1a),$00]
+	addq.b	#1,(0x1f,a3)                    	| [inc  (iy+$1f)]
+	rts                                    	| [ret]
+* diamond hits a wall/another block
+l_45bc:
+	move.b	(0x18,a2),d0                    	| [ld   a,(ix+$18)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	add.b	d0,d0                            	| [add  a,a]
+	clr.b	d3                               	| [ld   d,$00]
+	move.b	d0,d4                           	| [ld   e,a]
+	lea	diamond_block_1_xy_8DB0(pc),a0     	| [ld   hl,diamond_block_1_xy_8DB0]
+add  hl,de
+	move.b	d2,(a0)                         	| [ld   (hl),c]
+	addq.w	#1,a0                           	| [inc  hl]
+	move.b	d1,(a0)                         	| [ld   (hl),b]
+	move.b	#0x09,d0                        	| [ld   a,$09]
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
+	clr.b	(x_pos,a2)                       	| [ld   (ix+x_pos),$00]
+	clr.b	(y_pos,a2)                       	| [ld   (ix+y_pos),$00]
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	jbsr	l_45eb                            	| [call $45EB]
+	jbsr	l_464a                            	| [call $464A]
+	jra	l_455a                             	| [jp   $455A]
+l_45eb:
+	btst.b	#7,(0x16,a2)                    	| [bit  7,(ix+$16)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.w	diamond_block_1_xy_8DB0(pc),a4  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	move.w	diamond_block_2_xy_8DB2(pc),a4  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	move.w	diamond_block_3_xy_8DB4(pc),a4  	| [ld   bc,(diamond_block_3_xy_8DB4)]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	clr.b	(0x17,a2)                        	| [ld   (ix+$17),$00]
+	jbsr	l_4612                            	| [call $4612]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	#0xFF,(0x17,a2)                 	| [ld   (ix+$17),$FF]
+	rts                                    	| [ret]
+l_4612:
+	move.w	diamond_block_1_xy_8DB0(pc),a4  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	move.w	diamond_block_2_xy_8DB2(pc),a1  	| [ld   de,(diamond_block_2_xy_8DB2)]
+	jbsr	l_462a                            	| [call $462A]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	move.w	diamond_block_3_xy_8DB4(pc),a1  	| [ld   de,(diamond_block_3_xy_8DB4)]
+	jbsr	l_462a                            	| [call $462A]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	move.w	diamond_block_2_xy_8DB2(pc),a4  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+l_462a:
+	clr.b	d5                               	| [ld   h,$00]
+	move.b	d1,d0                           	| [ld   a,b]
+	addq.b	#0x02,d0                        	| [add  a,$02]
+	sub.b	d3,d0                            	| [sub  d]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	cmp.b	#0x05,d0                         	| [cp   $05]
+	bcs.b	0f
+	rts                                    	| [ret  nc]
+0:
+	subq.b	#0x02,d0                        	| [sub  $02]
+	jeq	l_4639                             	| [jr   z,$4639]
+	addq.b	#1,d5                           	| [inc  h]
+l_4639:
+	move.b	d2,d0                           	| [ld   a,c]
+	addq.b	#0x02,d0                        	| [add  a,$02]
+	sub.b	d4,d0                            	| [sub  e]
+	bcc.b	0f
+	rts                                    	| [ret  c]
+0:
+	cmp.b	#0x05,d0                         	| [cp   $05]
+	bcs.b	0f
+	rts                                    	| [ret  nc]
+0:
+	subq.b	#0x02,d0                        	| [sub  $02]
+	jeq	l_4646                             	| [jr   z,$4646]
+	addq.b	#1,d5                           	| [inc  h]
+l_4646:
+	move.b	#0x01,d0                        	| [ld   a,$01]
+	sub.b	d5,d0                            	| [sub  h]
+	rts                                    	| [ret]
+l_464a:
+	btst.b	#7,(0x16,a2)                    	| [bit  7,(ix+$16)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	jbsr	l_4896                            	| [call $4896]
+	jeq	l_4658                             	| [jr   z,$4658]
+	jbsr	l_4863                            	| [call $4863]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+* diamonds are aligned
+l_4658:
+	clr.b	(0x17,a2)                        	| [ld   (ix+$17),$00]
+	move.b	#0x03,d1                        	| [ld   b,$03]
+	jbsr	play_sfx_1889                     	| diamond align music bonus [call play_sfx_1889]
+	move.b	#0x21,d4                        	| stars [ld   e,$21]
+	jbsr	draw_borders_2E7A                 	| [call draw_borders_2E7A]
+	move.b	#0x40,d1                        	| [ld   b,$40]
+l_4668:
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	move.l	a4,-(sp)                        	| [push bc]
+	move.b	d1,d0                           	| [ld   a,b]
+	and.b	#0x03,d0                         	| [and  $03]
+	lea	table_479E(pc),a1                  	| [ld   de,table_479E]
+	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+	move.b	#0x02,d0                        	| [ld   a,$02]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	move.l	(sp)+,a4                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	move.l	a4,-(sp)                        	| [push bc]
+	move.b	d1,d0                           	| [ld   a,b]
+	subq.b	#1,d0                           	| [dec  a]
+	and.b	#0x07,d0                         	| [and  $07]
+	addq.b	#1,d0                           	| [inc  a]
+	jbsr	l_47fe                            	| [call $47FE]
+	move.l	(sp)+,a4                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	move.l	a4,-(sp)                        	| [push bc]
+	move.b	d1,d2                           	| [ld   c,b]
+	jbsr	l_4817                            	| [call $4817]
+	move.b	#0x02,d0                        	| [ld   a,$02]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	move.l	(sp)+,a4                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	subq.b	#1,d1                           	| [...]
+	jne	l_4668                             	| [djnz $4668]
+	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
+	jbsr	l_0f98                            	| [call $0F98]
+	lea	table_476C(pc),a0                  	| [ld   hl,table_476C]
+	jbsr	erase_rectangular_char_zone_0F2E  	| [call erase_rectangular_char_zone_0F2E]
+	lea	table_476C+0x79-0x6C(pc),a0        	| [ld   hl,table_476C+$79-$6C]
+	btst.b	#7,(0x16,a2)                    	| 10000 [bit  7,(ix+$16)]
+	jeq	l_46a7                             	| [jr   z,$46A7]
+	lea	table_476C+0x88-0x6C(pc),a0        	| 5000 [ld   hl,table_476C+$88-$6C]
+l_46a7:
+	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
+	lea	table_476C+0x71-0x6C(pc),a0        	| bonus [ld   hl,table_476C+$71-$6C]
+	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
+	lea	table_476C+0x81-0x6C(pc),a0        	| pts [ld   hl,table_476C+$81-$6C]
+	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
+	move.b	#0x2A,d0                        	| [ld   a,$2A]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	move.b	#0x07,d1                        	| [ld   b,$07]
+	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	move.b	#0x64,d1                        	| [ld   b,$64]
+	move.w	#0x03E8,d6                      	| 1000 [ld   hl,$03E8]
+	btst.b	#7,(0x16,a2)                    	| [bit  7,(ix+$16)]
+	jeq	l_46d0                             	| [jr   z,$46D0]
+	move.b	#0x32,d1                        	| [ld   b,$32]
+	move.w	#0x01F4,d6                      	| 500 [ld   hl,$01F4]
+l_46d0:
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+
+	move.l	d6,-(sp)                        	| [push hl]
+	move.b	d1,d0                           	| [ld   a,b]
+	and.b	#0x03,d0                         	| [and  $03]
+	bne	0f
+	jbsr	l_474f                            	| [call z,$474F]
+0:
+	move.w	#0x000A,d3                      	| [ld   de,$000A]
+	jbsr	add_to_current_player_score_28AF  	| [call add_to_current_player_score_28AF]
+	move.l	(sp)+,d6                        	| [pop  hl]
+	move.w	#0x000A,d3                      	| [ld   de,$000A]
+												| [xor  a]
+	sub.w	d3,d6 							 | [sbc  hl,de]
+
+	move.l	d6,-(sp)                        	| [push hl]
+	jbsr	convert_number_2B40               	| [call convert_number_2B40]
+										| [ld   h,$12]
+										| [ld   l,$0A]
+	move.w	#0x0A12,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
+	move.b	#0x02,d0                        	| [ld   a,$02]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+
+	move.l	a0,-(sp)                        	| [push hl]
+	move.b	d1,d2                           	| [ld   c,b]
+	jbsr	l_4817                            	| [call $4817]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	subq.b	#1,d1                           	| [...]
+	jne	l_46d0                             	| [djnz $46D0]
+	st.b	d1                                	| [ld   b,$FF]
+	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	move.b	#0x08,d1                        	| [ld   b,$08]
+	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	move.b	#0x40,d0                        	| [ld   a,$40]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	jbsr	l_0fba                            	| [call $0FBA]
+	move.b	#0xFF,(0x16,a2)                 	| [ld   (ix+$16),$FF]
+	move.b	#0x09,d0                        	| [ld   a,$09]
+	jbsr	l_47fe                            	| [call $47FE]
+	jbsr	draw_borders_2E6A                 	| [call draw_borders_2E6A]
+
+	move.l	a2,-(sp)                        	| [push ix]
+	lea	snobee_1_struct_8D00(pc),a2        	| [ld   ix,snobee_1_struct_8D00]
+	jbsr	l_4790                            	| [call $4790]
+	lea	snobee_2_struct_8D20(pc),a2        	| [ld   ix,snobee_2_struct_8D20]
+	jbsr	l_4790                            	| [call $4790]
+	lea	snobee_3_struct_8D40(pc),a2        	| [ld   ix,snobee_3_struct_8D40]
+	jbsr	l_4790                            	| [call $4790]
+	lea	snobee_4_struct_8D60(pc),a2        	| [ld   ix,snobee_4_struct_8D60]
+	jbsr	l_4790                            	| [call $4790]
+	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	move.b	#0x20,d0                        	| [ld   a,$20]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	move.l	(sp)+,a2                        	| [pop  ix]
+	rts                                    	| [ret]
+l_474f:
+	btst.b	#2,d1                           	| [bit  2,b]
+	jeq	l_4767                             	| [jr   z,$4767]
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	move.b	#0x24,d2                        	| [ld   c,$24]
+l_4756:
+	move.b	#0x0B,d0                        	| [ld   a,$0B]
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	jbsr	get_nb_lives_289E                 	| [call get_nb_lives_289E]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_4765                             	| [jr   z,$4765]
+	move.b	d0,d1                           	| [ld   b,a]
+	jbsr	l_2d26                            	| [call $2D26]
+l_4765:
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	rts                                    	| [ret]
+l_4767:
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	move.b	#0x28,d2                        	| [ld   c,$28]
+	jra	l_4756                             	| [jr   $4756]
+
+table_476C:
+	.byte	0x09,0x10,0x10,0x0A,0x05,0x0A,0x11,0x18,0x42,0x4F,0x4E,0x55,0xD3,0x0B,0x12,0x10   |  .......BONUÓ...
+	.byte	0x31,0x30,0x30,0x30,0xB0,0x0E,0x13,0x19,0x50,0x54,0x53,0xBA,0x0B,0x12,0x10,0x20   | 1000°...PTSº...
+	.byte	0x35,0x30,0x30
+	.align	2
+l_4790:
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	move.b	#0x02,d0                        	| [ld   a,$02]
+	cmp.b	(char_state,a2),d0               	| [cp   (ix+char_state)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	#0x03,(char_state,a2)           	| [ld   (ix+char_state),$03]
+	rts                                    	| [ret]
+
+table_479E:
+	.long	l_47d2
+	.long	l_47e8
+	.long	l_47a6
+	.long	l_47bc
+
+
+l_47a6:
+	move.w	diamond_block_1_xy_8DB0(pc),a4  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	move.w	diamond_block_2_xy_8DB2(pc),a4  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+	jbsr	set_2x2_tile_color_0C_4BC2        	| [call set_2x2_tile_color_0C_4BC2]
+	move.w	diamond_block_3_xy_8DB4(pc),a4  	| [ld   bc,(diamond_block_3_xy_8DB4)]
+	jbsr	set_2x2_tile_color_0C_4BC2        	| [call set_2x2_tile_color_0C_4BC2]
+	rts                                    	| [ret]
+
+l_47bc:
+	move.w	diamond_block_1_xy_8DB0(pc),a4  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	jbsr	set_2x2_tile_color_0C_4BC2        	| [call set_2x2_tile_color_0C_4BC2]
+	move.w	diamond_block_2_xy_8DB2(pc),a4  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	move.w	diamond_block_3_xy_8DB4(pc),a4  	| [ld   bc,(diamond_block_3_xy_8DB4)]
+	jbsr	set_2x2_tile_color_0C_4BC2        	| [call set_2x2_tile_color_0C_4BC2]
+	rts                                    	| [ret]
+
+l_47d2:
+	move.w	diamond_block_1_xy_8DB0(pc),a4  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	jbsr	set_2x2_tile_color_0C_4BC2        	| [call set_2x2_tile_color_0C_4BC2]
+	move.w	diamond_block_2_xy_8DB2(pc),a4  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+	jbsr	set_2x2_tile_color_0C_4BC2        	| [call set_2x2_tile_color_0C_4BC2]
+	move.w	diamond_block_3_xy_8DB4(pc),a4  	| [ld   bc,(diamond_block_3_xy_8DB4)]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	rts                                    	| [ret]
+
+l_47e8:
+	move.w	diamond_block_1_xy_8DB0(pc),a4  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	move.w	diamond_block_2_xy_8DB2(pc),a4  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	move.w	diamond_block_3_xy_8DB4(pc),a4  	| [ld   bc,(diamond_block_3_xy_8DB4)]
+	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
+	rts                                    	| [ret]
+
+* change colors when diamonds are aligned
+l_47fe:
+	illegal
+	lea	0x8462(pc),a0                      	| [ld   hl,$8462]
+	lea	0x8463(pc),a1                      	| [ld   de,$8463]
+	move.b	#0x1A,d1                        	| [ld   b,$1A]
+l_4806:
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	move.w	#0x001D,d1                      	| [ld   bc,$001D]
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	jbsr	ldir                              	| [ldir]
+	addq.w	#1,a0                           	| [inc  hl]
+	addq.w	#1,a0                           	| [inc  hl]
+	addq.w	#1,a0                           	| [inc  hl]
+	addq.w	#1,a1                           	| [inc  de]
+	addq.w	#1,a1                           	| [inc  de]
+	addq.w	#1,a1                           	| [inc  de]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	subq.b	#1,d1                           	| [...]
+	jne	l_4806                             	| [djnz $4806]
+	rts                                    	| [ret]
+
+l_4817:
+	move.w	#0x87A1,d6                      	| [ld   hl,$87A1]
+												| [ld   de,$0020]
+	move.b	#0x0E,d1                        	| [ld   b,$0E]
+l_481f:
+	move.b	d2,d0                           	| [ld   a,c]
+	and.b	#0x07,d0                         	| [and  $07]
+	add.b	#0x16,d0                         	| [add  a,$16]
+	bsr		osd_w_colorram                         	| [ld   (hl),a]
+	                               	| [and  a]
+	sub.w	#0x20,d6				| [sbc  hl,de]
+	bsr		osd_w_colorram                         	| [ld   (hl),a]
+	                               	| [and  a]
+	sub.w	#0x20,d6				| [sbc  hl,de]
+	addq.b	#1,d2                           	| [inc  c]
+	subq.b	#1,d1                           	| [...]
+	jne	l_481f                             	| [djnz $481F]
+	move.w	#0x8442,d6                      	| [ld   hl,$8442]
+	move.b	#0x0F,d1                        	| [ld   b,$0F]
+l_4834:
+	move.b	d2,d0                           	| [ld   a,c]
+	and.b	#0x07,d0                         	| [and  $07]
+	add.b	#0x16,d0                         	| [add  a,$16]
+	bsr		osd_w_colorram
+	addq.w	#1,d6                         	| [ld   (hl),a]
+	bsr		osd_w_colorram
+	addq.w	#1,d6                         	| [ld   (hl),a]
+	                           	| [inc  hl]
+	addq.b	#1,d2                           	| [inc  c]
+	subq.b	#1,d1                           	| [...]
+	jne	l_4834                             	| [djnz $4834]
+	move.w	#0x8402,d6                      	| [ld   hl,$8402]
+	move.b	#0x0E,d1                        	| [ld   b,$0E]
+l_4845:
+	move.b	d2,d0                           	| [ld   a,c]
+	and.b	#0x07,d0                         	| [and  $07]
+	add.b	#0x16,d0                         	| [add  a,$16]
+	bsr		osd_w_colorram
+	addq.w	#1,d6                         	| [ld   (hl),a]
+	bsr		osd_w_colorram
+	addq.w	#1,d6                         	| [ld   (hl),a]
+	addq.b	#1,d2                           	| [inc  c]
+	subq.b	#1,d1                           	| [...]
+	jne	l_4845                             	| [djnz $4845]
+	move.w	#0x87BF,d6                      	| [ld   hl,$87BF]
+	move.b	#0x0F,d1                        	| [ld   b,$0F]
+l_4856:
+	move.b	d2,d0                           	| [ld   a,c]
+	and.b	#0x07,d0                         	| [and  $07]
+	add.b	#0x16,d0                         	| [add  a,$16]
+	bsr		osd_w_colorram
+	subq.w	#1,d6                         	| [ld   (hl),a]
+	bsr		osd_w_colorram
+	subq.w	#1,d6                         	| [ld   (hl),a]
+	addq.b	#1,d2                           	| [inc  c]
+	subq.b	#1,d1                           	| [...]
+	jne	l_4856                             	| [djnz $4856]
+	rts                                    	| [ret]
+l_4863:
+	lea	diamond_block_1_xy_8DB0(pc),a0     	| [ld   hl,diamond_block_1_xy_8DB0]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	addq.w	#2,a0                           	| [inc  hl]
+										| [inc  hl]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	addq.w	#2,a0                           	| [inc  hl]
+										| [inc  hl]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	jbsr	l_48d0                            	| [call $48D0]
+	lea	moving_block_struct_8DA0+0x11(pc),a0	| [ld   hl,moving_block_struct_8DA0+$11]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	add.w	#0x20,a0							| [add  hl,de]
+	subq.b	#2,d0                           	| [dec  a]
+	                           	| [dec  a]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	addq.w	#2,a0                           	| [inc  hl]
+	subq.b	#2,d0                           	| [dec  a]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	diamond_block_1_xy_8DB0,d0      	| [ld   a,(diamond_block_1_xy_8DB0)]
+	cmp.b	#0x01,d0                         	| [cp   $01]
+	jeq	l_4890                             	| [jr   z,$4890]
+	cmp.b	#0x19,d0                         	| [cp   $19]
+	jeq	l_4890                             	| [jr   z,$4890]
+	clr.b	d0                               	| [xor  a]
+	rts                                    	| [ret]
+l_4890:
+	move.b	#0xFF,(0x16,a2)                 	| [ld   (ix+$16),$FF]
+	clr.b	d0                               	| [xor  a]
+	rts                                    	| [ret]
+l_4896:
+	lea	moving_block_struct_8DA0+0x11(pc),a0	| [ld   hl,moving_block_struct_8DA0+$11]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	addq.w	#2,a0                           	| [inc  hl]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	addq.w	#2,a0                           	| [inc  hl]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	jbsr	l_48c3                            	| [call $48C3]
+	lea	diamond_block_1_xy_8DB0(pc),a0     	| [ld   hl,diamond_block_1_xy_8DB0]
+	                      	| [ld   de,$0002]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	addq.w	#2,a0						| [add  hl,de]
+	subq.b	#2,d0                           	| [dec  a]
+	                           	| [dec  a]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	addq.w	#2,a0						| [add  hl,de]
+	subq.b	#2,d0                           	| [dec  a]
+	                           	| [dec  a]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	moving_block_struct_8DA0+0x11,d0	| [ld   a,(moving_block_struct_8DA0+$11)]
+	cmp.b	#0x02,d0                         	| [cp   $02]
+	jeq	l_4890                             	| [jr   z,$4890]
+	cmp.b	#0x1E,d0                         	| [cp   $1E]
+	jeq	l_4890                             	| [jr   z,$4890]
+	clr.b	d0                               	| [xor  a]
+	rts                                    	| [ret]
+l_48c3:
+	lea	diamond_block_1_xy_8DB0(pc),a0     	| [ld   hl,diamond_block_1_xy_8DB0]
+	move.b	#0x02,d1                        	| [ld   b,$02]
+l_48c8:
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	jbsr	l_48dd                            	| [call $48DD]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	subq.b	#1,d1                           	| [...]
+	jne	l_48c8                             	| [djnz $48C8]
+	rts                                    	| [ret]
+l_48d0:
+	lea	diamond_block_1_xy_8DB0(pc),a0     	| [ld   hl,diamond_block_1_xy_8DB0]
+	move.b	#0x02,d1                        	| [ld   b,$02]
+l_48d5:
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	jbsr	l_48fb                            	| [call $48FB]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	subq.b	#1,d1                           	| [...]
+	jne	l_48d5                             	| [djnz $48D5]
+	rts                                    	| [ret]
+l_48dd:
+
+	move.l	a0,-(sp)                        	| [push hl]
+	move.b	(a0)+,d4                         	| [ld   e,(hl)]
+	                           	| [inc  hl]
+	move.b	(a0)+,d3                         	| [ld   d,(hl)]
+	                           	| [inc  hl]
+	move.b	d4,d0                           	| [ld   a,e]
+l_48e3:
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	jcs	l_48f0                             	| [jr   c,$48F0]
+	addq.w	#2,a0                           	| [inc  hl]
+										| [inc  hl]
+l_48e8:
+	subq.b	#1,d1                           	| [...]
+	jne	l_48e3                             	| [djnz $48E3]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	move.b	d4,(a0)+                         	| [ld   (hl),e]
+	                           	| [inc  hl]
+	move.b	d3,(a0)+                         	| [ld   (hl),d]
+	                           	| [inc  hl]
+	rts                                    	| [ret]
+l_48f0:
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	d4,(a0)+                         	| [ld   (hl),e]
+	move.b	d0,d4                           	| [ld   e,a]
+	                           	| [inc  hl]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	d3,(a0)+                         	| [ld   (hl),d]
+	move.b	d0,d3                           	| [ld   d,a]
+	                           	| [inc  hl]
+	move.b	d4,d0                           	| [ld   a,e]
+	jra	l_48e8                             	| [jr   $48E8]
+l_48fb:
+
+	move.l	a0,-(sp)                        	| [push hl]
+	move.b	(a0)+,d4                         	| [ld   e,(hl)]
+	                           	| [inc  hl]
+	move.b	(a0)+,d3                         	| [ld   d,(hl)]
+	                           	| [inc  hl]
+	move.b	d3,d0                           	| [ld   a,d]
+l_4901:
+	addq.w	#1,a0                           	| [inc  hl]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	jcs	l_490e                             	| [jr   c,$490E]
+	addq.w	#1,a0                           	| [inc  hl]
+l_4906:
+	subq.b	#1,d1                           	| [...]
+	jne	l_4901                             	| [djnz $4901]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	move.b	d4,(a0)+                         	| [ld   (hl),e]
+											| [inc  hl]
+	move.b	d3,(a0)+                         	| [ld   (hl),d]
+											| [inc  hl]
+	rts                                    	| [ret]
+l_490e:
+	subq.b	#1,a0                           	| [dec  hl]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	d4,(a0)+                         	| [ld   (hl),e]
+	move.b	d0,d4                           	| [ld   e,a]
+	                           	| [inc  hl]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	d3,(a0)+                         	| [ld   (hl),d]
+	move.b	d0,d3                           	| [ld   d,a]
+									| [inc  hl]
+	jra	l_4906                             	| [jr   $4906]
+
+
+snobee_block_break_4919:
+	lea	breaking_block_slots_8CC0(pc),a2   	| [ld   ix,breaking_block_slots_8CC0]
+	move.b	#0x05,d1                        	| [ld   b,$05]
+l_491f:
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	btst.b	#7,(x_pos,a2)                   	| [bit  7,(ix+x_pos)]
+	beq	0f
+	jbsr	l_4930                            	| [call nz,$4930]
+0:
+											| [ld   de,$0006]
+	addq.w	#6,a2							| [add  ix,de]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	subq.b	#1,d1                           	| [...]
+	jne	l_491f                             	| [djnz $491F]
+	rts                                    	| [ret]
+l_4930:
+	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
+	lea	table_4939(pc),a1                  	| [ld   de,table_4939]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+table_4939:
+	.long	do_nothing_3358
+	.long	l_494d
+	.long	l_4967
+	.long	l_4972
+	.long	l_4a17
+	.long	l_4a22
+	.long	l_4a77
+	.long	l_4a82
+	.long	l_4ac6
+	.long	l_4ae5
+	.long	l_4b75
+
+
+l_494d:
+	btst.b	#6,(0x00,a2)                    	| [bit  6,(ix+$00)]
+	jeq	l_4960                             	| [jr   z,$4960]
+	lea	remaining_eggs_to_hatch_8DC1,a0	| [ld   hl,remaining_eggs_to_hatch_8DC1]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	d0,(0x04,a2)                    	| [ld   (ix+$04),a]
+	subq.b	#1,(a0)                         	| [dec  (hl)]
+	move.b	#0x04,d1                        	| [ld   b,$04]
+	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+l_4960:
+	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
+	lea	maze_data_8C20+0x3F,a0         	| [ld   hl,maze_data_8C20+$3F]
+	subq.b	#1,(a0)                         	| [dec  (hl)]
+l_4967:
+	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	or.b	#0x02,d0                          	| [or   $02]
+	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
+	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
+l_4972:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	and.b	#0x1F,d0                         	| [and  $1F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * counter 1 out of 32 broken block shatters
+	subq.b	#1,(0x00,a2)                    	| [dec  (ix+$00)]
+	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	and.b	#0x07,d0                         	| [and  $07]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(0x01,a2),d0                    	| [ld   a,(ix+$01)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_49c8                             	| [jr   z,$49C8]
+	move.b	d0,(0x01,a2)                    	| [ld   (ix+$01),a]
+	subq.b	#1,(0x05,a2)                    	| [dec  (ix+$05)]
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	#0x08,d0                        	| [ld   a,$08]
+	sub.b	d1,d0                            	| [sub  b]
+	btst.b	#6,(0x00,a2)                    	| [bit  6,(ix+$00)]
+	jeq	l_499d                             	| [jr   z,$499D]
+	cmp.b	#0x06,d0                         	| [cp   $06]
+	jcs	l_499d                             	| [jr   c,$499D]
+	move.b	#0x08,d0                        	| [ld   a,$08]
+l_499d:
+	add.b	d0,d0                            	| [add  a,a]
+	add.b	d0,d0                            	| [add  a,a]
+	add.b	#0x60,d0                         	| [add  a,$60]
+	move.w	d0,-(sp)                        	| [push af]
+	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
+	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
+	move.b	d2,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d1,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
+	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
+	move.b	#0x1C,d0                        	| [ld   a,$1C]
+	cmp.b	(a0),d0                          	| [cp   (hl)]
+	jeq	l_49be                             	| [jr   z,$49BE]
+	move.b	#0x09,d0                        	| [ld   a,$09]
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	move.w	(sp)+,d0                        	| [pop  af]
+	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
+	rts                                    	| [ret]
+l_49be:
+	move.w	(sp)+,d0                        	| [pop  af]
+	clr.b	(0x00,a2)                        	| [ld   (ix+$00),$00]
+	clr.b	(0x05,a2)                        	| [ld   (ix+$05),$00]
+	rts                                    	| [ret]
+l_49c8:
+	btst.b	#6,(0x00,a2)                    	| [bit  6,(ix+$00)]
+	jne	l_49ee                             	| [jr   nz,$49EE]
+	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
+	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
+	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
+	btst.b	#5,(0x00,a2)                    	| [bit  5,(ix+$00)]
+	lea	0x0003(pc),a1                      	| [ld   de,$0003]
+
+	move.l	a2,-(sp)                        	| [push ix]
+	beq	0f
+	jbsr	add_to_current_player_score_28AF  	| [call nz,add_to_current_player_score_28AF]
+0:
+	move.l	(sp)+,a2                        	| [pop  ix]
+	clr.b	(0x00,a2)                        	| [ld   (ix+$00),$00]
+	clr.b	(0x05,a2)                        	| [ld   (ix+$05),$00]
+	rts                                    	| [ret]
+l_49ee:
+	lea	total_eggs_to_hatch_8DC0(pc),a0    	| [ld   hl,total_eggs_to_hatch_8DC0]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	#0x0C,d0                        	| [ld   a,$0C]
+	sub.b	d1,d0                            	| [sub  b]
+	lsr.b	#1,d0                            	| [srl  a]
+	add.b	#0x08,d0                         	| [add  a,$08]
+	move.b	d0,d2                           	| [ld   c,a]
+	move.b	(0x04,a2),d0                    	| [ld   a,(ix+$04)]
+	sub.b	d1,d0                            	| [sub  b]
+	neg.b	d0                               	| [neg]
+	add.b	d2,d0                            	| [add  a,c]
+	clr.b	d5                               	| [ld   h,$00]
+	move.b	d0,d6                           	| [ld   l,a]
+	move.b	a0,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	move.b	d5,(0x01,a2)                    	| [ld   (ix+$01),h]
+	move.b	d6,(0x04,a2)                    	| [ld   (ix+$04),l]
+	move.b	#0x17,d0                        	| [ld   a,$17]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
+	rts                                    	| [ret]
+l_4a17:
+	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	or.b	#0x0F,d0                          	| [or   $0F]
+	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
+	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
+l_4a22:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * counter 1 out of 16 eggs hatching
+	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
+	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
+	btst.b	#0,(0x00,a2)                    	| [bit  0,(ix+$00)]
+	jeq	l_4a3b                             	| [jr   z,$4A3B]
+	move.b	#0x10,d0                        	| [ld   a,$10]
+	jbsr	set_2x2_tile_color_4BC4           	| [call set_2x2_tile_color_4BC4]
+	jra	l_4a40                             	| [jr   $4A40]
+l_4a3b:
+	move.b	#0x0C,d0                        	| [ld   a,$0C]
+	jbsr	set_2x2_tile_color_4BC4           	| [call set_2x2_tile_color_4BC4]
+l_4a40:
+	subq.b	#1,(0x00,a2)                    	| [dec  (ix+$00)]
+	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(0x01,a2),d5                    	| [ld   h,(ix+$01)]
+	move.b	(0x04,a2),d6                    	| [ld   l,(ix+$04)]
+	move.b	a0,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	move.b	#0x20,d0                        	| [ld   a,$20]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	btst.b	#5,(0x00,a2)                    	| [bit  5,(ix+$00)]
+	jne	l_4a6f                             	| [jr   nz,$4A6F]
+	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
+	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
+	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
+	clr.b	(0x00,a2)                        	| [ld   (ix+$00),$00]
+	clr.b	(0x05,a2)                        	| [ld   (ix+$05),$00]
+	rts                                    	| [ret]
+l_4a6f:
+	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
+	move.b	#0x05,(0x01,a2)                 	| [ld   (ix+$01),$05]
+	rts                                    	| [ret]
+l_4a77:
+	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	or.b	#0x03,d0                          	| [or   $03]
+	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
+	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
+l_4a82:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	and.b	#0x1F,d0                         	| [and  $1F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * counter 1 out of 32 ???
+	subq.b	#1,(0x00,a2)                    	| [dec  (ix+$00)]
+	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	and.b	#0x07,d0                         	| [and  $07]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(0x01,a2),d0                    	| [ld   a,(ix+$01)]
+	subq.b	#1,d0                           	| [dec  a]
+	jeq	l_4ac2                             	| [jr   z,$4AC2]
+	move.b	d0,(0x01,a2)                    	| [ld   (ix+$01),a]
+	subq.b	#1,(0x05,a2)                    	| [dec  (ix+$05)]
+	move.b	d0,d1                           	| [ld   b,a]
+	move.b	#0x04,d0                        	| [ld   a,$04]
+	sub.b	d1,d0                            	| [sub  b]
+	add.b	d0,d0                            	| [add  a,a]
+	add.b	d0,d0                            	| [add  a,a]
+	add.b	#0x80,d0                         	| [add  a,$80]
+	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
+	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
+	move.b	d2,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	d1,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
+	move.w	d0,-(sp)                        	| [push af]
+	move.b	#0x10,d0                        	| [ld   a,$10]
+	btst.b	#0,(0x01,a2)                    	| [bit  0,(ix+$01)]
+	jeq	l_4aba                             	| [jr   z,$4ABA]
+	move.b	#0x0C,d0                        	| [ld   a,$0C]
+l_4aba:
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	move.w	(sp)+,d0                        	| [pop  af]
+	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
+	rts                                    	| [ret]
+l_4ac2:
+	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
+	rts                                    	| [ret]
+l_4ac6:
+	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	or.b	#0x08,d0                          	| [or   $08]
+	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
+	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
+	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
+	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
+	move.b	a4,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
+	move.b	#0x10,d0                        	| [ld   a,$10]
+	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	move.b	#0x98,d0                        	| [ld   a,$98]
+	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
+l_4ae5:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	and.b	#0x3F,d0                         	| [and  $3F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * counter 1 out of 64
+	subq.b	#1,(0x00,a2)                    	| [dec  (ix+$00)]
+	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
+	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
+	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
+	lea	0x0032(pc),a1                      	| [ld   de,$0032]
+	jbsr	add_to_current_player_score_28AF  	| [call add_to_current_player_score_28AF]
+	clr.b	(0x00,a2)                        	| [ld   (ix+$00),$00]
+	clr.b	(0x05,a2)                        	| [ld   (ix+$05),$00]
+	rts                                    	| [ret]
+
+l_4b0c:
+	lea	moving_block_struct_8DA0(pc),a2    	| [ld   ix,moving_block_struct_8DA0]
+	btst.b	#7,(0x17,a2)                    	| [bit  7,(ix+$17)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	d0,d1                           	| [ld   b,a]
+	and.b	#0x3F,d0                         	| [and  $3F]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+ * counter 1 out of 64
+	btst.b	#6,d1                           	| [bit  6,b]
+	jeq	l_4b26                             	| [jr   z,$4B26]
+	move.b	#0x09,d0                        	| [ld   a,$09]
+	jbsr	l_4b2c                            	| [call $4B2C]
+	rts                                    	| [ret]
+l_4b26:
+	move.b	#0x0C,d0                        	| [ld   a,$0C]
+	jbsr	l_4b2c                            	| [call $4B2C]
+	rts                                    	| [ret]
+l_4b2c:
+	move.b	(0x10,a2),d2                    	| [ld   c,(ix+$10)]
+	move.b	(0x11,a2),d1                    	| [ld   b,(ix+$11)]
+	jbsr	set_2x2_tile_color_4BC4           	| [call set_2x2_tile_color_4BC4]
+	move.b	(0x12,a2),d2                    	| [ld   c,(ix+$12)]
+	move.b	(0x13,a2),d1                    	| [ld   b,(ix+$13)]
+	jbsr	set_2x2_tile_color_4BC4           	| [call set_2x2_tile_color_4BC4]
+	move.b	(0x14,a2),d2                    	| [ld   c,(ix+$14)]
+	move.b	(0x15,a2),d1                    	| [ld   b,(ix+$15)]
+	jbsr	set_2x2_tile_color_4BC4           	| [call set_2x2_tile_color_4BC4]
+	rts                                    	| [ret]
+
 
 blink_on_egg_locations_4B48:
 	lea	total_eggs_to_hatch_8DC0(pc),a2    	| [ld   ix,total_eggs_to_hatch_8DC0]
