@@ -53,25 +53,40 @@ NB_POSSIBLE_SPRITES = 64
 
 
 palette = block_dict["palette"]["data"]
+# 19 unique colors
+##print(palette)
+##print(len({tuple(x) for x in palette}))
+# looks that there are only 32 cluts for 16 colors totol
+
+palette = [tuple(x) for x in palette[:16]]
 
 with open(os.path.join(src_dir,"palette.68k"),"w") as f:
     bitplanelib.palette_dump(palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
 
-character_codes = list()
+cluts = block_dict["clut"]["data"][:32]
+
+character_codes_list = list()
 
 clut_index = 7  # TEMP
 
+
+rgb_cluts = [[tuple(palette[pidx]) for pidx in clut] for clut in cluts]
+
+
 for k,chardat in enumerate(block_dict["tile"]["data"]):
     img = Image.new('RGB',(8,8))
-    d = iter(chardat)
-    for i in range(8):
-        for j in range(8):
-            v = next(d)
-            palette_indexes = block_dict["clut"]["data"][clut_index]
-            colors = [tuple(palette[pidx]) for pidx in palette_indexes]
-            img.putpixel((j,i),colors[v])
-    character_codes.append(bitplanelib.palette_image2raw(img,None,colors))
+
+    character_codes = list()
+    for colors in rgb_cluts:
+        d = iter(chardat)
+        for i in range(8):
+            for j in range(8):
+                v = next(d)
+                img.putpixel((j,i),colors[v])
+        character_codes.append(bitplanelib.palette_image2raw(img,None,palette))
+    character_codes_list.append(character_codes)
+
 ##    if dump_it:
 ##        scaled = ImageOps.scale(img,5,0)
 ##        scaled.save(os.path.join(dump_dir,f"char_{k:02x}.png"))
@@ -155,15 +170,22 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     bitplanelib.dump_asm_bytes(amiga_cols,f,mit_format=True,size=2)
 
     f.write("character_table:\n")
-    for i,c in enumerate(character_codes):
+    for i,c in enumerate(character_codes_list):
+        # c is the list of the same character with 31 different cluts
         if c is not None:
             f.write(f"\t.long\tchar_{i}\n")
         else:
             f.write("\t.long\t0\n")
-    for i,c in enumerate(character_codes):
+    for i,c in enumerate(character_codes_list):
         if c is not None:
-            f.write(f"char_{i}:")
-            bitplanelib.dump_asm_bytes(c,f,mit_format=True)
+            f.write(f"char_{i}:\n")
+            # this is a table
+            for j,cc in enumerate(c):
+                f.write(f"\t.word\tchar_{i}_{j}-char_{i}\n")
+
+            for j,cc in enumerate(c):
+                f.write(f"char_{i}_{j}:")
+                bitplanelib.dump_asm_bytes(cc,f,mit_format=True)
     f.write("sprite_table:\n")
 
     sprite_names = [None]*NB_POSSIBLE_SPRITES
@@ -203,8 +225,7 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
                     # clut is valid for this sprite
                     f.write(f"{name}_{j}:\n\t.word\t")
 
-                    hw_sprite = slot.get("hw_sprite")
-                    print(slot,hw_sprite)
+                    hw_sprite = True  #slot.get("hw_sprite")
                     if hw_sprite is None:
                         f.write("0   | BOB\n")
                         # just bob pointers

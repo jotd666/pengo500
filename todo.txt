@@ -1,0 +1,12 @@
+General:
+
+- CLUTs seem wrong: alphanum chars OK, graphic chars wrong
+- end transcode
+- dip switches (see ** code)
+
+Amiga:
+
+- sprites
+- sound
+- log used cluts to filter out unused clut/char combination
+- tile planar optimization
