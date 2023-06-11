@@ -58,6 +58,7 @@
 ;	+ 0A:	stunned counter (used for stun/blinking stun)
 ;	+ 0B:	intermission related counter (used for animating pengos in intermission)
 ;   + 0C:   alive/walk counter (increases when pengo walks, snobee is alive)
+;   + 10-11: path address pointer (demo/ice pack)
 ;	+ 1B:	 ?????
 ;	+ 1C:	move period for this level
 ;		pengo move period is 0A
@@ -116,6 +117,7 @@ stunned_push_block_counter = $0A
 ; maybe used for other misc snobees animations as well
 intermission_dance_counter = $0B
 alive_walk_counter = $0C
+path_address_pointer_or_misc_flags = $10
 unknown_1A = $1A
 unknown_1B = $1B
 move_period = $1C
@@ -937,7 +939,7 @@ display_top_scores_6C0:
 06E0: C9            ret
 	;; demo mode
 display_demo_and_top_scores_6E1:
-	: 3E 2D         ld   a,$05
+06E1: 3E 2D         ld   a,$05
 06E3: 32 3A 88      ld   (level_number_player1_8812),a
 06E6: 32 B3 88      ld   (level_number_player2_8813),a
 	;; set main counter to 0
@@ -952,7 +954,7 @@ display_demo_and_top_scores_6E1:
 06F7: 0F            rrca
 06F8: C6 22         add  a,$02
 06FA: 32 34 88      ld   (lives_counter_p1_8814),a
-06FD: 32 15 A8      ld   ($lives_counter_p2_8815),a
+06FD: 32 15 A8      ld   (lives_counter_p2_8815),a
 0700: AF            xor  a
 0701: 32 BE 20      ld   (player_number_8816),a
 0704: 2A 8E 80      ld   hl,(random_seed_8826)
@@ -1149,7 +1151,7 @@ increase_counter_0875:
 087C: C9            ret
 	
 play_one_game_087D:
- 21 00 20      ld   hl,$0000
+087D: 21 00 20      ld   hl,$0000
 0880: 22 86 88      ld   (player_1_score_880E),hl
 0883: 22 38 88      ld   (player_2_score_8810),hl
 0886: 3E A1         ld   a,$01
@@ -1164,7 +1166,7 @@ play_one_game_087D:
 	;; gives 1,2,3 depending on lives settings
 0897: C6 02         add  a,$02
 0899: 32 14 A8      ld   (lives_counter_p1_8814),a
-089C: 32 35 88      ld   ($lives_counter_p2_8815),a
+089C: 32 35 88      ld   (lives_counter_p2_8815),a
 	;; game loop (lives)
 089F: 21 3E 88      ld   hl,player_number_8816
 08A2: CB 7E         bit  7,(hl)
@@ -1177,7 +1179,7 @@ play_one_game_087D:
 08AE: 3A B4 88      ld   a,(lives_counter_p1_8814)
 08B1: E6 7F         and  $7F
 08B3: 47            ld   b,a
-08B4: 3A 35 88      ld   a,($lives_counter_p2_8815)
+08B4: 3A 35 88      ld   a,(lives_counter_p2_8815)
 08B7: E6 7F         and  $7F
 08B9: 4F            ld   c,a
 08BA: 80            add  a,b
@@ -1199,7 +1201,7 @@ play_one_game_087D:
 08D4: 18 E9         jr   $089F
 	
 play_one_life_08D6:
-	21 36 88      ld   hl,player_number_8816
+08D6: 21 36 88      ld   hl,player_number_8816
 08D9: CB 7E         bit  7,(hl)
 08DB: 20 07         jr   nz,$08E4
 08DD: 7E            ld   a,(hl)
@@ -1647,7 +1649,7 @@ player_dies_0CD2:
 0D0F: DD 77 B3      ld   (ix+$13),a
 0D12: FB            ei
 0D13: 3E 00         ld   a,$00
-0D15: 32 9E 8D      ld   ($pengo_struct_8D80+$1E),a
+0D15: 32 9E 8D      ld   (pengo_struct_8D80+$1E),a
 0D18: CD 9E 28      call	get_nb_lives_289E
 0D1B: 7E            ld   a,(hl)
 0D1C: 3D            dec  a
@@ -1721,8 +1723,8 @@ player_dies_0CD2:
 0D9A: E1            pop  hl
 0D9B: 18 D0         jr   $0D6D
 
-table_0D9D  0D 0E 0D 0C 0D 10 0B 0E 0F 0E 0B 10 0F 10 0B 0C   ................
-			0F 0C
+table_0D9D:
+0D 0E 0D 0C 0D 10 0B 0E 0F 0E 0B 10 0F 10 0B 0C 0F 0C
 
 
 0DAF: C5            push bc
@@ -1933,7 +1935,7 @@ swap_players_0EC4:
 0F10: C9            ret
 0F11: 34            inc  (hl)
 0F12: 34            inc  (hl)
-0F13: 21 00 AC      ld   hl,$8400
+0F13: 21 00 AC      ld   hl,video_attribute_memory_8400
 0F16: 16 A4         ld   d,$04
 0F18: 1E 02         ld   e,$2A
 0F1A: 19            add  hl,de
@@ -1975,12 +1977,12 @@ erase_rectangular_char_zone_0F2E:
 0F4B: C9            ret
 
 table_0F4C:
-0F4C  08 0C 10 0C 05 09 0D 10 50 4C 41 59 45 52 20 20   ..... ..PLAYER
-0F5C  B1 09 0D 10 50 4C 41 59 45 52 20 20 B2 09 0F 10   ± ..PLAYER  ² ..
-0F6C  47 41 4D 45 20 20 4F 56 45 D2 21 E3 0F B2 16 88   GAME  OVEÒ!ã.²..
+0F4C  08 0C 10 0C 05 09 0D 10 50 4C 41 59 45 52 20 20  ; ..... ..PLAYER
+0F5C  B1 09 0D 10 50 4C 41 59 45 52 20 20 B2 09 0F 10  ; ± ..PLAYER  ² ..
+0F6C  47 41 4D 45 20 20 4F 56 45 D2 21 E3 0F B2 16 88  ; GAME  OVEÒ!ã.²..
 
-
-0F76:21 6B 0F	    ld   hl,str_player_1_FE3                                       
+display_player_ready_0F76:
+0F76: 21 6B 0F	    ld   hl,str_player_1_FE3                                       
 0F79: 3A 16 88      ld   a,(player_number_8816)
 0F7C: CB 47         bit  0,a
 0F7E: 28 A3         jr   z,$0F83
@@ -2381,7 +2383,7 @@ check_memory_13DF:
 1435: 21 BF 9B      ld   hl,$13BF
 1438: CD F4 29      call print_line_typewriter_style_29F4
 143B: C9            ret
-143C: 21 88 60      ld   hl,$6000
+143C: 21 88 60      ld   hl,ice_pack_tiles_6000
 143F: 01 F8 97      ld   bc,$1FF8
 1442: CD D3 14      call checksum_memory_145B
 1445: 21 FE 57      ld   hl,$7FFE
@@ -4184,7 +4186,7 @@ jump_table_2265:
 
 pack_ice_screen_22CB:
 22CB: CD B9 23      call set_bank_selectors_2319
-22CE: CD 25 23      call reset_attributes_to_10_2325
+22CE: CD 25 23      call show_ice_pack_screen_2325
 22D1: CD 60 B5      call init_all_characters_states_1D60
 22D4: CD 55 08      call increase_counter_0875
 ; active wait
@@ -4221,6 +4223,7 @@ clr_bank_selectors_230E:
 2315: 32 46 B8      ld   (color_lookup_table_bank_selector_9046),a
 2318: C9            ret
 
+; switch banks, just for the ice pack animation screen
 set_bank_selectors_2319:
 2319: 3E 01         ld   a,$01
 231B: 32 47 B8      ld   (character_sprite_bank_selector_9047),a
@@ -4228,13 +4231,13 @@ set_bank_selectors_2319:
 2321: 32 EE 10      ld   (color_lookup_table_bank_selector_9046),a
 2324: C9            ret
 
-reset_attributes_to_10_2325:
-2325: 21 A8 04      ld   hl,$8400
+show_ice_pack_screen_2325:
+2325: 21 A8 04      ld   hl,video_attribute_memory_8400
 2328: 11 81 A4      ld   de,$8401
 232B: 01 56 83      ld   bc,$03FE
 232E: 36 90         ld   (hl),$10
 2330: ED B0         ldir
-2332: 21 A0 60      ld   hl,$6000
+2332: 21 A0 60      ld   hl,ice_pack_tiles_6000
 2335: 11 00 A8      ld   de,video_tile_memory_8000
 2338: 01 A0 04      ld   bc,$0400
 233B: ED B0         ldir
@@ -4304,19 +4307,23 @@ table_2369:
 23A0: 23            inc  hl
 23A1: DD 36 87 A8   ld   (ix+current_period_counter),$00
 23A5: 7E            ld   a,(hl)
-23A6: DD 77 B8      ld   (ix+$10),a
+23A6: DD 77 B8      ld   (ix+path_address_pointer_or_misc_flags),a
 23A9: 23            inc  hl
 23AA: 7E            ld   a,(hl)
-23AB: DD 77 91      ld   (ix+$11),a
+23AB: DD 77 91      ld   (ix+path_address_pointer_or_misc_flags+1),a
 23AE: 23            inc  hl
 23AF: DD 36 B2 00   ld   (ix+$12),$00
 23B3: DD 34 97      inc  (ix+char_state)
 23B6: C9            ret
 
+; x,y,frame,color,facing direction,move period,pointer on move table
 table_23B7:
-78 50 0E 02 01 0C 00 68 78 50 0E 03 01 0C 00 6B
-78 50 0E 04 01 0C 00 69 78 50 0E 05 01 0C 20 6A
-78 50 0E 08 01 0C 00 6D 78 50 0E 0C 01 0C 00 6E
+78 50 0E 02 01 0C 00 68 
+78 50 0E 03 01 0C 00 6B
+78 50 0E 04 01 0C 00 69 
+78 50 0E 05 01 0C 20 6A
+78 50 0E 08 01 0C 00 6D 
+78 50 0E 0C 01 0C 00 6E
 
 
 23E7: CD 57 8B      call $23FF
@@ -4353,7 +4360,7 @@ table_23B7:
 2431: CD 85 91      call $3985
 2434: C9            ret
 
-2435: DD 6E 30      ld   l,(ix+$10)
+2435: DD 6E 30      ld   l,(ix+path_address_pointer_or_misc_flags)
 2438: DD 66 11      ld   h,(ix+$11)
 243B: 7E            ld   a,(hl)
 243C: 47            ld   b,a
@@ -4363,7 +4370,7 @@ table_23B7:
 2442: E6 A7         and  $07
 2444: DD 77 2C      ld   (ix+facing_direction),a
 2447: 23            inc  hl
-2448: DD 75 38      ld   (ix+$10),l
+2448: DD 75 38      ld   (ix+path_address_pointer_or_misc_flags),l
 244B: DD 74 B1      ld   (ix+$11),h
 244E: C9            ret
 244F: 07            rlca
@@ -4371,10 +4378,10 @@ table_23B7:
 2451: E6 03         and  $03
 2453: 11 68 04      ld   de,table_2468
 2456: CD AF 2D      call indirect_jump_2D8F
-2459: DD 6E 30      ld   l,(ix+$10)
+2459: DD 6E 30      ld   l,(ix+path_address_pointer_or_misc_flags)
 245C: DD 66 11      ld   h,(ix+$11)
 245F: 23            inc  hl
-2460: DD 75 38      ld   (ix+$10),l
+2460: DD 75 38      ld   (ix+path_address_pointer_or_misc_flags),l
 2463: DD 74 B1      ld   (ix+$11),h
 2466: 18 CD         jr   $2435
 
@@ -4388,7 +4395,7 @@ table_2468:
 2473: E1            pop  hl
 2474: C9            ret
 
-2475: DD 6E 30      ld   l,(ix+$10)
+2475: DD 6E 30      ld   l,(ix+path_address_pointer_or_misc_flags)
 2478: DD 66 11      ld   h,(ix+$11)
 247B: 7E            ld   a,(hl)
 247C: 87            add  a,a
@@ -4401,7 +4408,7 @@ table_2468:
 2489: DD 36 B2 D7   ld   (ix+$12),$FF
 248D: C9            ret
 
-248E: DD 6E 10      ld   l,(ix+$10)
+248E: DD 6E 10      ld   l,(ix+path_address_pointer_or_misc_flags)
 2491: DD 66 31      ld   h,(ix+$11)
 2494: 7E            ld   a,(hl)
 2495: E6 0F         and  $0F
@@ -4873,6 +4880,7 @@ score_act_text_2845:  07 0B 19 53 43 4F 52 45 20 20 20 41 43 54 20 20 20 4E  ; .
 2867  14 11 33 52 C4 02 17 11 34 54 C8 02 1A 11 35 54  ; ..3RÄ...4TÈ...5TH
 2877  C8 
 
+set_proper_screen_orientation_2878:
 2878: 06 20         ld   b,$00
 287A: 3A B0 88      ld   a,(cocktail_mode_8818)
 287D: CB 47         bit  0,a
@@ -4946,7 +4954,7 @@ clear_screen_and_colors_28E5:
 ; copy overlap to clear tiles
 28F0: ED B0         ldir
 ; same thing with attributes
-28F2: 21 20 84      ld   hl,$8400
+28F2: 21 20 84      ld   hl,video_attribute_memory_8400
 28F5: 11 01 2C      ld   de,$8401
 28F8: 01 DE 03      ld   bc,$03FE
 28FB: 36 00         ld   (hl),$00
@@ -5542,7 +5550,8 @@ display_eggs_2D4B:
 ;print ("%x" % pengo_random()) # 0x05
 ;print ("%x" % pengo_random()) # 0x39
 
-get_random_value_2D7C: C5            push bc
+get_random_value_2D7C:
+2D7C: C5            push bc
 2D7D: E5            push hl
 2D7E: 2A 26 80      ld   hl,(random_seed_8826)
 2D81: 44            ld   b,h
@@ -5587,7 +5596,8 @@ compare_hl_to_de_2D99:
 2D9F: 5F            ld   e,a
 2DA0: 57            ld   d,a
 	
-draw_maze_2DA1: CD DD AE      call draw_borders_2E5D
+draw_maze_2DA1:
+2DA1: CD DD AE      call draw_borders_2E5D
 2DA4: CD 65 0E      call $2ECD
 2DA7: CD BC AF      call show_maze_with_line_delay_effect_2F14
 2DAA: 3A C0 B0      ld   a,(dip_switches_9040)
@@ -6023,21 +6033,24 @@ insert_egg_302D:
 303E: 34            inc  (hl)		; add 1 egg
 303F: C9            ret
 	
-_00_path_draw_up_3040: CD A6 18      call is_way_up_clear_308E
+_00_path_draw_up_3040:
+3040: CD A6 18      call is_way_up_clear_308E
 3043: C8            ret  z
 3044: CD 24 18      call set_way_up_clear_30AC
 3047: DD 34 89      inc  (ix+$01) ; ylen++
 304A: CD 61 18      call draw_2_holes_up_30E9
 304D: 18 2D         jr   handle_path_end_307C
 	
-_01_path_draw_down_304F: CD 97 B8      call is_way_down_clear_3097
+_01_path_draw_down_304F:
+303F: CD 97 B8      call is_way_down_clear_3097
 3052: C8            ret  z
 3053: CD B5 B8      call set_way_down_clear_30B5
 3056: DD 35 01      dec  (ix+$01) ; ylen--
 3059: CD F6 B8      call draw_2_holes_down_30F6
 305C: 18 1E         jr   handle_path_end_307C
 	
-_02_path_draw_left_305E: CD 16 18      call is_way_left_clear_309E
+_02_path_draw_left_305E:
+305E: CD 16 18      call is_way_left_clear_309E
 3061: C8            ret  z
 3062: CD 34 18      call set_way_left_clear_30BC
 3065: DD 35 88      dec  (ix+$00)  ; xlen--
@@ -6341,7 +6354,8 @@ set_initial_snobee_directions_and_count_323A:
 324A: DD 77 03      ld   (ix+char_color),a		; also sets color
 324D: C9            ret
 	
-compute_snobee_speed_324E: CD A7 28      call get_level_number_288F
+compute_snobee_speed_324E:
+32AE: CD A7 28      call get_level_number_288F
 3251: 3D            dec  a
 3252: CB 3F         srl  a
 3254: CB 3F         srl  a
@@ -6372,7 +6386,8 @@ compute_snobee_speed_324E: CD A7 28      call get_level_number_288F
 327E: DD 36 37 88   ld   (ix+char_state),$00
 3282: C9            ret
 	
-init_moving_block_3283: DD 21 28 A5   ld   ix,moving_block_struct_8DA0
+init_moving_block_3283:
+3283: DD 21 28 A5   ld   ix,moving_block_struct_8DA0
 3287: DD 36 88 00   ld   (ix+x_pos),$00
 328B: DD 36 89 00   ld   (ix+y_pos),$00
 328F: DD 36 8B 09   ld   (ix+char_color),$09
@@ -6457,28 +6472,29 @@ snobee_jump_table_332D
 	dc.w	_04_snobee_stunned_39B5
 	dc.w	_05_snobee_blinking_stunned_39F3
 	dc.w	_06_stunned_picked_3A6C
-	3359
-	3372
-	3AD7
-	3B46
-	3B7D
-	3BB4
-	3359
-	3C4B
-	3CEB
-	336D
-	3D2C
-	3372
+	dc.w	disable_snobee_3359
+	dc.w	chicken_mode_3372
+	dc.w	$3AD7
+	dc.w	$3B46
+	dc.w	$3B7D
+	dc.w	$3BB4
+	dc.w	disable_snobee_3359
+	dc.w	$3C4B
+	dc.w	$3CEB
+	dc.w	$336D
+	dc.w	$3D2C
+	dc.w	chicken_mode_3372
 	
 _00_snobee_do_nothing_3353:
 	;; active loop to keep roughly the same game speed
 	;; regardless of the number of currently active monsters
-			    ld b,$05
+3353:			    ld b,$05
 3354: 05            dec  b
 3355: 10 FE         djnz $3355
 3357: C9            ret
 3358: C9            ret
-	
+
+disable_snobee_3359:
 3359: DD 36 80 00   ld   (ix+x_pos),$00
 335D: DD 36 81 80   ld   (ix+y_pos),$00
 3361: CD 4E BB      call display_snobee_sprite_33CE
@@ -6491,6 +6507,7 @@ _00_snobee_do_nothing_3353:
 336D: DD 36 37 01   ld   (ix+char_state),$01
 3371: C9            ret
 
+chicken_mode_3372:
 3372: DD 36 1F A6   ld   (ix+char_state),$0E
 3376: C9            ret
 	
@@ -6527,7 +6544,8 @@ _02_snobee_moving_33A5:
 33B2: DD 36 07 80   ld   (ix+current_period_counter),$00
 	;; call the main A.I. routine
 	
-33B6: CD 70 33      call handle_snobee_direction_change_33D8
+33B6: CD 70 33      callpalette_bank_selector_9042 handle_snobee_direction_change_33D8
+move_snobee_forward_33B9:
 33B9: 21 CE 9B      ld   hl,display_snobee_sprite_33CE
 33BC: E5            push hl
 33BD: DD 7E 84      ld   a,(ix+facing_direction) ; snobee direction
@@ -6732,7 +6750,7 @@ chicken_mode_go_right_to_corner_3515:
 351C: 18 39         jr   $34D7
 	
 00_snobee_mode_block_avoid_351E: CD A0 B6      call $3608
-3521: DD 4E 38      ld   c,(ix+$10)
+3521: DD 4E 38      ld   c,(ix+path_address_pointer_or_misc_flags)
 3524: FD 21 20 05   ld   iy,moving_block_struct_8DA0
 3528: FD 7E 84      ld   a,(iy+$04)
 352B: 11 B1 BD      ld   de,$3531
@@ -6847,27 +6865,27 @@ snobee_threatened_by_moving_block_right_35F8: FD 7E 01      ld   a,(iy+$01)
 3605: D0            ret  nc
 3606: 18 32         jr   snobee_tries_to_avoid_block_35C2
 	
-3608: DD 36 10 88   ld   (ix+$10),$00
+3608: DD 36 10 88   ld   (ix+path_address_pointer_or_misc_flags),$00
 360C: CD 50 3E      call get_div8_ix_coords_3E78
 360F: CD 0F 39      call is_upper_grid_free_390F
 3612: 20 8F         jr   nz,$361B
-3614: DD CB 10 E6   set  4,(ix+$10)
-3618: DD 34 10      inc  (ix+$10)
+3614: DD CB 10 E6   set  4,(ix+path_address_pointer_or_misc_flags)
+3618: DD 34 10      inc  (ix+path_address_pointer_or_misc_flags)
 361B: CD 78 3E      call get_div8_ix_coords_3E78
 361E: CD 9F 39      call is_lower_grid_free_3917
 3621: 20 07         jr   nz,$362A
-3623: DD CB 98 EE   set  5,(ix+$10)
-3627: DD 34 98      inc  (ix+$10)
+3623: DD CB 98 EE   set  5,(ix+path_address_pointer_or_misc_flags)
+3627: DD 34 98      inc  (ix+path_address_pointer_or_misc_flags)
 362A: CD 50 3E      call get_div8_ix_coords_3E78
 362D: CD 33 11      call is_left_grid_free_391B
 3630: 20 8F         jr   nz,$3639
-3632: DD CB 10 F6   set  6,(ix+$10)
-3636: DD 34 10      inc  (ix+$10)
+3632: DD CB 10 F6   set  6,(ix+path_address_pointer_or_misc_flags)
+3636: DD 34 10      inc  (ix+path_address_pointer_or_misc_flags)
 3639: CD 78 3E      call get_div8_ix_coords_3E78
 363C: CD 1E 39      call is_right_grid_free_391E
 363F: 20 07         jr   nz,$3648
-3641: DD CB 98 FE   set  7,(ix+$10)
-3645: DD 34 98      inc  (ix+$10)
+3641: DD CB 98 FE   set  7,(ix+path_address_pointer_or_misc_flags)
+3645: DD 34 98      inc  (ix+path_address_pointer_or_misc_flags)
 3648: C9            ret
 	
 _01_snobee_mode_roaming_3649: 3A BF A5      ld   a,($block_moving_flag_8DBF)
@@ -6877,7 +6895,7 @@ _01_snobee_mode_roaming_3649: 3A BF A5      ld   a,($block_moving_flag_8DBF)
 3651: DD 7E 1C      ld   a,(ix+move_period)
 3654: DD 77 06      ld   (ix+instant_move_period),a
 3657: CD 08 BE      call $3608
-365A: DD 7E 10      ld   a,(ix+$10)
+365A: DD 7E 10      ld   a,(ix+path_address_pointer_or_misc_flags)
 365D: E6 0F         and  $0F
 365F: 11 4D 1E      ld   de,table_3665
 3662: C3 A7 2D      jp   indirect_jump_2D8F
@@ -6893,7 +6911,7 @@ table_3665:
 3673: E1            pop  hl
 3674: C9            ret
 
-3675: DD 7E 98      ld   a,(ix+$10)
+3675: DD 7E 98      ld   a,(ix+path_address_pointer_or_misc_flags)
 3678: 06 8B         ld   b,$03
 367A: 07            rlca
 367B: 38 02         jr   c,$367F
@@ -6970,7 +6988,7 @@ table_368E:
 table_3702:
   01 00 03 02 
   
-3706: DD 7E 90  	ld   a,(ix+$10)                                     
+3706: DD 7E 90  	ld   a,(ix+path_address_pointer_or_misc_flags)                                     
 3709: 06 84         ld   b,$04
 370B: 0E 83         ld   c,$03
 370D: DD E5         push ix
@@ -7490,7 +7508,7 @@ _03_snobee_aligns_for_stunned_3AAD:
 3ACB: DD 36 81 00   ld   (ix+$09),$00
 3ACF: DD 34 1F      inc  (ix+char_state) ; next state (stunned)
 3AD2: C9            ret
-3AD3: CD B9 BB      call $33B9
+3AD3: CD B9 BB      call move_snobee_forward_33B9
 3AD6: C9            ret
 
 3AD7: ED 4B A0 8D   ld   bc,(moving_block_struct_8DA0)
@@ -7561,7 +7579,7 @@ jump_table_3B2A:
 3B52: DD BE 06      cp   (ix+instant_move_period)
 3B55: D8            ret  c
 3B56: DD 36 07 80   ld   (ix+current_period_counter),$00
-3B5A: CD 39 33      call $33B9
+3B5A: CD 39 33      call move_snobee_forward_33B9
 3B5D: C9            ret
 
 3B5E: DD 7E 84      ld   a,(ix+facing_direction)
@@ -7822,8 +7840,8 @@ table_3C1E:
 3D6F: CD CE 9B      call display_snobee_sprite_33CE
 3D72: C9            ret
 	
-pengo_moves_3D73: DD 21 00 8D
-	ld   ix,pengo_struct_8D80
+pengo_moves_3D73:
+3D73: DD 21 00 8D	ld   ix,pengo_struct_8D80
 3D77: DD 7E B7      ld   a,(ix+char_state)
 3D7A: 11 00 3D      ld   de,table_3D80
 3D7D: C3 8F AD      jp   indirect_jump_2D8F
@@ -7970,7 +7988,8 @@ pengo_goes_right_3E02:
 3E75: 04            inc  b
 3E76: 18 44         jr   $3E44
 	
-get_div8_ix_coords_3E78: DD 7E 00      ld   a,(ix+x_pos)
+get_div8_ix_coords_3E78:
+3E78: DD 7E 00      ld   a,(ix+x_pos)
 3E7B: CB 3F         srl  a
 3E7D: CB 3F         srl  a
 3E7F: CB 3F         srl  a
@@ -7983,7 +8002,8 @@ get_div8_ix_coords_3E78: DD 7E 00      ld   a,(ix+x_pos)
 3E8D: 47            ld   b,a
 3E8E: C9            ret
 	
-get_div8_iy_coords_3E8F: FD 7E 88      ld   a,(iy+$00)
+get_div8_iy_coords_3E8F:
+3E8F: FD 7E 88      ld   a,(iy+$00)
 3E92: CB 3F         srl  a
 3E94: CB 3F         srl  a
 3E96: CB 3F         srl  a
@@ -8055,7 +8075,7 @@ get_div8_iy_coords_3E8F: FD 7E 88      ld   a,(iy+$00)
 3F08: C8            ret  z
 3F09: DD 36 20 7F   ld   (ix+$08),$FF
 3F0D: DD 46 2C      ld   b,(ix+facing_direction)
-3F10: DD 70 10      ld   (ix+$10),b
+3F10: DD 70 10      ld   (ix+path_address_pointer_or_misc_flags),b
 3F13: 06 04         ld   b,$04
 3F15: 0F            rrca
 3F16: 38 83         jr   c,$3F1B
@@ -8316,12 +8336,12 @@ jump_table_40A3:
 40E9: 5E            ld   e,(hl)
 40EA: 23            inc  hl
 40EB: 7E            ld   a,(hl)
-40EC: DD 77 38      ld   (ix+$10),a
+40EC: DD 77 38      ld   (ix+path_address_pointer_or_misc_flags),a
 40EF: D5            push de
 40F0: CD C7 29      call convert_coords_to_screen_address_296F
 40F3: D1            pop  de
 40F4: D5            push de
-40F5: DD CB 30 56   bit  2,(ix+$10)
+40F5: DD CB 30 56   bit  2,(ix+path_address_pointer_or_misc_flags)
 40F9: 28 01         jr   z,$40FC
 40FB: 1C            inc  e
 40FC: 73            ld   (hl),e
@@ -8331,7 +8351,7 @@ jump_table_40A3:
 4102: CD EF 09      call convert_coords_to_screen_address_296F
 4105: D1            pop  de
 4106: D5            push de
-4107: DD CB 90 FE   bit  2,(ix+$10)
+4107: DD CB 90 FE   bit  2,(ix+path_address_pointer_or_misc_flags)
 410B: 20 A9         jr   nz,$410E
 410D: 1C            inc  e
 410E: 73            ld   (hl),e
@@ -8342,10 +8362,10 @@ jump_table_40A3:
 4115: 20 D8         jr   nz,$40EF
 4117: C9            ret
 
-4118: DD CB 10 E6   bit  0,(ix+$10)
+4118: DD CB 10 E6   bit  0,(ix+path_address_pointer_or_misc_flags)
 411C: 28 A1         jr   z,$411F
 411E: 0C            inc  c
-411F: DD CB 90 CE   bit  1,(ix+$10)
+411F: DD CB 90 CE   bit  1,(ix+path_address_pointer_or_misc_flags)
 4123: 28 A9         jr   z,$4126
 4125: 04            inc  b
 4126: C9            ret
@@ -8418,7 +8438,7 @@ table_41CB:
 	dc.w	$43BD 
 	dc.w	$44E9 
 	dc.w	$4529 
-	dc.w	$3359 
+	dc.w	disable_snobee_3359 
 	dc.w	$3368 
  
 
@@ -9811,72 +9831,268 @@ handle_pengo_eats_stunned_snobees_4C55:
 4C9A: DD 36 1F 26   ld   (ix+char_state),$06
 4C9E: C9            ret
 
+ice_pack_tiles_6000:
+     6000  00 00 00 00 00 00 00 00 A7 00 00 00 00 00 00 00
+     6010  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+     6020  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+     6030  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+     6040  02 02 02 02 02 02 02 02 02 2B 00 3F 00 00 00 00
+     6050  00 00 62 00 00 00 00 E5 92 02 02 02 02 02 02 00
+     6060  02 02 02 02 02 02 02 02 12 2A 00 3F 00 00 00 00
+     6070  00 00 61 70 00 00 00 86 8F 02 02 02 02 02 02 A6
+     6080  02 02 02 02 02 02 02 02 02 29 00 3F 00 00 00 00
+     6090  00 00 00 6F 00 00 00 6A 91 02 02 02 02 02 02 02
+     60A0  02 02 02 02 02 02 02 02 11 28 3E 40 4F 00 00 00
+     60B0  00 00 00 6E 00 00 00 6A 8A 02 02 02 02 02 02 02
+     60C0  02 02 02 02 02 02 02 02 10 27 3D 40 4E 55 50 00
+     60D0  00 00 00 3F 00 00 00 69 8A 02 02 02 02 02 02 02
+     60E0  B8 BD 02 02 02 02 02 E1 0F 26 00 40 4D 54 50 00
+     60F0  00 00 00 6D 00 00 00 6A 8A 02 02 02 02 02 02 02
+     6100  04 04 C3 C9 C9 C9 D8 E0 0E 25 00 41 4C 53 50 00
+     6110  00 00 00 6C 00 00 00 69 90 02 02 02 02 02 02 02
+     6120  04 04 04 04 CD D4 D7 DF E4 24 00 41 4B 00 4E 00
+     6130  00 00 00 6C 74 00 00 85 8F 02 02 02 02 02 02 A5
+     6140  B7 B7 B7 C8 01 01 C2 BC 0D 00 00 41 00 00 4E 00
+     6150  00 00 00 6B 73 00 00 E5 8E 02 02 02 02 02 02 00
+     6160  01 01 01 01 C2 BC 03 CC 0C 23 3C 45 4A 00 4E 00
+     6170  00 00 00 6A 02 00 00 84 8D 02 02 02 02 02 02 00
+     6180  01 01 C2 BC 03 03 CC DE 0B 22 3B 44 49 00 4C 00
+     6190  00 00 00 69 02 7A 00 83 8C 02 02 02 02 02 A4 00
+     61A0  B6 BC 03 03 03 CC D6 DD 0A 21 3A 43 48 00 57 00
+     61B0  00 00 00 69 02 79 00 01 02 02 02 02 02 02 A3 00
+     61C0  03 03 03 03 CC 00 D5 D2 E3 20 39 42 47 00 56 00
+     61D0  00 00 00 68 02 78 00 82 02 02 02 02 02 02 A2 00
+     61E0  03 03 C1 C7 00 C0 D3 01 E2 1F 00 41 46 50 00 00
+     61F0  00 5D 00 68 02 02 7D 81 02 02 02 02 02 02 00 00
+     6200  B5 BB 00 00 C0 03 D2 D1 DB 1E 38 41 46 4E 00 00
+     6210  00 5C 00 67 72 02 02 02 02 02 02 02 02 02 00 00
+     6220  00 00 00 C0 03 D3 01 D0 DA 1D 37 41 00 52 00 00
+     6230  00 5C 00 66 69 77 02 02 02 02 02 9B 9D A1 00 00
+     6240  00 00 C0 03 03 D2 D1 04 D9 02 36 41 00 51 00 00
+     6250  00 41 00 65 71 76 02 02 02 02 02 9A 9C A0 00 00..
+     6260  B4 B0 03 03 BA 01 D0 DC 02 1C 35 41 00 4C 00 00
+     6270  00 5F 00 64 00 75 7C 02 02 02 02 99 00 9F 00 00
+     6280  03 03 03 BA 01 D1 04 DB 02 1B 34 41 00 4C 00 00
+     6290  00 5E 00 64 00 00 7B 80 02 02 98 00 00 9E 00 00
+     62A0  03 03 BA 01 01 D0 04 DA 09 1A 33 41 00 4C 00 00
+     62B0  00 50 00 5C 00 00 00 7F 8B 02 13 00 00 00 00 00
+     62C0  03 BA 01 01 CB 04 04 D9 08 19 00 41 00 4E 00 00
+     62D0  5D 00 5D 41 00 00 00 4C 8A 02 13 00 00 00 00 00
+     62E0  B3 01 01 C6 CA 04 CF 02 07 18 32 41 00 4E 00 00
+     62F0  5C 00 60 63 00 00 00 68 8A 02 97 00 00 00 00 00
+     6300  01 01 01 C5 04 04 CE 02 02 17 31 41 00 50 00 00
+     6310  5B 00 00 00 00 00 00 7E 8A 02 97 00 00 00 00 00
+     6320  01 01 BF 04 04 CF 02 02 06 00 30 40 00 00 00 00
+     6330  5A 00 00 00 00 00 00 00 89 02 96 00 00 00 00 00
+     6340  A8 AE 04 04 04 CE 02 02 05 16 2F 40 00 00 00 00
+     6350  59 00 00 00 00 00 00 00 88 94 41 00 00 00 00 00
+     6360  04 04 04 04 C4 02 02 02 02 15 2E 3F 00 00 00 00
+     6370  58 00 00 00 00 00 00 00 4C 93 95 00 00 00 00 00
+     6380  04 04 04 C4 02 02 02 02 02 14 2D 3F 00 00 00 00
+     6390  00 00 00 00 00 00 00 00 87 00 00 00 00 00 00 00
+     63A0  04 B9 BE 02 02 02 02 02 02 13 2C 3F 00 00 00 00
+     63B0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+     63C0  00 00 02 02 02 AD 04 04 04 04 AC 01 01 AB 03 03
+     63D0  03 00 00 00 AA 03 03 A9 01 01 01 A8 04 04 00 00
+     63E0  00 00 02 02 02 02 AD 04 04 04 B2 01 01 AB 03 03
+     63F0  B1 00 00 00 B0 03 03 AF 01 01 01 AE 04 04 00 00
+
+
 move_table_6400:
-     6400  AA AA AA AA AA AA AE 00 00 00 00 00 00 00 00 00   ªªªªªª®.........
-     6410  00 00 00 00 A0 CA B8 BB BB 90 8B BC CB A8 AA AE   .... Ê¸»»..¼Ë¨ª®
-     6420  9A 99 99 9D 99 80 BB 88 AA 88 AA 99 99 88 DA 00   ......».ª.ª...Ú.
-     6430  99 99 99 99 99 99 99 09 9B B9 BB BB BB BB BB BB   ....... .¹»»»»»»
-     6440  BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB   »»»»»»»»»»»»»»»»
-     6450  BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB   »»»»»»»»»»»»»»»»
-     6460  BB BB BB BB BB BB BB BB BB BB BB BB FB BB A8 AE   »»»»»»»»»»»»û»¨®
-     6470  0A A8 8A 88 B8 C8 BB 09 80 DA 99 99 99 00 88 08   .¨..¸È» .Ú......
-     6480  AA 9D 99 89 B8 BB BB BB 9B B9 BB BB BB BB BB BB   ª...¸»»».¹»»»»»»
-     6490  BF 9B AA AA AA AA 90 9A A9 9A 99 99 99 99 99 99   ¿.ªªªª..©.......
-     64A0  99 09 9B B9 BB 0B B8 8B 88 AA AA AA BE BB BB 80   . .¹».¸..ªªª¾»».
-     64B0  88 8C 88 88 88 88 88 88 88 88 88 88 88 88 C8 88   ..............È.
-     64C0  88 AE 09 BB BB BB BB BB FB BB 0B 99 9D 09 B0 AA   .® »»»»»û»... °ª
-     64D0  99 B9 BB BB 80 E8 AA AA 80 A8 AA AA AA 9A D9 B0   .¹»».èªª.¨ªªª.Ù°
-     64E0  9B B9 88 BB B9 8B AC 99 9B 0A D9 99 99 B0 BB BB   .¹.»¹.¬...Ù..°»»
-     64F0  90 BB 8B 08 AA AA AA AA 90 BB BB BB BB 80 BB BB   .»..ªªªª.»»»».»»
-     6500  BB BB BB BB BB 90 99 09 00 88 BB BB 8F 99 A0 BA   »»»»».. ..»».. º
-     6510  88 88 88 88 0A 88 88 0B BB 0B 00 AA 9A 99 99 B0   ........»..ª...°
-     6520  00 88 88 88 99 99 99 88 BB 9D 99 BB 99 AA AA AE   ........»..».ªª®
-     6530  EA AA AA AA AA AA A9 BC 9B 99 A9 AA 0A A8 9D 99   êªªªªª©¼..©ª.¨..
-     6540  99 99 99 99 99 99 99 99 99 99 99 99 99 99 99 99   ................
-     6550  99 09 8A 88 88 88 88 C8 00 00 00 00 00 00 00 00   . .....È........
-     6560  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
-     6570  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
-     6580  00 99 BB 99 A9 3B 00 3B FF FF FF FF FF FF FF FF   ..».©;.;ÿÿÿÿÿÿÿÿ
-     6590  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     65A0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     65B0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     65C0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     65D0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     65E0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     65F0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     6600  AA AA AA AA AA AA AA AA AA AA AA AA AA AA AE 8A   ªªªªªªªªªªªªªª®.
+     6400  AA AA AA AA AA AA AE 00 00 00 00 00 00 00 00 00
+     6410  00 00 00 00 A0 CA B8 BB BB 90 8B BC CB A8 AA AE¨ª®
+     6420  9A 99 99 9D 99 80 BB 88 AA 88 AA 99 99 88 DA 00
+     6430  99 99 99 99 99 99 99 09 9B B9 BB BB BB BB BB BB
+     6440  BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB
+     6450  BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB
+     6460  BB BB BB BB BB BB BB BB BB BB BB BB FB BB A8 AE
+     6470  0A A8 8A 88 B8 C8 BB 09 80 DA 99 99 99 00 88 08
+     6480  AA 9D 99 89 B8 BB BB BB 9B B9 BB BB BB BB BB BB
+     6490  BF 9B AA AA AA AA 90 9A A9 9A 99 99 99 99 99 99
+     64A0  99 09 9B B9 BB 0B B8 8B 88 AA AA AA BE BB BB 80
+     64B0  88 8C 88 88 88 88 88 88 88 88 88 88 88 88 C8 88
+     64C0  88 AE 09 BB BB BB BB BB FB BB 0B 99 9D 09 B0 AA
+     64D0  99 B9 BB BB 80 E8 AA AA 80 A8 AA AA AA 9A D9 B0
+     64E0  9B B9 88 BB B9 8B AC 99 9B 0A D9 99 99 B0 BB BB
+     64F0  90 BB 8B 08 AA AA AA AA 90 BB BB BB BB 80 BB BB
+     6500  BB BB BB BB BB 90 99 09 00 88 BB BB 8F 99 A0 BA º
+     6510  88 88 88 88 0A 88 88 0B BB 0B 00 AA 9A 99 99 B0
+     6520  00 88 88 88 99 99 99 88 BB 9D 99 BB 99 AA AA AE
+     6530  EA AA AA AA AA AA A9 BC 9B 99 A9 AA 0A A8 9D 99
+     6540  99 99 99 99 99 99 99 99 99 99 99 99 99 99 99 99
+     6550  99 09 8A 88 88 88 88 C8 00 00 00 00 00 00 00 00
+     6560  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+     6570  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+     6580  00 99 BB 99 A9 3B 00 3B FF FF FF FF FF FF FF FF
+     6590  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     65A0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     65B0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     65C0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     65D0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     65E0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     65F0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
 
 move_table_6600:
-     6600  AA AA AA AA AA AA AA AA AA AA AA AA AA AA AE 8A   ªªªªªªªªªªªªªª®.
-     6610  88 88 88 88 08 B0 88 88 88 C8 B0 BB BB BB FB 8B   .....°...È°»»»û.
-     6620  BB BB BB BB BB 80 BB BB BB BB BB BB BB BB BB BB   »»»»».»»»»»»»»»»
-     6630  BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB   »»»»»»»»»»»»»»»»
-     6640  BB BB BB BB BB BB BB BB FB 90 99 B0 BB BF BB BB   »»»»»»»»û..°»¿»»
-     6650  0B 99 D9 BB BB BB BB 00 99 99 99 99 99 99 99 99   ..Ù»»»».........
-     6660  99 99 99 9B 99 BB BB BF BB BB BB BB BB BB 80 88   .....»»¿»»»»»»..
-     6670  88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 08   ................
-     6680  A0 AA 99 99 99 99 99 99 99 99 99 09 9B 99 99 99    ª......... ....
-     6690  A0 9A B9 C8 08 90 99 99 99 99 99 09 B0 BB BB BB    .¹È....... °»»»
-     66A0  BB 0B B9 BB BB BB 80 88 88 8A C8 B8 08 A0 AA AA   ».¹»»»....È¸. ªª
-     66B0  AA AA 88 AA AA AA 0A A9 88 C8 A9 99 B9 BB BF 99   ªª.ªªª.©.È©.¹»¿.
-     66C0  99 09 9B AA AA EA BA 99 99 99 99 99 9D 99 BD 8B   . .ªªêº.......½.
-     66D0  88 AE 9A AA EA AA AA 0A 88 8C 88 AA AA AA AA AA   .®.ªêªª....ªªªªª
-     66E0  AA 8E 88 88 88 A8 00 99 F9 88 88 B0 BB BB BB BB   ª....¨..ù..°»»»»
-     66F0  BB BF BB BB BF BB BB BB BB BB BB BB BB BB BB BB   »¿»»¿»»»»»»»»»»»
-     6700  BB BB BB BF BB BB BB BB BB BB 0B 99 FB FB BB BB   »»»¿»»»»»»..ûû»»
-     6710  BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB 90   »»»»»»»»»»»»»»».
-     6720  99 99 D9 99 AA CA BB 9B BF BB BB BB BB BB BB BB   ..Ù.ªÊ».¿»»»»»»»
-     6730  BB 90 8A A8 80 88 88 88 88 88 88 88 00 AA 88 BB   »..¨.........ª.»
-     6740  BB 99 AA AE 0A 00 00 00 00 00 00 00 00 00 AA 88   ».ª®..........ª.
-     6750  88 88 B0 88 88 C8 88 88 88 88 88 88 88 88 88 88   ..°..È..........
-     6760  88 88 88 88 88 88 9A 99 99 9D 99 3B 00 3B 00 3B   ...........;.;.;
-     6770  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     6780  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     6790  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     67A0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     67B0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     67C0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     67D0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     67E0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
-     67F0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF   ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+     6600  AA AA AA AA AA AA AA AA AA AA AA AA AA AA AE 8A
+     6610  88 88 88 88 08 B0 88 88 88 C8 B0 BB BB BB FB 8B
+     6620  BB BB BB BB BB 80 BB BB BB BB BB BB BB BB BB BB
+     6630  BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB
+     6640  BB BB BB BB BB BB BB BB FB 90 99 B0 BB BF BB BB
+     6650  0B 99 D9 BB BB BB BB 00 99 99 99 99 99 99 99 99
+     6660  99 99 99 9B 99 BB BB BF BB BB BB BB BB BB 80 88
+     6670  88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 08
+     6680  A0 AA 99 99 99 99 99 99 99 99 99 09 9B 99 99 99...
+     6690  A0 9A B9 C8 08 90 99 99 99 99 99 09 B0 BB BB BB»»»
+     66A0  BB 0B B9 BB BB BB 80 88 88 8A C8 B8 08 A0 AA AAªª
+     66B0  AA AA 88 AA AA AA 0A A9 88 C8 A9 99 B9 BB BF 99
+     66C0  99 09 9B AA AA EA BA 99 99 99 99 99 9D 99 BD 8B
+     66D0  88 AE 9A AA EA AA AA 0A 88 8C 88 AA AA AA AA AA
+     66E0  AA 8E 88 88 88 A8 00 99 F9 88 88 B0 BB BB BB BB
+     66F0  BB BF BB BB BF BB BB BB BB BB BB BB BB BB BB BB
+     6700  BB BB BB BF BB BB BB BB BB BB 0B 99 FB FB BB BB
+     6710  BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB 90
+     6720  99 99 D9 99 AA CA BB 9B BF BB BB BB BB BB BB BB
+     6730  BB 90 8A A8 80 88 88 88 88 88 88 88 00 AA 88 BB
+     6740  BB 99 AA AE 0A 00 00 00 00 00 00 00 00 00 AA 88
+     6750  88 88 B0 88 88 C8 88 88 88 88 88 88 88 88 88 88
+     6760  88 88 88 88 88 88 9A 99 99 9D 99 3B 00 3B 00 3B
+     6770  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     6780  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     6790  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     67A0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     67B0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     67C0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     67D0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     67E0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     67F0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
 
+misc_table_6800:
+     6800  57 8F 03 03 03 03 03 03 03 06 03 03 03 03 03 03
+     6810  03 03 03 03 03 03 03 03 06 03 8E 03 03 03 03 03
+     6820  03 03 03 06 03 03 03 03 03 03 03 8D 03 03 03 03
+     6830  03 03 03 06 03 03 03 03 03 03 06 03 03 03 03 03
+     6840  03 03 06 03 03 03 03 03 03 06 03 03 03 03 03 03
+     6850  06 03 03 03 56 03 06 8E 03 03 03 06 03 03 03 06
+     6860  03 03 06 03 06 03 03 06 55 8F 06 06 06 06 06 01
+     6870  06 01 01 01 54 01 01 01 01 01 01 01 07 53 01 01
+     6880  07 01 07 07 07 07 8E 07 5F 02 07 02 02 07 8D 02
+     6890  02 02 02 07 02 02 02 02 07 02 02 02 8C 02 02 07
+     68A0  02 02 02 02 07 02 02 02 02 07 02 02 02 5E 02 07
+     68B0  02 02 02 02 07 02 02 02 02 07 8A 02 02 02 07 02
+     68C0  02 02 02 02 07 02 02 02 02 02 02 02 07 02 02 8B
+     68D0  02 02 02 02 02 02 02 02 07 02 02 02 02 02 02 02
+     68E0  8C 02 02 02 07 02 02 02 02 8D 02 02 02 02 8E 02
+     68F0  02 02 02 52 8F 01 C0 01 01 01 01 01 01 01 01 01
+     6900  8F 47 07 02 02 07 02 02 07 02 02 07 02 02 07 02
+     6910  02 07 02 07 02 07 02 46 07 02 07 02 07 01 06 03
+     6920  8C 03 06 03 03 03 06 03 03 06 03 03 03 03 03 45
+     6930  06 03 03 03 03 06 03 03 03 03 03 06 03 03 03 03
+     6940  06 03 8F 06 03 06 03 06 44 01 01 07 07 02 07 02
+     6950  8E 02 07 02 02 02 07 02 02 02 02 07 8C 02 02 02
+     6960  07 4F 02 02 07 02 02 02 07 02 02 07 02 07 02 02
+     6970  02 07 02 8B 07 02 02 07 02 07 02 02 07 02 07 02
+     6980  07 02 02 07 02 02 07 02 02 02 07 02 8A 02 07 02
+     6990  07 4E 02 02 07 02 02 07 02 02 07 02 02 07 02 07
+     69A0  02 07 02 07 02 07 8B 02 07 02 07 02 07 02 07 8C
+     69B0  07 07 07 07 4D 07 07 07 07 8D 07 07 07 07 07 41
+     69C0  01 07 07 8E 07 07 01 07 01 07 07 01 07 01 01 07
+     69D0  01 07 01 01 01 07 01 01 01 01 01 01 01 01 01 01
+     69E0  01 01 01 01 01 01 01 01 40 01 01 01 01 01 06 01
+     69F0  01 8D 01 01 06 01 06 01 06 01 6C 06 06 06 06 06
+     6A00  06 03 06 8C 03 03 03 06 03 03 03 03 03 03 03 03
+     6A10  03 03 03 03 03 03 03 03 40 00 01 00 01 00 01 C0
+     6A20  8F 47 01 01 01 02 02 02 02 02 02 02 02 02 02 02
+     6A30  02 02 02 02 02 02 02 02 02 07 07 02 02 02 02 02
+     6A40  02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02
+     6A50  02 02 02 07 07 02 02 07 02 02 07 46 02 02 02 02
+     6A60  02 02 02 02 02 02 07 07 07 02 02 02 02 02 02 02
+     6A70  02 02 02 02 02 07 02 02 02 07 07 07 45 07 07 07
+     6A80  02 07 07 07 02 07 07 02 02 07 44 07 07 07 07 07
+     6A90  07 07 07 43 07 07 01 01 07 01 01 07 01 01 01 01
+     6AA0  03 06 01 01 42 06 06 06 06 06 06 06 06 06 06 06
+     6AB0  06 06 06 06 06 41 06 06 06 06 06 06 06 06 06 06
+     6AC0  06 06 06 06 06 06 03 03 01 03 03 01 03 03 01 03
+     6AD0  03 01 03 03 01 03 03 01 03 03 01 03 03 01 6D 03
+     6AE0  03 03 03 03 03 03 03 41 C0 01 01 01 01 01 01 01
+     6AF0  01 00 01 00 01 00 01 00 01 00 01 00 01 00 01 00
+     6B00  8F 47 02 07 02 02 02 02 07 02 02 02 02 02 07 02
+     6B10  02 02 02 07 02 02 02 02 07 02 02 02 02 07 02 02
+     6B20  02 02 07 02 02 02 8E 46 07 02 02 07 02 02 02 07
+     6B30  02 02 02 07 02 02 07 02 02 07 02 02 07 02 02 07
+     6B40  02 02 8D 45 07 02 02 07 02 02 07 02 07 02 02 07
+     6B50  02 07 02 07 02 07 8C 44 07 02 07 07 01 06 06 03
+     6B60  03 06 03 03 03 03 06 03 03 03 03 03 03 03 03 03
+     6B70  03 8B 6F 06 03 03 03 03 03 03 03 03 06 03 03 03
+     6B80  03 03 03 03 03 06 03 03 03 03 03 03 06 03 03 03
+     6B90  03 06 03 03 03 03 03 06 03 03 03 03 06 03 03 03
+     6BA0  03 03 06 03 03 03 03 03 06 03 03 03 03 03 03 03
+     6BB0  06 03 03 03 03 03 06 03 03 03 03 03 03 03 06 03
+     6BC0  03 03 03 03 03 03 06 03 03 03 03 03 03 06 03 03
+     6BD0  03 03 06 03 03 03 03 06 03 03 03 03 8A 6E 06 03
+     6BE0  03 03 03 06 03 03 03 03 06 03 03 03 03 06 03 03
+     6BF0  03 03 03 03 06 03 03 03 03 06 03 03 03 03 06 03
+     6C00  03 03 06 03 03 42 C0 01 01 01 01 01 01 01 01 01
+     6C10  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6C20  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6C30  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6C40  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6C50  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6C60  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6C70  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6C80  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6C90  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6CA0  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6CB0  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6CC0  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6CD0  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6CE0  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6CF0  01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+     6D00  8F 57 03 03 03 06 03 03 03 03 03 06 03 03 03 03
+     6D10  03 06 03 03 03 03 03 03 06 03 03 03 06 03 03 03
+     6D20  06 03 06 03 8E 56 06 03 06 03 06 03 06 06 06 06
+     6D30  03 06 8D 55 06 03 06 03 06 03 06 06 03 06 03 03
+     6D40  06 03 03 06 03 03 8C 54 06 03 03 06 03 03 03 06
+     6D50  03 03 06 03 06 03 06 03 06 06 8B 53 06 01 06 01
+     6D60  06 06 06 06 01 06 01 01 06 01 01 01 8A 52 06 01
+     6D70  01 01 06 01 01 01 06 01 01 01 06 06 89 5E 06 06
+     6D80  06 03 06 03 03 03 06 03 03 06 08 08 51 06 06 01
+     6D90  01 01 07 01 01 07 07 07 07 87 5D 07 02 07 02 07
+     6DA0  02 02 02 07 02 02 02 02 02 02 02 02 07 02 02 02
+     6DB0  02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02
+     6DC0  02 07 02 02 02 02 02 02 02 02 07 02 02 02 02 02
+     6DD0  02 02 02 02 07 02 02 02 02 02 02 02 51 C0 00 01
+     6DE0  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6DF0  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6E00  8F 47 01 07 07 01 07 01 07 8F 46 07 07 07 07 07
+     6E10  01 07 07 8F 45 07 07 07 07 07 07 01 07 8F 44 07
+     6E20  07 07 07 07 02 07 07 07 8F 43 07 07 02 07 07 07
+     6E30  07 07 07 07 02 07 07 07 07 02 07 02 07 07 8F 42
+     6E40  07 07 07 02 07 07 07 07 07 02 07 07 07 07 07 07
+     6E50  07 07 07 8F 41 07 07 07 07 07 07 07 07 07 07 07
+     6E60  07 07 07 07 07 07 07 07 07 07 07 07 07 07 07 01
+     6E70  07 07 07 01 07 07 07 07 01 07 01 07 01 07 01 07
+     6E80  01 01 01 01 01 8F 40 01 01 01 01 01 01 01 01 06
+     6E90  01 01 06 01 01 06 01 06 01 06 06 01 06 06 01 06
+     6EA0  06 06 06 06 06 06 06 8D 6C 06 06 03 06 06 06 06
+     6EB0  06 03 06 03 06 03 06 03 03 06 03 03 03 03 06 03
+     6EC0  03 03 03 06 03 03 03 03 03 03 03 03 03 03 03 03
+     6ED0  03 06 03 03 03 03 03 03 03 03 03 03 03 03 03 03
+     6EE0  03 03 03 03 06 03 03 03 03 03 03 03 03 03 03 03
+     6EF0  03 06 03 03 03 03 03 03 03 03 03 03 03 03 03 03
+     6F00  C0 03 03 03 03 03 01 01 40 C0 01 01 01 01 01 01
+     6F10  01 C0 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6F20  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6F30  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6F40  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6F50  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6F60  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6F70  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6F80  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6F90  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6FA0  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6FB0  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6FC0  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6FD0  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6FE0  00 01 00 01 00 01 00 01 00 01 00 01 00 01 00 01
+     6FF0  00 01 00 01 00 01 00 01 66 01 A6 01 EB 01 EA C0
+     7000  E0 70 00 74 00 7D 80 72 80 77 80 74 FF 70 80 75

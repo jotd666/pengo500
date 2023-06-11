@@ -1,6 +1,7 @@
 General:
 
 - CLUTs seem wrong: alphanum chars OK, graphic chars wrong
+  (something to do with tile/clut banks?)
 - end transcode
 - dip switches (see ** code)
 

@@ -191,7 +191,10 @@ w\@:
 		.global osd_calibrate_display		| for debug
 		.global osd_w_videoram
 		.global osd_w_colorram
-		.global osd_update_graphics
+		.global osd_r_videoram
+		.global osd_r_colorram
+		.global osd_set_bank_selectors
+		.global osd_update_sprites
 		.global osd_read_dipswitches
 		.global osd_read_p1_inputs
 		.global osd_read_p2_inputs
@@ -537,6 +540,13 @@ osd_calibrate_display:
 	movem.l	(a7)+,a0/d0-d1
 	rts
 
+* this enables alternate bank selectors
+* (only for ice-pack screen)
+
+osd_set_bank_selectors:
+	move.b	d0,alternate_bank_selectors
+	rts
+	
 osd_sound_enable:	
 	rts
 osd_sound_disable:	
@@ -1132,7 +1142,32 @@ decode_sprite_data:
 	move.b	d4,d0	| sprite Y (aka X on amiga)
 	rts
 
-
+* d6=screen address
+osd_r_videoram:
+	movem.l	a0/d6,-(a7)
+	sub.w	#SCREEN_ADDRESS,d6
+	cmp.w	#0x400,d6
+	bcs.b	1f
+	* should not happen
+	move.w	#0,d6
+	
+	lea		bg_videoram,a0
+	move.b	(a0,d6.w),d0
+	movem.l	(a7)+,a0/d6
+	rts
+* d6=screen address
+osd_r_colorram:
+	movem.l	a0/d6,-(a7)
+	sub.w	#SCREEN_ADDRESS+0x400,d6
+	cmp.w	#0x400,d6
+	bcs.b	1f
+	* should not happen
+	move.w	#0,d6
+	
+	lea		bg_colorram,a0
+	move.b	(a0,d6.w),d0
+	movem.l	(a7)+,a0/d6
+	rts
 	
 * d6=screen address (preserved), d0=tile (preserved)
 * d6 starts at 0x8000 ends at 0x83FF
@@ -1320,6 +1355,10 @@ update_bg_tile:
 	* compute Y
 	and.w	#0xFF,d0	| mask up to 255
 	and.w	#0xFF,d1	| mask up to 255
+	tst.B	alternate_bank_selectors
+	beq.b	0f
+	bset	#8,d0
+0:
 	cmp.w	#0x3C0,d6
 	bcc.b	0f
 	move.w	d6,d3
@@ -2059,6 +2098,8 @@ dirty_rows_values:
 pause_flag:
 	dc.w	0
 
+alternate_bank_selectors:
+	.word	0
 	* sound variables
 sound_lock:
 	.word	0

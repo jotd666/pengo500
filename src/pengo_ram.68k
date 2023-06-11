@@ -24,11 +24,15 @@
 *VARIABLES_END:
 
 	.align	2
+	
+unknown_8DE0:
+	ds.b	0x20
+	
 bg_videoram:
-CHARACTER_RAM:						| $5000
+CHARACTER_RAM:						| $8000
 	ds.b	0x800
 bg_colorram:
-ATTRIBUTE_RAM:						| $5800
+ATTRIBUTE_RAM:						| $8400
 	ds.b	0x800
 
 	ds.b	2
