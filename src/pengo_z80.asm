@@ -1431,7 +1431,7 @@ level_completed_0A2B:
 0AC5: A7            and  a
 0AC6: 20 33         jr   nz,$0AFB
 0AC8: 06 A1         ld   b,$01
-0ACA: CD 0F B8      call $18AF
+0ACA: CD 0F B8      call sound_18AF
 0ACD: 2E 2A         ld   l,$02
 0ACF: 26 0E         ld   h,$0E
 0AD1: 11 01 20      ld   de,$0001
@@ -1703,7 +1703,7 @@ player_dies_0CD2:
 0D71: E5            push hl
 0D72: CD 82 30      call look_for_hidden_egg_300A
 0D75: 38 23         jr   c,$0D9A
-0D77: CD AF 85      call $0DAF
+0D77: CD AF 85      call does_bc_match_a_diamond_block_xy_0daf
 0D7A: 38 96         jr   c,$0D9A
 0D7C: E1            pop  hl
 0D7D: 79            ld   a,c
@@ -1727,7 +1727,7 @@ player_dies_0CD2:
 table_0D9D:
 0D 0E 0D 0C 0D 10 0B 0E 0F 0E 0B 10 0F 10 0B 0C 0F 0C
 
-
+does_bc_match_a_diamond_block_xy_0daf:
 0DAF: C5            push bc
 0DB0: 50            ld   d,b
 0DB1: 59            ld   e,c
@@ -2911,6 +2911,8 @@ play_sfx_1889: F3            di
 18A7: 32 58 A4      ld   (sound_channel_1_struct_8C70),a
 18AA: 32 A8 A4      ld   (sound_channel_2_struct_8C80),a
 18AD: 18 DB         jr   $18A2
+
+sound_18AF:
 18AF: F3            di
 18B0: 21 90 8C      ld   hl,sound_channel_3_struct_8C90
 18B3: 04            inc  b
@@ -2922,6 +2924,7 @@ play_sfx_1889: F3            di
 18BE: 32 34 A4      ld   (sfx_1_playing),a
 18C1: FB            ei
 18C2: C9            ret
+
 18C3: 36 00         ld   (hl),$00
 18C5: 18 FA         jr   $18C1
 
@@ -5322,7 +5325,7 @@ check_p1_score_for_extra_life_2BAE:
 2BFB: CB FE         set  7,(hl)
 2BFD: CD 13 05      call draw_lives_2D13
 2C00: 06 A1         ld   b,$01
-2C02: CD 0F B8      call $18AF
+2C02: CD 0F B8      call sound_18AF
 2C05: C9            ret
 
 check_p2_score_for_extra_life_2C06:
@@ -5912,7 +5915,8 @@ draw_diamonds_2F3A:
 2F83: C9            ret
 
 	;; return x,y random in b,c
-get_random_xy_grid_in_bc_2F84: CD 15 0F      call get_random_x_06_2F95
+get_random_xy_grid_in_bc_2F84:
+2F84: CD 15 0F      call get_random_x_06_2F95
 2F87: 87            add  a,a
 2F88: 87            add  a,a
 2F89: C6 AB         add  a,$03
@@ -8553,7 +8557,7 @@ table_41CB:
 4252: CD 8B 39      call display_character_sprite_39AB
 4255: DD 34 B7      inc  (ix+char_state)
 4258: 06 25         ld   b,$05
-425A: CD 8F 18      call $18AF
+425A: CD 8F 18      call sound_18AF
 425D: C9            ret
 
 425E: CD CF 6A      call $42EF
@@ -8579,7 +8583,7 @@ table_41CB:
 4288: DD E1         pop  ix
 428A: DD 36 BF A0   ld   (ix+char_state),$00
 428E: 06 A3         ld   b,$03
-4290: CD 8F 18      call $18AF
+4290: CD 8F 18      call sound_18AF
 4293: C9            ret
 4294: DD 36 1F 24   ld   (ix+char_state),$04
 4298: FD CB 18 46   bit  4,(iy+$18)
@@ -8593,7 +8597,7 @@ table_41CB:
 42AA: DD 36 BF A0   ld   (ix+char_state),$00
 42AE: C5            push bc
 42AF: 06 02         ld   b,$02
-42B1: CD AF B0      call $18AF
+42B1: CD AF B0      call sound_18AF
 42B4: C1            pop  bc
 42B5: CD C6 62      call find_breaking_block_free_slot_42c6
 42B8: CB EE         set  5,(hl)
@@ -8665,8 +8669,8 @@ table_431A:
 	dc.w	$434D 
 	dc.w	$4362  
 
-4324: 4F            ld   c,a
-4325: A9            xor  c
+4322: 05			dec  b                                              
+4323: CD 4F A9		call $296F                                          
 4326: 3E B2         ld   a,$1A
 4328: BE            cp   (hl)
 4329: C8            ret  z
@@ -8676,6 +8680,7 @@ table_431A:
 4331: C8            ret  z
 4332: FD CB 18 2E   res  4,(iy+$18)
 4336: C9            ret
+
 4337: 04            inc  b
 4338: 04            inc  b
 4339: CD 6F 01      call convert_coords_to_screen_address_296F
@@ -8688,6 +8693,7 @@ table_431A:
 4347: C8            ret  z
 4348: FD CB 98 0E   res  4,(iy+$18)
 434C: C9            ret
+
 434D: 0D            dec  c
 434E: CD EF 29      call convert_coords_to_screen_address_296F
 4351: 3E 19         ld   a,$19
@@ -8699,6 +8705,7 @@ table_431A:
 435C: C8            ret  z
 435D: FD CB 90 26   res  4,(iy+$18)
 4361: C9            ret
+
 4362: 0C            inc  c
 4363: 0C            inc  c
 4364: CD EF 09      call convert_coords_to_screen_address_296F
@@ -8963,7 +8970,7 @@ go_right_test_44CF:
 4529: CD 58 BE      call get_div8_ix_coords_3E78
 452C: ED 43 A8 20   ld   (cursor_x_8800),bc
 4530: DD CB 18 66   bit  4,(ix+$18)
-4534: C2 1C 45      jp   nz,$45BC
+4534: C2 1C 45      jp   nz,diamond_hits_obstacle_45bc
 4537: DD 7E 91      ld   a,(ix+$19)
 453A: CB 7F         bit  7,a
 453C: 28 B1         jr   z,$454F
@@ -8982,7 +8989,7 @@ go_right_test_44CF:
 4554: CD 5E 2E      call draw_ice_block_tile_2EFE
 4557: DD 34 97      inc  (ix+char_state)
 455A: 06 A4         ld   b,$04
-455C: CD 0F 18      call $18AF
+455C: CD 0F 18      call sound_18AF
 455F: DD 7E A7      ld   a,(ix+$0f)
 4562: A7            and  a
 4563: C8            ret  z
@@ -9020,6 +9027,7 @@ go_right_test_44CF:
 45B8: FD 34 1F      inc  (iy+$1f)
 45BB: C9            ret
 ; diamond hits a wall/another block
+diamond_hits_obstacle_45bc:
 45BC: DD 7E 18      ld   a,(ix+$18)
 45BF: E6 8F         and  $0F
 45C1: 87            add  a,a
