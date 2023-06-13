@@ -286,11 +286,6 @@ char_state = 0x1F
     .global pengo_reset
 
 	
-	.include "pengo.inc"
-	.ifdef	__amiga__
-	.include "pengo_ram.68k"
-	.align	2
-	.endif
 	
 * < A0: source (HL)
 * < A1: destination (DE)
@@ -379,6 +374,10 @@ INITIALISE_SYSTEM:
 	
 
 pengo_irq:
+	lea		sprite_ram_8FF2,a0		| type & color
+	lea		sprite_ram_9022,a1		| X,Y
+	jbsr	osd_update_sprites
+	
 	move.w	cursor_x_8800,-(sp)
 	move.w	cursor_color_8802,-(sp)
 	move.b	delay_timer_8820,d0             	| [ld   a,(delay_timer_8820)]
@@ -649,7 +648,7 @@ l_060e:
 	jne	l_060e                             	| [djnz $060E]
 	rts                                    	| [ret]
 
-l_0615:
+draw_pengo_title_0615:
 	clr.b	d0                               	| [ld   a,$00]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	lea	table_0670(pc),a0                  	| [ld   hl,table_0670]
@@ -784,7 +783,7 @@ wait_for_start_and_play_072D:
 	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
 	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
 	jbsr	l_2a2c                            	| [call $2A2C]
-	lea	unknown_880B(pc),a0                	| [ld   hl,unknown_880B]
+	lea	unknown_880B,a0                	| [ld   hl,unknown_880B]
 	bset.b	#7,(a0)                         	| [set  7,(hl)]
 
 	move.l	a0,-(sp)                        	| [push hl]
@@ -798,7 +797,7 @@ wait_for_start_and_play_072D:
 	clr.b	d0                               	| [xor  a]
 	move.b	d0,game_playing_8817            	| [ld   (game_playing_8817),a]
 	*move.b	d0,flip_screen_9043             	| [ld   (flip_screen_9043),a]
-	lea	cursor_x_8800(pc),a0               	| [ld   hl,cursor_x_8800]
+	lea	cursor_x_8800,a0               	| [ld   hl,cursor_x_8800]
 												| [ld   de,$002A]
 	tst.b	d0                               	| [and  a]
 	add.w	#0x2A,a0							| [add  hl,de]
@@ -808,7 +807,7 @@ wait_for_start_and_play_072D:
 	jeq	wait_for_start_and_play_072D       	| [jp   z,wait_for_start_and_play_072D]
 	clr.b	d0                               	| [xor  a]
 	not.b	d0                               	| [cpl]
-	lea	cursor_x_8800(pc),a0               	| [ld   hl,cursor_x_8800]
+	lea	cursor_x_8800,a0               	| [ld   hl,cursor_x_8800]
 											| [dec  hl]
 	move.b	d0,-(a0)                         	| [ld   (hl),a]
 	jra	wait_for_start_and_play_072D       	| [jp   wait_for_start_and_play_072D]
@@ -817,7 +816,7 @@ wait_for_start_0774:
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
  * initialize pengo structure
 
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	move.b	#0xB0,(x_pos,a2)                	| 176 [ld   (ix+x_pos),$B0]
 	move.b	#0x58,(y_pos,a2)                	| 88 [ld   (ix+y_pos),$58]
 	move.b	#0x0B,(char_color,a2)           	| [ld   (ix+char_color),$0B]
@@ -830,13 +829,13 @@ wait_for_start_0774:
 l_079d:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 	jbsr	l_0819                            	| [call $0819]
-	move.b	0x9080,d0                       	| [ld   a,($9080)]
+	**move.b	dip_switches_9080,d0                       	| [ld   a,($9080)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x60,d0                         	| [and  $60]
 	jeq	l_079d                             	| [jr   z,$079D]
 	btst.b	#6,d0                           	| [bit  6,a]
 	jne	l_07bc                             	| [jr   nz,$07BC]
-	lea	number_of_credits_8808(pc),a0      	| [ld   hl,number_of_credits_8808]
+	lea	number_of_credits_8808,a0      	| [ld   hl,number_of_credits_8808]
 	subq.b	#1,(a0)                         	| [dec  (hl)]
 	clr.b	d0                               	| [ld   a,$00]
 	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]
@@ -846,7 +845,7 @@ l_07bc:
 	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
 	cmp.b	#0x01,d0                         	| [cp   $01]
 	jeq	l_079d                             	| [jr   z,$079D]
-	lea	number_of_credits_8808(pc),a0      	| [ld   hl,number_of_credits_8808]
+	lea	number_of_credits_8808,a0      	| [ld   hl,number_of_credits_8808]
 	subq.b	#2,(a0)                         	| [dec  (hl)]
 	                         	| [dec  (hl)]
 	move.b	#0x80,d0                        	| [ld   a,$80]
@@ -857,9 +856,9 @@ l_07d1:
 	**move.b	dsw_1_9000_coinage,d0                   	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
-	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
+	lea	unknown_8809,a0                	| [ld   hl,unknown_8809]
 	jbsr	l_07fb                            	| [call $07FB]
-	lea	unknown_8809+1(pc),a0                	| [ld   hl,unknown_880a]
+	lea	unknown_8809+1,a0                	| [ld   hl,unknown_880a]
 	**move.b	dsw_1_9000_coinage,d0                   	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
@@ -873,7 +872,7 @@ l_07d1:
 	and.b	#0x0F,d0                         	| [and  $0F]
 	cmp.b	d1,d0                            	| [cp   b]
 	jne	l_07f7                             	| [jr   nz,$07F7]
-	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
+	lea	unknown_8809,a0                	| [ld   hl,unknown_8809]
 l_07f7:
 	jbsr	l_07fb                            	| [call $07FB]
 	rts                                    	| [ret]
@@ -984,7 +983,7 @@ play_one_game_087D:
 	move.b	d0,lives_counter_p2_8815      	| [ld   ($lives_counter_p2_8815),a]
  * game loop (lives)
 l_089f:
-	lea	player_number_8816(pc),a0          	| [ld   hl,player_number_8816]
+	lea	player_number_8816,a0          	| [ld   hl,player_number_8816]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	jne	l_08ae                             	| [jr   nz,$08AE]
 	move.b	lives_counter_p1_8814,d0        	| [ld   a,(lives_counter_p1_8814)]
@@ -1025,7 +1024,7 @@ l_08ce:
 	jra	l_089f                             	| [jr   $089F]
 
 play_one_life_08D6:
-	lea	player_number_8816(pc),a0          	| [ld   hl,player_number_8816]
+	lea	player_number_8816,a0          	| [ld   hl,player_number_8816]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	jne	l_08e4                             	| [jr   nz,$08E4]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
@@ -1098,7 +1097,7 @@ l_094b:
 	move.b	d0,total_eggs_to_hatch_8DC0     	| [ld   (total_eggs_to_hatch_8DC0),a]
 	move.b	d0,current_nb_eggs_to_hatch_8DDD	| [ld   (current_nb_eggs_to_hatch_8DDD),a]
 	move.b	d0,remaining_alive_snobees_8D98 	| [ld   (remaining_alive_snobees_8D98),a]
-	lea	snobee_1_struct_8D00+5(pc),a0      	| [ld   hl,snobee_1_struct_8D00+5]
+	lea	snobee_1_struct_8D00+5,a0      	| [ld   hl,snobee_1_struct_8D00+5]
 	move.b	#0x01,(a0)                      	| [ld   (hl),$01]
 	add.w	#0x20,a0							| [add  hl,de]
 	move.b	#0x02,(a0)                      	| [ld   (hl),$02]
@@ -1106,9 +1105,9 @@ l_094b:
 	move.b	#0x03,(a0)                      	| [ld   (hl),$03]
 	add.w	#0x20,a0							| [add  hl,de]
 	move.b	#0x04,(a0)                      	| [ld   (hl),$04]
-	lea	pengo_struct_8D80+5(pc),a0         	| [ld   hl,pengo_struct_8D80+5]
+	lea	pengo_struct_8D80+5,a0         	| [ld   hl,pengo_struct_8D80+5]
 	move.b	#0x05,(a0)                      	| [ld   (hl),$05]
-	lea	moving_block_struct_8DA0+5(pc),a0  	| [ld   hl,moving_block_struct_8DA0+5]
+	lea	moving_block_struct_8DA0+5,a0  	| [ld   hl,moving_block_struct_8DA0+5]
 	move.b	#0x06,(a0)                      	| [ld   (hl),$06]
 	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
@@ -1134,7 +1133,7 @@ l_0985:
 
 l_09a0:
 	jbsr	l_0d44                            	| [call $0D44]
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
@@ -1155,14 +1154,14 @@ l_09cb:
 	move.b	#0x06,d0                        	| [ld   a,$06]
 	move.b	d0,game_phase_8CBB              	| [ld   (game_phase_8CBB),a]
 	clr.b	d0                               	| [xor  a]
-	lea	time_counter_8C5B(pc),a0           	| [ld   hl,time_counter_8C5B]
+	lea	time_counter_8C5B,a0           	| [ld   hl,time_counter_8C5B]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	addq.w	#1,a0                           	| [inc  hl]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	addq.w	#1,a0                           	| [inc  hl]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 * a timer which is used for instance for egg blink
-	lea	timer_16_bit_8DDE(pc),a0           	| [ld   hl,timer_16_bit_8DDE]
+	lea	timer_16_bit_8DDE,a0           	| [ld   hl,timer_16_bit_8DDE]
 	move.b	#0x08,(a0)                      	| [ld   (hl),$08]
 	addq.w	#1,a0                           	| [inc  hl]
 	move.b	#0x80,(a0)                      	| [ld   (hl),$80]
@@ -1207,7 +1206,7 @@ level_completed_0A2B:
 
 	bsr		osd_disable_vblank_interrupt
 
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	move.b	elapsed_seconds_since_start_of_round_8C5C,d0	| [ld   a,(elapsed_seconds_since_start_of_round_8C5C)]
 	add.b	(0x12,a2),d0                     	| [add  a,(ix+$12)]
 	clr.b	d1                               	| [ld   b,$00]
@@ -1396,7 +1395,7 @@ l_0c1e:
 
 * start from second slot
 l_0c26:
-	lea	breaking_block_slots_8CC0+5(pc),a0 	| [ld   hl,breaking_block_slots_8CC0+5]
+	lea	breaking_block_slots_8CC0+5,a0 	| [ld   hl,breaking_block_slots_8CC0+5]
 										| [ld   de,$0006]
 	move.b	#0x04,d1                        	| [ld   b,$04]
 l_0c2e:
@@ -1437,7 +1436,7 @@ l_0c3b:
 * pengo leaves the screen, and sometimes falls
 
 pengo_walks_out_the_screen_0C55:
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
 * choose the shortest path to leave the screen
 	move.b	#0x02,(facing_direction,a2)     	| facing direction: right [ld   (ix+facing_direction),$02]
@@ -1523,13 +1522,13 @@ player_dies_0CD2:
 	move.b	#0x06,d0                        	| [ld   a,$06]
 	move.b	d0,pengo_struct_8D80+char_state 	| [ld   (pengo_struct_8D80+char_state),a]
 l_0ce2:
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	jbsr	pengo_dies_3FB3                            	| [call $3FB3]
 	move.b	#0x06,d0                        	| [ld   a,$06]
 	cmp.b	(char_state,a2),d0               	| [cp   (ix+char_state)]
 	jeq	l_0ce2                             	| [jr   z,$0CE2]
 	jbsr	osd_disable_vblank_interrupt	| [di]
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	move.b	elapsed_seconds_since_start_of_round_8C5C,d0	| [ld   a,(elapsed_seconds_since_start_of_round_8C5C)]
 	add.b	(0x12,a2),d0                     	| [add  a,(ix+$12)]
 	clr.b	d1                               	| [ld   b,$00]
@@ -1562,7 +1561,7 @@ l_0d05:
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jbsr	clear_maze_and_borders_0C39       	| [call clear_maze_and_borders_0C39]
 	jbsr	l_0e38                            	| [call $0E38]
-	lea	player_number_8816(pc),a0          	| [ld   hl,player_number_8816]
+	lea	player_number_8816,a0          	| [ld   hl,player_number_8816]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	jeq	l_0d41                             	| [jr   z,$0D41]
 	addq.b	#1,(a0)                         	| [inc  (hl)]
@@ -1598,7 +1597,7 @@ l_0d44:
 	rts                                    	| [ret]
 
 l_0d66:
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	lea	table_0D9D(pc),a0                  	| [ld   hl,table_0D9D]
 l_0d6d:
 	move.b	(a0)+,d2                         	| [ld   c,(hl)]
@@ -1660,25 +1659,25 @@ l_0dcd:
 
 l_0dd0:
 	lea	table_0E2C(pc),a0                  	| [ld   hl,table_0E2C]
-	lea	snobee_1_struct_8D00(pc),a2        	| [ld   ix,snobee_1_struct_8D00]
+	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
 	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
 	tst.b	d0                               	| [and  a]
 	beq	0f
 	jbsr	l_0e00                            	| [call nz,$0E00]
 0:
-	lea	snobee_2_struct_8D20(pc),a2        	| [ld   ix,snobee_2_struct_8D20]
+	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
 	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
 	tst.b	d0                               	| [and  a]
 	beq	0f
 	jbsr	l_0e00                            	| [call nz,$0E00]
 0:
-	lea	snobee_3_struct_8D40(pc),a2        	| [ld   ix,snobee_3_struct_8D40]
+	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
 	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
 	tst.b	d0                               	| [and  a]
 	beq	0f
 	jbsr	l_0e00                            	| [call nz,$0E00]
 0:
-	lea	snobee_4_struct_8D60(pc),a2        	| [ld   ix,snobee_4_struct_8D60]
+	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
 	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
 	tst.b	d0                               	| [and  a]
 	beq	0f
@@ -1825,9 +1824,9 @@ l_0ead:
 	movem.w	d1-d3,-(sp)                        	| [push bc]
 												| [push de]
 	bsr		set_current_cursor_from_bc                	| [ld   (cursor_x_8800),bc]
-	move.b	(a0),d1
-	roxl.b	#1,d1                         	| [rl   (hl)]
-	move.b	d1,(a0)
+	move.b	(a0),d7
+	roxl.b	#1,d7                         	| [rl   (hl)]
+	move.b	d7,(a0)
 	jcc	l_0ebc                             	| [jr   nc,$0EBC]
 	move.l	a0,-(sp)                        	| [push hl]
 	jbsr	draw_ice_block_tile_2EFE          	| [call draw_ice_block_tile_2EFE]
@@ -1878,7 +1877,7 @@ l_0ef2:
 	move.b	#0x80,d0                        	| [ld   a,$80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jbsr	l_258f                            	| [call $258F]
-	lea	player_number_8816(pc),a0          	| [ld   hl,player_number_8816]
+	lea	player_number_8816,a0          	| [ld   hl,player_number_8816]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	jeq	l_0f11                             	| [jr   z,$0F11]
 	addq.b	#1,(a0)                         	| [inc  (hl)]
@@ -1964,7 +1963,7 @@ l_0f98:
 	move.b	#0x09,d2                        	| [ld   c,$09]
 	move.b	#0x05,d3                        	| [ld   d,$05]
 	move.b	#0x0A,d4                        	| [ld   e,$0A]
-	lea	maze_hole_wall_bit_table_8C27(pc),a0	| [ld   hl,maze_hole_wall_bit_table_8C27]
+	lea	maze_hole_wall_bit_table_8C27,a0	| [ld   hl,maze_hole_wall_bit_table_8C27]
 l_0fa3:
 	movem.w	d3/d4,-(sp)                        	| [push de]
 	move.w	d1,-(sp)                        	| [push bc]
@@ -1991,7 +1990,7 @@ l_0fba:
 	move.b	#0x09,d2                        	| [ld   c,$09]
 	move.b	#0x05,d3                        	| [ld   d,$05]
 	move.b	#0x0A,d4                        	| [ld   e,$0A]
-	lea	maze_hole_wall_bit_table_8C27(pc),a0	| [ld   hl,maze_hole_wall_bit_table_8C27]
+	lea	maze_hole_wall_bit_table_8C27,a0	| [ld   hl,maze_hole_wall_bit_table_8C27]
 l_0fc5:
 	movem.w	d3/d4,-(sp)                        	| [push de]
 	move.w	d1,-(sp)                        	| [push bc]
@@ -2062,11 +2061,6 @@ pengo_intermission_or_title_1D29:
 	jbsr	init_all_characters_states_1D60   	| [call init_all_characters_states_1D60]
 l_1d36:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
- * small active loop
-	clr.b	d1                               	| [ld   b,$00]
-l_1d3b:
-	subq.b	#1,d1                           	| [...]
-	jne	l_1d3b                             	| [djnz $1D3B]
 
 
 * here we move 6 objects max: 6 pengos, using the ice block
@@ -2077,7 +2071,7 @@ l_1d3b:
 	jbsr	move_snobee_4_title_1DB4          	| 4 [call move_snobee_4_title_1DB4]
 	jbsr	move_character_following_path_1DBA	| pengo [call move_character_following_path_1DBA]
 	jbsr	move_character_intermission_path_1DC0	| moving block [call move_character_intermission_path_1DC0]
-	lea	moving_block_struct_8DA0(pc),a2    	| [ld   ix,moving_block_struct_8DA0]
+	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 	move.b	#0x05,d0                        	| [ld   a,$05]
 	cmp.b	(char_state,a2),d0               	| [cp   (ix+char_state)]
 	jne	l_1d36                             	| [jr   nz,$1D36]
@@ -2088,7 +2082,7 @@ l_1d3b:
  * init snobees, pengo, and moving block to an empty state (0) and init sprites
  * used for title, intermission and ice pack screens, not in real game
 init_all_characters_states_1D60:
-	lea	snobee_1_struct_8D00(pc),a2        	| [ld   ix,snobee_1_struct_8D00]
+	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
 	move.w	#0x20,d3                      	| [ld   de,$0020]
 	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
 	move.b	#0x01,(char_id,a2)              	| [ld   (ix+char_id),$01]
@@ -2280,7 +2274,7 @@ move_character_intermission_1EC4:
 	move.b	#0xB0,d0                        	| [ld   a,$B0]
 	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
 	bne	0f
-	jbsr	l_1f24                            	| [call z,$1F24]
+	jbsr	change_chars_state_from_01_to_02_1f24                            	| [call z,$1F24]
 0:
 	move.b	#0xF0,d0                        	| [ld   a,$F0]
 	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
@@ -2322,7 +2316,8 @@ l_1f17:
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
 	move.l	(sp)+,a2                        	| [pop  ix]
 	rts                                    	| [ret]
-l_1f24:
+	
+change_chars_state_from_01_to_02_1f24:
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
 	cmp.b	#0x01,d0                         	| [cp   $01]
 	beq.b	0f
@@ -2373,11 +2368,11 @@ move_character_intermission_1F52:
 0:
 	jra	move_character_according_to_direction_3DD7	| [jp   move_character_according_to_direction_3DD7]
 l_1f7b:
-	jbsr	l_1f24                            	| [call $1F24]
+	jbsr	change_chars_state_from_01_to_02_1f24                            	| [call $1F24]
 	move.l	a2,-(sp)                        	| [push ix]
-	lea	moving_block_struct_8DA0(pc),a2    	| [ld   ix,moving_block_struct_8DA0]
-	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
-	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
+	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
+	addq.b	#2,(char_state,a2)              	| [inc  (ix+char_state)]
+											| [inc  (ix+char_state)]
 	move.l	(sp)+,a2                        	| [pop  ix]
 	subq.b	#1,(char_state,a2)              	| [dec  (ix+char_state)]
 	rts                                    	| [ret]
@@ -2454,7 +2449,7 @@ table_1FF7:
 change_last_3_characters_char_states_200a:
 	move.l	a2,-(sp)                        	| [push ix]
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
-	lea	snobee_4_struct_8D60(pc),a2        	| [ld   ix,snobee_4_struct_8D60]
+	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
 	move.w	#0x20,d3                      	| [ld   de,$0020]
 	addq.b	#2,(char_state,a2)              	| [inc  (ix+char_state)]
 												| [inc  (ix+char_state)]
@@ -2465,7 +2460,7 @@ change_last_3_characters_char_states_200a:
 	addq.b	#2,(char_state,a2)              	| [inc  (ix+char_state)]
 										| [inc  (ix+char_state)]
 	move.l	(sp)+,a2                        	| [pop  ix]
-	jra	l_0615                            	| [call $0615]
+	jra	draw_pengo_title_0615                            	| [call $0615]
 	rts                                    	| [ret]
 l_2032:
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
@@ -2525,7 +2520,6 @@ move_character_intermission_204E:
 
 l_2085:
 	move.b	(0x09,a2),d0                    	| [ld   a,(ix+$09)]
-	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
@@ -2561,6 +2555,7 @@ l_20a4:
 	move.b	#0x01,d5                        	| [ld   h,$01]
 	bsr		set_current_cursor_from_hl        	| [ld   (cursor_x_8800),hl]
 												| [ld   (cursor_x_8800),hl]
+	* clut attribute for "pengo" title
 	move.b	#0x0E,d0                        	| [ld   a,$0E]
 	btst.b	#0,(facing_direction,a2)        	| [bit  0,(ix+facing_direction)]
 	jne	l_20c4                             	| [jr   nz,$20C4]
@@ -2944,27 +2939,27 @@ show_ice_pack_screen_2325:
 	rts                                    	| [ret]
 
 move_snobee_pack_ice_1_233E:
-	lea	snobee_1_struct_8D00(pc),a2        	| [ld   ix,snobee_1_struct_8D00]
+	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
 	jra	l_2360                             	| [jr   $2360]
 
 move_snobee_pack_ice_2_2344:
-	lea	snobee_2_struct_8D20(pc),a2        	| [ld   ix,snobee_2_struct_8D20]
+	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
 	jra	l_2360                             	| [jr   $2360]
 
 move_snobee_pack_ice_3_234A:
-	lea	snobee_3_struct_8D40(pc),a2        	| [ld   ix,snobee_3_struct_8D40]
+	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
 	jra	l_2360                             	| [jr   $2360]
 
 move_snobee_pack_ice_4_2350:
-	lea	snobee_4_struct_8D60(pc),a2        	| [ld   ix,snobee_4_struct_8D60]
+	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
 	jra	l_2360                             	| [jr   $2360]
 
 move_pengo_pack_ice_2356:
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	jra	l_2360                             	| [jr   $2360]
 
 move_pengo_pack_ice_235C:
-	lea	moving_block_struct_8DA0(pc),a2    	| [ld   ix,moving_block_struct_8DA0]
+	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 l_2360:
 	move.b	(char_state,a2),d0              	| state, only from pack_ice screen (states are different: only 3 states) [ld   a,(ix+char_state)]
 	lea	table_2369(pc),a1                  	| [ld   de,table_2369]
@@ -3244,7 +3239,7 @@ init_highscore_table_2540:
 	move.w	d0,hiscore_pos_5_8840+6         	| [ld   (hiscore_pos_5_8840+6),hl]
 	move.w	d0,hiscore_pos_5_8840           	| [ld   (hiscore_pos_5_8840),hl]
 * set text attributes for names
-	lea	high_score_names_8842(pc),a0       	| [ld   hl,high_score_names_8842]
+	lea	high_score_names_8842,a0       	| [ld   hl,high_score_names_8842]
 	move.b	#0x01,d0                        	| [ld   a,0x01]
 	move.b	#0x05,d1                        	| [ld   b,0x05]
 l_255c:
@@ -3253,19 +3248,19 @@ l_255c:
 	subq.b	#1,d1                           	| [...]
 	jne	l_255c                             	| [djnz 0x255C]
 * set default names (AKIRA)
-	lea	hiscore_pos_5_8840+0x18+3(pc),a0   	| [ld   hl,hiscore_pos_5_8840+0x18+3]
+	lea	hiscore_pos_5_8840+0x18+3,a0   	| [ld   hl,hiscore_pos_5_8840+0x18+3]
 	move.b	#0x41,d0                        	| AAA [ld   a,0x41]
 	jbsr	set_3_chars_2589                  	| [call set_3_chars_2589]
-	lea	hiscore_pos_5_8840+0x12+3(pc),a0   	| [ld   hl,hiscore_pos_5_8840+0x12+3]
+	lea	hiscore_pos_5_8840+0x12+3,a0   	| [ld   hl,hiscore_pos_5_8840+0x12+3]
 	move.b	#0x4B,d0                        	| KKK [ld   a,0x4B]
 	jbsr	set_3_chars_2589                  	| [call set_3_chars_2589]
-	lea	hiscore_pos_5_8840+0xC+3(pc),a0    	| [ld   hl,hiscore_pos_5_8840+0xC+3]
+	lea	hiscore_pos_5_8840+0xC+3,a0    	| [ld   hl,hiscore_pos_5_8840+0xC+3]
 	move.b	#0x49,d0                        	| III [ld   a,0x49]
 	jbsr	set_3_chars_2589                  	| [call set_3_chars_2589]
-	lea	hiscore_pos_5_8840+9(pc),a0        	| [ld   hl,hiscore_pos_5_8840+9]
+	lea	hiscore_pos_5_8840+9,a0        	| [ld   hl,hiscore_pos_5_8840+9]
 	move.b	#0x52,d0                        	| RRR [ld   a,0x52]
 	jbsr	set_3_chars_2589                  	| [call set_3_chars_2589]
-	lea	hiscore_pos_5_8840+3(pc),a0        	| [ld   hl,hiscore_pos_5_8840+3]
+	lea	hiscore_pos_5_8840+3,a0        	| [ld   hl,hiscore_pos_5_8840+3]
 	move.b	#0x41,d0                        	| AAA [ld   a,0x41]
 	jbsr	set_3_chars_2589                  	| [call set_3_chars_2589]
 	rts                                    	| [ret]
@@ -3383,35 +3378,35 @@ compute_score_insertion_position_2648:
 	move.b	#0x06,d0                        	| [ld   a,$06]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
 	jbsr	get_current_player_score_ptr_in_de_268D	| [call get_current_player_score_ptr_in_de_268D]
-	move.w	hiscore_pos_5_8840(pc),a0       	| [ld   hl,(hiscore_pos_5_8840)]
+	move.w	hiscore_pos_5_8840,a0       	| [ld   hl,(hiscore_pos_5_8840)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0x05,d0                        	| [ld   a,$05]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
-	move.w	hiscore_pos_5_8840+6(pc),a0     	| [ld   hl,(hiscore_pos_5_8840+6)]
+	move.w	hiscore_pos_5_8840+6,a0     	| [ld   hl,(hiscore_pos_5_8840+6)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0x04,d0                        	| [ld   a,$04]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
-	move.w	hiscore_pos_5_8840+12(pc),a0    	| [ld   hl,(hiscore_pos_5_8840+12)]
+	move.w	hiscore_pos_5_8840+12,a0    	| [ld   hl,(hiscore_pos_5_8840+12)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0x03,d0                        	| [ld   a,$03]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
-	move.w	hiscore_pos_5_8840+0x12(pc),a0  	| pos 2 [ld   hl,(hiscore_pos_5_8840+$12)]
+	move.w	hiscore_pos_5_8840+0x12,a0  	| pos 2 [ld   hl,(hiscore_pos_5_8840+$12)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
-	move.w	hiscore_pos_5_8840+0x18(pc),a0  	| pos 1 [ld   hl,(hiscore_pos_5_8840+$18)]
+	move.w	hiscore_pos_5_8840+0x18,a0  	| pos 1 [ld   hl,(hiscore_pos_5_8840+$18)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
@@ -3424,16 +3419,16 @@ get_current_player_score_ptr_in_de_268D:
 	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
 	btst.b	#0,d0                           	| is this player 1 or 2? [bit  0,a]
 	jeq	l_2699                             	| [jr   z,$2699]
-	move.w	player_2_score_8810(pc),a1      	| [ld   de,(player_2_score_8810)]
+	move.w	player_2_score_8810,a1      	| [ld   de,(player_2_score_8810)]
 	rts                                    	| [ret]
 l_2699:
-	move.w	player_1_score_880E(pc),a1      	| [ld   de,(player_1_score_880E)]
+	move.w	player_1_score_880E,a1      	| [ld   de,(player_1_score_880E)]
 	rts                                    	| [ret]
 
 create_highscore_entry_269E:
 * make room for newly attained highscore
-	lea	hiscore_pos_5_8840(pc),a1          	| [ld   de,hiscore_pos_5_8840]
-	lea	hiscore_pos_5_8840+6(pc),a0        	| [ld   hl,hiscore_pos_5_8840+6]
+	lea	hiscore_pos_5_8840,a1          	| [ld   de,hiscore_pos_5_8840]
+	lea	hiscore_pos_5_8840+6,a0        	| [ld   hl,hiscore_pos_5_8840+6]
 	move.b	score_insertion_position_885F,d0	| [ld   a,(score_insertion_position_885F)]
 	move.b	d0,d1                           	| [ld   b,a]
 	move.b	#0x05,d0                        	| [ld   a,$05]
@@ -3688,6 +3683,7 @@ l_28ab:
 	rts                        
 
 
+* < D3: value to add
 add_to_current_player_score_28AF:
 	tst.b	currently_playing_8819       	| [ld   a,(currently_playing_8819)]
 	bne.b	0f
@@ -3748,7 +3744,7 @@ put_blank_at_current_pos_2900:
 move_cursor_b_290B:
 	move.w	d0,-(sp)                        	| [push af]
 	move.l	a0,-(sp)                        	| [push hl]
-	lea	cursor_x_8800(pc),a0               	| [ld   hl,cursor_x_8800]
+	lea	cursor_x_8800,a0               	| [ld   hl,cursor_x_8800]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	sub.b	d1,d0                            	| [sub  b]
 	move.b	d0,(a0)+                         	| [ld   (hl),a]
@@ -3785,11 +3781,11 @@ move_cursor_1A_2928:
 * updates current position
 
 set_attribute_at_current_pos_292D:
-	movem.w	d0-d3,-(sp)                        	| [push af]
+	* caution: use same register set as belows!!
+	movem.w	d0-d3/d6,-(sp)     	| store a lot of registers :)
 	                     	| [push bc]
 	                     	| [push bc]
 	                     	| [push de]
-	move.l	a0,-(sp)                        	| [push hl]
 	move.w	d0,-(sp)                        	| [push af]
 	move.b	cursor_x_8800,D2            	| get current X & Y [ld   bc,(cursor_x_8800)]
 	move.b	cursor_y_8801,D1            	| get current X & Y [ld   bc,(cursor_x_8800)]
@@ -3801,7 +3797,8 @@ set_attribute_at_current_pos_292D:
 * updates current position
 
 set_tile_at_current_pos_293C:
-	movem.w	d0-d3/d6,-(sp)                        	| store a lot of registers :) [push af]
+	* caution: use same register set as above!!
+	movem.w	d0-d3/d6,-(sp)    |  store a lot of registers :) [push af]
 											| [push bc]
 											| [push bc]
 											| [push de]
@@ -4180,7 +4177,7 @@ update_and_display_p2_score_2C24:
 	rts                                    	| [ret]
 
 update_and_display_p1_score_2C24:
-	move.w	player_2_score_8810(pc),a0      	| [ld   hl,(player_2_score_8810)]
+	move.w	player_2_score_8810,a0      	| [ld   hl,(player_2_score_8810)]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 												| [ld   h,$22]
 												| [ld   l,$15]
@@ -4191,8 +4188,8 @@ update_and_display_p1_score_2C24:
 	move.b	#0x30,d0                        	| [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p2_score_for_extra_life_2C06	| [call check_p2_score_for_extra_life_2C06]
-	move.w	high_score_880C(pc),d6          	| [ld   hl,(high_score_880C)]
-	move.w	player_2_score_8810(pc),d3      	| [ld   de,(player_2_score_8810)]
+	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)]
+	move.w	player_2_score_8810,d3      	| [ld   de,(player_2_score_8810)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
@@ -4468,7 +4465,7 @@ draw_maze_2DA1:
 
 	move.b	#0x0D,d1                        	| [ld   b,$0D]
 	lea	to_copy_2E39(pc),a1                	| [ld   de,to_copy_2E39]
-	lea	ram_code_8C24(pc),a0               	| [ld   hl,ram_code_8C24]
+	lea	ram_code_8C24,a0               	| [ld   hl,ram_code_8C24]
 l_2dbe:
 	move.b	(a1),d0                         	| [ld   a,(de)]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
@@ -4931,7 +4928,7 @@ insert_egg_302D:
 	move.b	remaining_eggs_to_hatch_8DC1,d0 	| [ld   a,(remaining_eggs_to_hatch_8DC1)]
 	add.b	d0,d0                            	| [add  a,a]
 											| adapting stuff using d & e to use d0 directly
-	lea	egg_location_table_8DC2(pc),a0     	| [ld   hl,egg_location_table_8DC2]
+	lea	egg_location_table_8DC2,a0     	| [ld   hl,egg_location_table_8DC2]
 	add.w	d0,a0							| [add  hl,de]
 	move.b	d2,(a0)+                         	| store coordinates [ld   (hl),c]
 												| [inc  hl]
@@ -5069,7 +5066,7 @@ is_way_clear_30CA:
 set_way_clear_30D2:
 	move.b	#0x86,d3                        	| z80 operand mask [ld   d,$86]
 l_30d4:
-	lea	maze_hole_wall_bit_table_8C27(pc),a0	| [ld   hl,maze_hole_wall_bit_table_8C27]
+	lea	maze_hole_wall_bit_table_8C27,a0	| [ld   hl,maze_hole_wall_bit_table_8C27]
 	move.b	d2,d0                           	| [ld   a,c]
 	not.b	d0                               	| [cpl]
 	and.b	#0x07,d0                         	| [and  $07]
@@ -5153,10 +5150,10 @@ l_314e:
 	rts                                    	| [ret]
 
 
-* < A: sprite number to display
+* < A: sprite number to display (starting at 1)
 * < HL: points on X,Y
 display_sprite_3154:
-	lea	sprite_ram_9020(pc),a3             	| [ld   iy,sprite_ram_9020]
+	lea	sprite_ram_9022-2,a3             	| [ld   iy,sprite_ram_9022-2]
 	add.b	d0,d0                            	| [add  a,a]
 	clr.b	d3                               	| [ld   d,$00]
 	move.b	d0,d3                           	| [ld   e,a]
@@ -5176,7 +5173,7 @@ l_317b:
 	rts                                    	| [ret]
 
 * < HL: pengo/snobee struct 8Dxx
-* < A: pengo sprite index
+* < A: sprite index
 display_character_sprite_318A:
 	lea	sprite_ram_8FF2-2,a3          	| [ld   iy,stack_pointer_8FF0]
 	addq.w	#2,a0                           	| [inc  hl]
@@ -5194,7 +5191,7 @@ display_character_sprite_318A:
 	rts                                    	| [ret]
 	
 clear_sprites_31B7:
-	lea	sprite_ram_9020,a0             	| [ld   hl,sprite_ram_9020]
+	lea	sprite_ram_9022-2,a0             	| [ld   hl,sprite_ram_9022-2]
 	move.b	#0x10,d1                        	| [ld   b,$10]
 l_31bc:
 	clr.b	(a0)+                             	| [ld   (hl),$00]
@@ -5203,7 +5200,7 @@ l_31bc:
 	rts                                    	| [ret]
 
 init_pengo_structure_31C2:
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	move.b	#0x78,(x_pos,a2)                	| x [ld   (ix+x_pos),$78]
 	move.b	#0x70,(y_pos,a2)                	| y [ld   (ix+y_pos),$70]
 	move.b	#0x08,(animation_frame,a2)      	| animation frame [ld   (ix+animation_frame),$08]
@@ -5217,13 +5214,13 @@ init_pengo_structure_31C2:
 	rts                                    	| [ret]
 
 init_snobee_positions_31EF:
-	lea	snobee_1_struct_8D00(pc),a2        	| [ld   ix,snobee_1_struct_8D00]
+	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
 	jbsr	l_320c                            	| [call $320C]
-	lea	snobee_2_struct_8D20(pc),a2        	| [ld   ix,snobee_2_struct_8D20]
+	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
 	jbsr	l_320c                            	| [call $320C]
-	lea	snobee_3_struct_8D40(pc),a2        	| [ld   ix,snobee_3_struct_8D40]
+	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
 	jbsr	l_320c                            	| [call $320C]
-	lea	snobee_4_struct_8D60(pc),a2        	| [ld   ix,snobee_4_struct_8D60]
+	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
 	jbsr	l_320c                            	| [call $320C]
 	rts                                    	| [ret]
 
@@ -5298,7 +5295,7 @@ l_326e:
 	rts                                    	| [ret]
 
 init_moving_block_3283:
-	lea	moving_block_struct_8DA0(pc),a2    	| [ld   ix,moving_block_struct_8DA0]
+	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 	clr.b	(x_pos,a2)                       	| [ld   (ix+x_pos),$00]
 	clr.b	(y_pos,a2)                       	| [ld   (ix+y_pos),$00]
 	move.b	#0x09,(char_color,a2)           	| [ld   (ix+char_color),$09]
@@ -5314,7 +5311,7 @@ init_moving_block_3283:
 * and 1 pengo
 l_32ab:
 	clr.b	d0                               	| [xor  a]
-	lea	breaking_block_slots_8CC0(pc),a0   	| [ld   hl,breaking_block_slots_8CC0]
+	lea	breaking_block_slots_8CC0,a0   	| [ld   hl,breaking_block_slots_8CC0]
 									| [ld   de,$0005]
 	move.b	#0x05,d1                        	| [ld   b,$05]
 l_32b4:
@@ -5384,16 +5381,16 @@ l_3308:
 	rts       	
 
 l_330e:
-	lea	snobee_1_struct_8D00(pc),a2        	| [ld   ix,snobee_1_struct_8D00]
+	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
 	jra	l_3324                             	| [jr   $3324]
 l_3314:
-	lea	snobee_2_struct_8D20(pc),a2        	| [ld   ix,snobee_2_struct_8D20]
+	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
 	jra	l_3324                             	| [jr   $3324]
 l_331a:
-	lea	snobee_3_struct_8D40(pc),a2        	| [ld   ix,snobee_3_struct_8D40]
+	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
 	jra	l_3324                             	| [jr   $3324]
 l_3320:
-	lea	snobee_4_struct_8D60(pc),a2        	| [ld   ix,snobee_4_struct_8D60]
+	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
 l_3324:
 	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
 	lea	snobee_jump_table_332D(pc),a1      	| [ld   de,snobee_jump_table_332D]
@@ -5718,7 +5715,7 @@ chicken_mode_go_right_to_corner_3515:
 _00_snobee_mode_block_avoid_351E:
 	jbsr	find_an_empty_space_3608          	| [call find_an_empty_space_3608]
 	move.b	(path_address_pointer_or_misc_flags,a2),d2	| [ld   c,(ix+path_address_pointer_or_misc_flags)]
-	lea	moving_block_struct_8DA0(pc),a3    	| [ld   iy,moving_block_struct_8DA0]
+	lea	moving_block_struct_8DA0,a3    	| [ld   iy,moving_block_struct_8DA0]
 	move.b	(facing_direction,a3),d0        	| [ld   a,(iy+facing_direction)]
 	lea	table_3531(pc),a1                  	| [ld   de,table_3531]
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
@@ -5788,7 +5785,7 @@ snobee_avoids_block_right_3589:
 	jra	l_354d                             	| [jr   $354D]
 
 avoids_moving_block_359F:
-	lea	moving_block_struct_8DA0(pc),a3    	| [ld   iy,moving_block_struct_8DA0]
+	lea	moving_block_struct_8DA0,a3    	| [ld   iy,moving_block_struct_8DA0]
 	move.b	(facing_direction,a3),d0        	| block direction [ld   a,(iy+facing_direction)]
 	lea	jump_table_35AC(pc),a1             	| [ld   de,jump_table_35AC]
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
@@ -6069,7 +6066,7 @@ l_3752:
 	rts                                    	| [ret  z]
 0:
 * 50% chance
-	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a3           	| [ld   iy,pengo_struct_8D80]
 	clr.b	(facing_direction,a2)            	| [ld   (ix+facing_direction),$00]
 	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
 	sub.b	(x_pos,a3),d0                    	| [sub  (iy+x_pos)]
@@ -6103,7 +6100,7 @@ l_3785:
  *    else go (temporarily) in roaming mode
 
 _03_snobee_mode_pengo_hunt_1_on_x_378A:
-	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a3           	| [ld   iy,pengo_struct_8D80]
 	move.b	(x_pos,a3),d0                   	| pengo X [ld   a,(iy+x_pos)]
 	cmp.b	(x_pos,a2),d0                    	| same X as snobee? [cp   (ix+x_pos)]
 	jeq	change_vertical_direction_to_follow_pengo_37B0	| [jr   z,change_vertical_direction_to_follow_pengo_37B0]
@@ -6144,7 +6141,7 @@ l_37bb:
  *    else go (temporarily) in roaming mode
 
 _04_snobee_mode_pengo_hunt_2_on_y_37C2:
-	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a3           	| [ld   iy,pengo_struct_8D80]
 	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
 	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
 	jeq		change_lateral_direction_to_follow_pengo_37E8	| [jr   z,$change_lateral_direction_to_follow_pengo_37E8]
@@ -6184,7 +6181,7 @@ l_37f3:
  *    else go in roaming mode
 
 _05_snobee_mode_pengo_hunt_3_37FA:
-	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a3           	| [ld   iy,pengo_struct_8D80]
 	move.b	(x_pos,a3),d0                   	| [ld   a,(iy+x_pos)]
 	cmp.b	(x_pos,a2),d0                    	|  same X ? [cp   (ix+x_pos)]
 	jeq		change_vertical_direction_to_follow_pengo_37B0	| [jr   z,$change_vertical_direction_to_follow_pengo_37B0]
@@ -6232,7 +6229,7 @@ _02_snobee_mode_block_eat_3843:
 	and.b	#0x01,d0                         	| [and  $01]
 	jne	l_38b4                             	|  1/2 chance [jr   nz,$38B4]
 
-	lea	pengo_struct_8D80(pc),a3           	| [ld   iy,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a3           	| [ld   iy,pengo_struct_8D80]
 	move.b	(y_pos,a3),d0                   	| [ld   a,(iy+y_pos)]
 	cmp.b	(y_pos,a2),d0                    	| [cp   (ix+y_pos)]
 	jne	l_3866                             	| [jr   nz,$3866]
@@ -6579,7 +6576,7 @@ l_3a77:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	move.b	#0x80,(animation_frame,a2)      	| [ld   (ix+animation_frame),$80]
 	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
-	lea	0x000A(pc),a1                      	| [ld   de,$000A]
+	move.w	#10,d3                      	| [ld   de,$000A]  100 points
 	jbsr	add_to_current_player_score_28AF                            	| [call $28AF]
 	move.b	#0x02,d1                        	| [ld   b,$02]
 	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
@@ -6599,7 +6596,7 @@ l_3a92:
 l_3aa1:
 	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
-	lea	remaining_alive_snobees_8D98(pc),a0	| [ld   hl,remaining_alive_snobees_8D98]
+	lea	remaining_alive_snobees_8D98,a0	| [ld   hl,remaining_alive_snobees_8D98]
 	subq.b	#1,(a0)                         	| one snobee less [dec  (hl)]
 	rts                                    	| [ret]
 
@@ -6831,15 +6828,15 @@ l_3c31:
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
-	lea	remaining_alive_snobees_8D98(pc),a0	| [ld   hl,remaining_alive_snobees_8D98]
+	lea	remaining_alive_snobees_8D98,a0	| [ld   hl,remaining_alive_snobees_8D98]
 	subq.b	#1,(a0)                         	| [dec  (hl)]
-	lea	timer_16_bit_8DDE+1(pc),a0         	| [ld   hl,timer_16_bit_8DDE+1]
+	lea	timer_16_bit_8DDE+1,a0         	| [ld   hl,timer_16_bit_8DDE+1]
 	move.b	#0x80,(a0)                      	| [ld   (hl),$80]
 	subq.b	#1,a0                           	| [dec  hl]
 	move.b	#0x08,(a0)                      	| [ld   (hl),$08]
 	rts                                    	| [ret]
 l_3c4b:
-	lea	current_nb_eggs_to_hatch_8DDD(pc),a0	| [ld   hl,current_nb_eggs_to_hatch_8DDD]
+	lea	current_nb_eggs_to_hatch_8DDD,a0	| [ld   hl,current_nb_eggs_to_hatch_8DDD]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	tst.b	d0                               	| [and  a]
 	jne	l_3c6c                             	| [jr   nz,$3C6C]
@@ -6862,7 +6859,7 @@ l_3c4b:
 
 l_3c6c:
 	subq.b	#1,(a0)                         	| [dec  (hl)]
-	lea	egg_location_table_8DC2(pc),a0     	| [ld   hl,egg_location_table_8DC2]
+	lea	egg_location_table_8DC2,a0     	| [ld   hl,egg_location_table_8DC2]
 l_3c70:
 	move.b	(a0)+,d2                         	| [ld   c,(hl)]
 	                           	| [inc  hl]
@@ -6898,7 +6895,7 @@ l_3c70:
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
 	move.b	#0x03,d1                        	| [ld   b,$03]
 	jbsr	update_sound_18c7                            	| [call $18C7]
-	lea	snobee_1_struct_8D00+0x1E(pc),a0   	| A.I. mode [ld   hl,snobee_1_struct_8D00+$1E]
+	lea	snobee_1_struct_8D00+ai_mode,a0   	| A.I. mode [ld   hl,snobee_1_struct_8D00+$1E]
 												| [ld   de,$0020]
 	move.b	#0x04,d1                        	| [ld   b,$04]
 	move.b	#0x02,d0                        	| [ld   a,$02]
@@ -6911,7 +6908,7 @@ l_3cc7:
 	add.w	#0x20,a0							| [add  hl,de]
 	subq.b	#1,d1                           	| [...]
 	jne	l_3cc7                             	| [djnz $3CC7]
-	lea	snobee_1_struct_8D00+0x1F(pc),a0   	| state [ld   hl,snobee_1_struct_8D00+$1F]
+	lea	snobee_1_struct_8D00+char_state,a0   	| state [ld   hl,snobee_1_struct_8D00+$1F]
 	move.b	#0x04,d1                        	| [ld   b,$04]
 	move.b	#0x02,d0                        	| [ld   a,$02]
 l_3cd3:
@@ -7009,7 +7006,7 @@ l_3d47:
 	rts                                    	| [ret]
 l_3d60:
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
-	lea	remaining_alive_snobees_8D98(pc),a0	| [ld   hl,remaining_alive_snobees_8D98]
+	lea	remaining_alive_snobees_8D98,a0	| [ld   hl,remaining_alive_snobees_8D98]
 	subq.b	#1,(a0)                         	| [dec  (hl)]
 	clr.b	(x_pos,a2)                       	| [ld   (ix+x_pos),$00]
 	clr.b	(y_pos,a2)                       	| [ld   (ix+y_pos),$00]
@@ -7018,7 +7015,7 @@ l_3d60:
 
 
 pengo_moves_3D73:
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
 	lea	table_3D80(pc),a1                  	| [ld   de,table_3D80]
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
@@ -7062,7 +7059,7 @@ l_3db6:
 	rts                                    	| [ret]
 
 pengo_nominal_move_3DBF:
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	jbsr	animate_pengo_39A4                	| [call animate_pengo_39A4]
 	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
 	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
@@ -7381,7 +7378,7 @@ l_3f85:
 	rts                                    	| [ret  z]
 0:
 	move.b	#0xFF,(0x0f,a2)                 	| [ld   (ix+$0f),$FF]
-	lea	pengo_moving_direction_8CF4(pc),a0 	| [ld   hl,pengo_moving_direction_8CF4]
+	lea	pengo_moving_direction_8CF4,a0 	| [ld   hl,pengo_moving_direction_8CF4]
 	bset.b	#2,(a0)                         	| [set  2,(hl)]
 l_3f9b:
 	move.b	block_moving_flag_8DBF,d0       	| [ld   a,(block_moving_flag_8DBF)]
@@ -7426,7 +7423,7 @@ l_3fc5:
 hide_snobee_sprites_3FDA:
 	clr.b	d0                               	| [xor  a]
 * set sprite colors to zero for snobees
-	lea	sprite_ram_8FF2+1(pc),a0                  	| [ld   hl,sound_8FF3]
+	lea	sprite_ram_8FF2+1,a0                  	| [ld   hl,sound_8FF3]
 	                      	| [ld   de,$0002]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	addq.w	#2,a0								| [add  hl,de]
@@ -7727,7 +7724,7 @@ l_41b8:
 	jra	l_41a7                             	| [jr   $41A7]
 	
 pengo_block_push_41BE:
-	lea	moving_block_struct_8DA0(pc),a2    	| [ld   ix,moving_block_struct_8DA0]
+	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 	lea	table_41CB(pc),a1                  	| [ld   de,table_41CB]
 	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
@@ -7745,7 +7742,7 @@ l_41d9:
 
 	move.l	a2,-(sp)                        	| [push ix]
 	move.l	(sp)+,a3                        	| [pop  iy]
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	clr.b	(0x18,a3)                        	| [ld   (iy+$18),$00]
 	clr.b	(0x19,a3)                        	| [ld   (iy+$19),$00]
@@ -7859,14 +7856,14 @@ l_42a3:
 	rts                                    	| [ret  z]
 0:
 * egg broken, decrease nb enemies and eggs
-	lea	remaining_alive_snobees_8D98(pc),a0	| [ld   hl,remaining_alive_snobees_8D98]
+	lea	remaining_alive_snobees_8D98,a0	| [ld   hl,remaining_alive_snobees_8D98]
 	subq.b	#1,(a0)                         	| [dec  (hl)]
-	lea	current_nb_eggs_to_hatch_8DDD(pc),a0	| [ld   hl,current_nb_eggs_to_hatch_8DDD]
+	lea	current_nb_eggs_to_hatch_8DDD,a0	| [ld   hl,current_nb_eggs_to_hatch_8DDD]
 	subq.b	#1,(a0)                         	| [dec  (hl)]
 	rts                                    	| [ret]
 
 find_breaking_block_free_slot_42c6:
-	lea	breaking_block_slots_8CC0(pc),a0   	| [ld   hl,breaking_block_slots_8CC0]
+	lea	breaking_block_slots_8CC0,a0   	| [ld   hl,breaking_block_slots_8CC0]
 	move.b	#0x05,d3                        	| [ld   d,$05]
 l_42cb:
 	* try to find free slot
@@ -8071,9 +8068,9 @@ l_43bd:
 0:
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
 	jbsr	l_43e5                            	| [call $43E5]
-	lea	0x43DB(pc),a0                      	| [ld   hl,$43DB]
+	pea	l_43db(pc)                      	| [ld   hl,$43DB]
 
-	move.l	a0,-(sp)                        	| [push hl]
+	                        	| [push hl]
  * move snobee in the current direction
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	lea	snobee_move_table_33C6(pc),a1      	| [ld   de,snobee_move_table_33C6]
@@ -8130,13 +8127,13 @@ l_4413:
 	rts                                    	| [ret]
 
 check_snobee_collisions_with_block_4431:
-	lea	snobee_1_struct_8D00(pc),a3        	| [ld   iy,snobee_1_struct_8D00]
+	lea	snobee_1_struct_8D00,a3        	| [ld   iy,snobee_1_struct_8D00]
 	jbsr	snobee_collision_with_moving_block_test_444E	| [call snobee_collision_with_moving_block_test_444E]
-	lea	snobee_2_struct_8D20(pc),a3        	| [ld   iy,snobee_2_struct_8D20]
+	lea	snobee_2_struct_8D20,a3        	| [ld   iy,snobee_2_struct_8D20]
 	jbsr	snobee_collision_with_moving_block_test_444E	| [call snobee_collision_with_moving_block_test_444E]
-	lea	snobee_3_struct_8D40(pc),a3        	| [ld   iy,snobee_3_struct_8D40]
+	lea	snobee_3_struct_8D40,a3        	| [ld   iy,snobee_3_struct_8D40]
 	jbsr	snobee_collision_with_moving_block_test_444E	| [call snobee_collision_with_moving_block_test_444E]
-	lea	snobee_4_struct_8D60(pc),a3        	| [ld   iy,snobee_4_struct_8D60]
+	lea	snobee_4_struct_8D60,a3        	| [ld   iy,snobee_4_struct_8D60]
 	jbsr	snobee_collision_with_moving_block_test_444E	| [call snobee_collision_with_moving_block_test_444E]
 	rts                                    	| [ret]
 
@@ -8273,25 +8270,25 @@ go_right_test_44CF:
 
 l_44e9:
 	jbsr	_03_snobee_aligns_for_stunned_3AAD	| [call $03_snobee_aligns_for_stunned_3AAD]
-	lea	snobee_1_struct_8D00(pc),a3        	| [ld   iy,snobee_1_struct_8D00]
+	lea	snobee_1_struct_8D00,a3        	| [ld   iy,snobee_1_struct_8D00]
 	move.b	(char_state,a3),d0                    	| [ld   a,(iy+$1f)]
 	cmp.b	#0x0A,d0                         	| [cp   $0A]
 	jne	l_44fb                             	| [jr   nz,$44FB]
 	clr.b	(0x08,a3)                        	| [ld   (iy+$08),$00]
 l_44fb:
-	lea	snobee_2_struct_8D20(pc),a3        	| [ld   iy,snobee_2_struct_8D20]
+	lea	snobee_2_struct_8D20,a3        	| [ld   iy,snobee_2_struct_8D20]
 	move.b	(char_state,a3),d0                    	| snobee state [ld   a,(iy+$1f)]
 	cmp.b	#0x0A,d0                         	| [cp   $0A]
 	jne	l_450a                             	| [jr   nz,$450A]
 	clr.b	(0x08,a3)                        	| [ld   (iy+$08),$00]
 l_450a:
-	lea	snobee_3_struct_8D40(pc),a3        	| [ld   iy,snobee_3_struct_8D40]
+	lea	snobee_3_struct_8D40,a3        	| [ld   iy,snobee_3_struct_8D40]
 	move.b	(char_state,a3),d0                    	| [ld   a,(iy+$1f)]
 	cmp.b	#0x0A,d0                         	| [cp   $0A]
 	jne	l_4519                             	| [jr   nz,$4519]
 	clr.b	(0x08,a3)                        	| [ld   (iy+$08),$00]
 l_4519:
-	lea	snobee_4_struct_8D60(pc),a3        	| [ld   iy,snobee_4_struct_8D60]
+	lea	snobee_4_struct_8D60,a3        	| [ld   iy,snobee_4_struct_8D60]
 	move.b	(char_state,a3),d0                    	| [ld   a,(iy+$1f)]
 	cmp.b	#0x0A,d0                         	| [cp   $0A]
 	jne	l_4528                             	| [jr   nz,$4528]
@@ -8310,7 +8307,7 @@ l_4529:
 	add.b	d0,d0                            	| [add  a,a]
 	clr.w	d3                               	| [ld   d,$00]
 	move.b	d0,d3                           	| [ld   e,a]
-	lea	egg_location_table_8DC2(pc),a0     	| [ld   hl,egg_location_table_8DC2]
+	lea	egg_location_table_8DC2,a0     	| [ld   hl,egg_location_table_8DC2]
 	add.w	d3,a0								| [add  hl,de]
 	move.b	d2,(a0)+                         	| [ld   (hl),c]
 												| [inc  hl]
@@ -8333,7 +8330,7 @@ l_455a:
 	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
 	move.w	#0x20,d3                      	| [ld   de,$0020]
 	move.b	#0x0A,d0                        	| [ld   a,$0A]
-	lea	snobee_1_struct_8D00(pc),a3        	| [ld   iy,snobee_1_struct_8D00]
+	lea	snobee_1_struct_8D00,a3        	| [ld   iy,snobee_1_struct_8D00]
 	cmp.b	(char_state,a3),d0                     	| [cp   (iy+$1f)]
 	jeq	l_4587                             	| [jr   z,$4587]
 	add.w	d3,a3							| [add  iy,de]
@@ -8347,7 +8344,7 @@ l_4587:
 	move.b	(0x0f,a2),d1                    	| [ld   b,(ix+$0f)]
 	move.b	d1,(0x1a,a3)                    	| [ld   (iy+$1a),b]
 	addq.b	#1,(char_state,a3)                    	| [inc  (iy+$1f)]
-	lea	snobee_2_struct_8D20(pc),a3        	| [ld   iy,snobee_2_struct_8D20]
+	lea	snobee_2_struct_8D20,a3        	| [ld   iy,snobee_2_struct_8D20]
 	cmp.b	(char_state,a3),d0                     	| [cp   (iy+$1f)]
 	jne	l_45a0                             	| [jr   nz,$45A0]
 	clr.b	(0x1a,a3)                        	| [ld   (iy+$1a),$00]
@@ -8375,7 +8372,7 @@ diamond_hits_obstacle_45bc:
 	add.w	d0,d0                            	| [add  a,a]
 												| [ld   d,$00]
 												| [ld   e,a]
-	lea	diamond_block_1_xy_8DB0(pc),a0     	| [ld   hl,diamond_block_1_xy_8DB0]
+	lea	diamond_block_1_xy_8DB0,a0     	| [ld   hl,diamond_block_1_xy_8DB0]
 	add.w	d0,a0								| [add  hl,de]
 	move.b	d2,(a0)+                         	| [ld   (hl),c]
 												| [inc  hl]
@@ -8578,15 +8575,15 @@ l_46d0:
 	jbsr	draw_borders_2E6A                 	| [call draw_borders_2E6A]
 
 	move.l	a2,-(sp)                        	| [push ix]
-	lea	snobee_1_struct_8D00(pc),a2        	| [ld   ix,snobee_1_struct_8D00]
+	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
 	jbsr	l_4790                            	| [call $4790]
-	lea	snobee_2_struct_8D20(pc),a2        	| [ld   ix,snobee_2_struct_8D20]
+	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
 	jbsr	l_4790                            	| [call $4790]
-	lea	snobee_3_struct_8D40(pc),a2        	| [ld   ix,snobee_3_struct_8D40]
+	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
 	jbsr	l_4790                            	| [call $4790]
-	lea	snobee_4_struct_8D60(pc),a2        	| [ld   ix,snobee_4_struct_8D60]
+	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
 	jbsr	l_4790                            	| [call $4790]
-	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
 	move.b	#0x20,d0                        	| [ld   a,$20]
 	jbsr	delay_28D1                        	| [call delay_28D1]
@@ -8827,7 +8824,7 @@ l_4896:
 	clr.b	d0                               	| [xor  a]
 	rts                                    	| [ret]
 l_48c3:
-	lea	diamond_block_1_xy_8DB0(pc),a0     	| [ld   hl,diamond_block_1_xy_8DB0]
+	lea	diamond_block_1_xy_8DB0,a0     	| [ld   hl,diamond_block_1_xy_8DB0]
 	move.b	#0x02,d1                        	| [ld   b,$02]
 l_48c8:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
@@ -8837,7 +8834,7 @@ l_48c8:
 	jne	l_48c8                             	| [djnz $48C8]
 	rts                                    	| [ret]
 l_48d0:
-	lea	diamond_block_1_xy_8DB0(pc),a0     	| [ld   hl,diamond_block_1_xy_8DB0]
+	lea	diamond_block_1_xy_8DB0,a0     	| [ld   hl,diamond_block_1_xy_8DB0]
 	move.b	#0x02,d1                        	| [ld   b,$02]
 l_48d5:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
@@ -8915,7 +8912,7 @@ l_490e:
 
 
 snobee_block_break_4919:
-	lea	breaking_block_slots_8CC0(pc),a2   	| [ld   ix,breaking_block_slots_8CC0]
+	lea	breaking_block_slots_8CC0,a2   	| [ld   ix,breaking_block_slots_8CC0]
 	move.b	#0x05,d1                        	| [ld   b,$05]
 l_491f:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
@@ -9020,7 +9017,7 @@ l_49c8:
 	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
 	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
 	btst.b	#5,(0x00,a2)                    	| [bit  5,(ix+$00)]
-	lea	0x0003(pc),a1                      	| [ld   de,$0003]
+	move.w	#3,d3                      	| [ld   de,$0003]
 
 	move.l	a2,-(sp)                        	| [push ix]
 	beq	0f
@@ -9031,7 +9028,7 @@ l_49c8:
 	clr.b	(0x05,a2)                        	| [ld   (ix+$05),$00]
 	rts                                    	| [ret]
 l_49ee:
-	lea	total_eggs_to_hatch_8DC0(pc),a0    	| [ld   hl,total_eggs_to_hatch_8DC0]
+	lea	total_eggs_to_hatch_8DC0,a0    	| [ld   hl,total_eggs_to_hatch_8DC0]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	move.b	d0,d1                           	| [ld   b,a]
 	move.b	#0x0C,d0                        	| [ld   a,$0C]
@@ -9172,14 +9169,14 @@ l_4ae5:
 	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
 	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
 	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
-	lea	0x0032(pc),a1                      	| [ld   de,$0032]
+	move.w	#0x32,d3                      	| [ld   de,$0032]
 	jbsr	add_to_current_player_score_28AF  	| [call add_to_current_player_score_28AF]
 	clr.b	(0x00,a2)                        	| [ld   (ix+$00),$00]
 	clr.b	(0x05,a2)                        	| [ld   (ix+$05),$00]
 	rts                                    	| [ret]
 
 l_4b0c:
-	lea	moving_block_struct_8DA0(pc),a2    	| [ld   ix,moving_block_struct_8DA0]
+	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 	btst.b	#7,(0x17,a2)                    	| [bit  7,(ix+$17)]
 	bne.b	0f
 	rts                                    	| [ret  z]
@@ -9214,7 +9211,7 @@ l_4b2c:
 
 
 blink_on_egg_locations_4B48:
-	lea	total_eggs_to_hatch_8DC0(pc),a2    	| [ld   ix,total_eggs_to_hatch_8DC0]
+	lea	total_eggs_to_hatch_8DC0,a2    	| [ld   ix,total_eggs_to_hatch_8DC0]
 	btst.b	#7,(0x1f,a2)                    	| [bit  7,(ix+$1f)]
 	bne.b	0f
 	rts                                    	| no blink [ret  z]
@@ -9703,3 +9700,9 @@ misc_table_6800:
      .byte	0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01
      .byte	0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01
      .byte	0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x66,0x01,0xA6,0x01,0xEB,0x01,0xEA,0xC0
+
+	.include "pengo.inc"
+	.ifdef	__amiga__
+	.include "pengo_ram.68k"
+	.align	2
+	.endif

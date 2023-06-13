@@ -812,6 +812,7 @@ display_title_screen_0521:
 056D: CD 01 AF      call set_diamond_position_2FA9
 0570: 21 0E 05      ld   hl,diamondblock_string_05AE
 0573: CD F4 01      call print_line_typewriter_style_29F4
+; snobees appear and drag the title
 0576: CD 01 1D      call pengo_intermission_or_title_1D29
 0579: C9            ret
 squash_snobee_msg_57A:
@@ -863,6 +864,7 @@ set_4_consecutive_tiles_in_a_row_060C:
 0612: 10 DA         djnz $060E
 0614: C9            ret
 
+draw_pengo_title_0615:
 0615: 3E 00         ld   a,$00
 0617: 32 02 A8      ld   (cursor_color_8802),a
 061A: 21 50 06      ld   hl,table_0670
@@ -1037,7 +1039,7 @@ wait_for_start_0774:
 079A: CD 0B 39      call display_character_sprite_39AB
 079D: CD 75 80      call increase_counter_0875
 07A0: CD B1 88      call $0819
-07A3: 3A A0 10      ld   a,($9080)
+07A3: 3A A0 10      ld   a,(dip_switches_9080)
 07A6: 2F            cpl
 07A7: E6 68         and  $60
 07A9: 28 72         jr   z,$079D
@@ -2331,7 +2333,7 @@ table_121E:
 1353: 3E 01         ld   a,$01
 1355: CD D1 A8      call delay_28D1
 1358: C1            pop  bc
-1359: 3A 80 10      ld   a,($9080)
+1359: 3A 80 10      ld   a,(dip_switches_9080)
 135C: CB 6F         bit  5,a
 135E: 37            scf
 135F: C8            ret  z
@@ -2500,7 +2502,7 @@ diagnostic_screen_14F1:
 1535: 11 20 82      ld   de,$0220
 1538: 06 A2         ld   b,$0A
 153A: 0E 7F         ld   c,$FF
-153C: 3A 00 90      ld   a,($9080)
+153C: 3A 00 90      ld   a,(dip_switches_9080)
 153F: 21 9A 3E      ld   hl,$161A
 1542: E6 A8         and  $20
 1544: 20 20         jr   nz,$154E
@@ -2515,7 +2517,7 @@ diagnostic_screen_14F1:
 1551: 11 09 87      ld   de,$0709
 1554: ED 53 00 20   ld   (cursor_x_8800),de
 1558: CD 46 15      call display_string_at_15C6
-155B: 3A 80 10      ld   a,($9080)
+155B: 3A 80 10      ld   a,(dip_switches_9080)
 155E: 21 B2 96      ld   hl,$161A
 1561: E6 C0         and  $40
 1563: 20 83         jr   nz,$1568
@@ -3706,7 +3708,7 @@ move_character_intermission_1EC4:
 1EDA: CC 9F 1F      call z,$1F17
 1EDD: 3E B0         ld   a,$B0
 1EDF: DD BE 88      cp   (ix+x_pos)
-1EE2: CC 0C 37      call z,$1F24
+1EE2: CC 0C 37      call z,change_chars_state_from_01_to_02_1f24
 1EE5: 3E D8         ld   a,$F0
 1EE7: DD BE 88      cp   (ix+x_pos)
 1EEA: CC C6 37      call z,$1F4E
@@ -3739,6 +3741,8 @@ animate_intermission_penguins_1ef0:
 1F1E: DD 34 9F      inc  (ix+char_state)
 1F21: DD E1         pop  ix
 1F23: C9            ret
+
+change_chars_state_from_01_to_02_1f24:
 1F24: DD 7E 85      ld   a,(ix+char_id)
 1F27: FE 81         cp   $01
 1F29: C0            ret  nz
@@ -3777,7 +3781,7 @@ move_character_intermission_1F52:
 1F72: DD BE 00      cp   (ix+x_pos)
 1F75: CC 4E B7      call z,$1F4E
 1F78: C3 57 3D      jp   move_character_according_to_direction_3DD7
-1F7B: CD 24 B7      call $1F24
+1F7B: CD 24 B7      call change_chars_state_from_01_to_02_1f24
 1F7E: DD E5         push ix
 1F80: DD 21 20 05   ld   ix,moving_block_struct_8DA0
 1F84: DD 34 9F      inc  (ix+char_state)
@@ -3848,7 +3852,7 @@ change_last_3_characters_char_states_200a:
 2026: DD 34 BF      inc  (ix+char_state)
 2029: DD 34 97      inc  (ix+char_state)
 202C: DD E1         pop  ix
-202E: CD B5 06      call $0615
+202E: CD B5 06      call draw_pengo_title_0615
 2031: C9            ret
 2032: DD 7E 05      ld   a,(ix+char_id)
 2035: FE 01         cp   $01
@@ -3919,7 +3923,7 @@ move_character_intermission_204E:
 20B4: 6F            ld   l,a
 20B5: 26 01         ld   h,$01
 20B7: 22 00 A8      ld   (cursor_x_8800),hl
-20BA: 3E A6         ld   a,$0E
+20BA: 3E A6         ld   a,$0E			; attribute for "pengo" title
 20BC: DD CB 04 66   bit  0,(ix+facing_direction)
 20C0: 20 A2         jr   nz,$20C4
 20C2: 3E A0         ld   a,$00

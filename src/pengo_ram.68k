@@ -37,10 +37,11 @@ ATTRIBUTE_RAM:						| $8400
 
 	ds.b	2
 sprite_ram_8FF2:
-	ds.b	0xE
+	ds.b	6*2
 
-sprite_ram_9020:
-	ds.b	0x10
+	ds.b	2
+sprite_ram_9022:
+	ds.b	6*2
 	
 high_score_beaten:
 	.word	0
