@@ -724,16 +724,9 @@ display_top_scores_6C0:
 	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
 	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
-	jbsr	l_276c                            	| [call $276C]
-	lea	0x057E(pc),a0  FUCK                    	| [ld   hl,$057E]
-	move.b	(a0),d0                         	| [ld   a,(hl)]
-	cmp.b	#0x51,d0                         	| [cp   $51]
-	jne	l_06df                             	| [jr   nz,$06DF]
+	jbsr	display_highs_276C 	            	| [call $276C]
 	st.b	d0                                	| [ld   a,$FF]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	rts                                    	| [ret]
-l_06df:
-	move.l	(sp)+,a0                        	| [pop  hl]
 	rts                                    	| [ret]
  * demo mode
 display_demo_and_top_scores_6E1:
@@ -866,7 +859,7 @@ l_07d1:
 	and.b	#0x0F,d0                         	| [and  $0F]
 	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
 	jbsr	l_07fb                            	| [call $07FB]
-	lea	unknown_880a(pc),a0                	| [ld   hl,unknown_880a]
+	lea	unknown_8809+1(pc),a0                	| [ld   hl,unknown_880a]
 	**move.b	dsw_1_9000_coinage,d0                   	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
@@ -3550,7 +3543,7 @@ l_273d:
 	move.b	#0x41,(a0)                      	| wrap to A [ld   (hl),$41]
 	jra	l_26d9                             	| [jr   $26D9]
 l_274a:
-	jbsr	display_highs_2763                	| [call display_highs_2763]
+	jbsr	write_active_letter_to_screen_with_color_2756                	| [call display_highs_2763]
 	move.b	#0x18,d0                        	| [ld   a,$18]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	jbsr	write_active_letter_to_screen_2756	| [call write_active_letter_to_screen_2756]
@@ -3569,13 +3562,13 @@ l_2758:
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	rts                                    	| [ret]
 
-display_highs_2763:
+write_active_letter_to_screen_with_color_2756:
 	move.b	#0x18,d0                        	| [ld   a,$18]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 
 	move.w	a3,-(sp)                        	| [push iy]
 	jra	l_2758                             	| [jr   $2758]
-l_276c:
+display_highs_276C:
 	lea	todays_best_text_27F7(pc),a0       	| [ld   hl,todays_best_text_27F7]
 	move.b	#0x02,d1                        	| [ld   b,$02]
 l_2771:

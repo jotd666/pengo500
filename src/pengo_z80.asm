@@ -928,14 +928,16 @@ display_top_scores_6C0:
 06C5: CD 45 00      call clear_screen_and_colors_28E5
 06C8: CD 3F 31      call clear_sprites_31B7
 06CB: CD 38 03      call update_all_scores_2B10
-06CE: CD 44 27      call $276C
+06CE: CD 44 27      call display_highs_276C
+; another protection against text-tampering (bootleg versions)
 06D1: 21 7E 25      ld   hl,$057E
 06D4: 7E            ld   a,(hl)
 06D5: FE 51         cp   $51
-06D7: 20 06         jr   nz,$06DF
+06D7: 20 06         jr   nz,$06DF	; crashes the CPU
 06D9: 3E FF         ld   a,$FF
 06DB: CD D1 80      call delay_28D1
 06DE: C9            ret
+; tamper with stack and return in the woods: crash
 06DF: E1            pop  hl
 06E0: C9            ret
 	;; demo mode
@@ -4788,7 +4790,7 @@ create_highscore_entry_269E:
 2744: 20 13         jr   nz,$26D9
 2746: 36 C1         ld   (hl),$41	; wrap to A
 2748: 18 27         jr   $26D9
-274A: CD CB 2F      call display_highs_2763
+274A: CD CB 2F      call write_active_letter_to_screen_with_color_2756
 274D: 3E 98         ld   a,$18
 274F: 32 02 88      ld   (cursor_color_8802),a
 2752: CD F6 27      call write_active_letter_to_screen_2756
@@ -4803,11 +4805,13 @@ write_active_letter_to_screen_2756:
 275F: CD 1C A9      call set_tile_at_current_pos_293C
 2762: C9            ret
 
-display_highs_2763:
+write_active_letter_to_screen_with_color_2756:
 2763: 3E 98         ld   a,$18
 2765: 32 AA 20      ld   (cursor_color_8802),a
 2768: FD E5         push iy
 276A: 18 6C         jr   $2758
+
+display_highs_276C:
 276C: 21 5F 2F      ld   hl,todays_best_text_27F7
 276F: 06 02         ld   b,$02
 2771: CD F4 01      call print_line_typewriter_style_29F4
