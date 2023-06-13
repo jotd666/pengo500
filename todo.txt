@@ -1,9 +1,10 @@
 General:
 
 - CLUTs seem wrong: alphanum chars OK, graphic chars wrong
-  (something to do with tile/clut banks?)
+  (try to swap colors in cluts ex clut $0E pengo title ??)
 - end transcode
 - dip switches (see ** code)
+- debug routine which writes "thanks for playing..." because regression!!!
 
 Amiga:
 

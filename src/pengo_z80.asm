@@ -491,7 +491,7 @@ coin_routine_02A2:
 02BE: 21 B4 88      ld   hl,unknown_881C
 02C1: 34            inc  (hl)
 02C2: 21 81 88      ld   hl,unknown_8809
-02C5: 3A 28 B8      ld   a,(dsw_1_9000)
+02C5: 3A 28 B8      ld   a,(dsw_1_9000_coinage)
 02C8: 2F            cpl
 02C9: E6 AF         and  $0F
 02CB: 18 B2         jr   $0307
@@ -517,11 +517,11 @@ coin_routine_02A2:
 02E9: 21 BE 88      ld   hl,unknown_881E
 02EC: 34            inc  (hl)
 02ED: 21 AA 88      ld   hl,unknown_880a
-02F0: 3A 20 90      ld   a,(dsw_1_9000)
+02F0: 3A 20 90      ld   a,(dsw_1_9000_coinage)
 02F3: 2F            cpl
 02F4: E6 A7         and  $0F
 02F6: 47            ld   b,a
-02F7: 3A 00 38      ld   a,(dsw_1_9000)
+02F7: 3A 00 38      ld   a,(dsw_1_9000_coinage)
 02FA: 2F            cpl
 02FB: 0F            rrca
 02FC: 0F            rrca
@@ -538,7 +538,7 @@ coin_routine_02A2:
 030D: 0C            inc  c
 030E: 71            ld   (hl),c
 030F: 87            add  a,a
-0310: 21 05 03      ld   hl,$032D
+0310: 21 05 03      ld   hl,table_032D
 0313: 5F            ld   e,a
 0314: 16 A0         ld   d,$00
 0316: 19            add  hl,de
@@ -627,7 +627,7 @@ FF 03 FF 04 FF 05 FF 06 FF 00 01 00 01 01 01 FF
 03D1: AF            xor  a
 03D2: 12            ld   (de),a
 03D3: C9            ret
-03D4: 21 A0 90      ld   hl,dsw_1_9000
+03D4: 21 A0 90      ld   hl,dsw_1_9000_coinage
 03D7: 06 20         ld   b,$20
 03D9: 36 00         ld   (hl),$00
 03DB: 23            inc  hl
@@ -1017,6 +1017,8 @@ wait_for_start_and_play_072D:
 076F: 2B            dec  hl
 0770: 77            ld   (hl),a
 0771: C3 2D A7      jp   wait_for_start_and_play_072D
+
+wait_for_start_0774:
 0774: CD 3F 31      call clear_sprites_31B7
 	;; initialize pengo structure
 
@@ -1054,17 +1056,17 @@ wait_for_start_and_play_072D:
 07CA: 32 96 80      ld   (player_number_8816),a
 07CD: CD F1 87      call $07D1
 07D0: C9            ret
-07D1: 3A 00 B8      ld   a,(dsw_1_9000)
+07D1: 3A 00 B8      ld   a,(dsw_1_9000_coinage)
 07D4: 2F            cpl
 07D5: E6 0F         and  $0F
 07D7: 21 09 88      ld   hl,unknown_8809
 07DA: CD 5B 07      call $07FB
 07DD: 21 0A 88      ld   hl,unknown_880a
-07E0: 3A 80 B0      ld   a,(dsw_1_9000)
+07E0: 3A 80 B0      ld   a,(dsw_1_9000_coinage)
 07E3: 2F            cpl
 07E4: E6 A7         and  $0F
 07E6: 47            ld   b,a
-07E7: 3A A8 10      ld   a,(dsw_1_9000)
+07E7: 3A A8 10      ld   a,(dsw_1_9000_coinage)
 07EA: 2F            cpl
 07EB: 0F            rrca
 07EC: 0F            rrca
@@ -1079,7 +1081,7 @@ wait_for_start_and_play_072D:
 07FB: E5            push hl
 07FC: 4E            ld   c,(hl)
 07FD: 87            add  a,a
-07FE: 21 05 2B      ld   hl,$032D
+07FE: 21 05 2B      ld   hl,table_032D
 0801: 5F            ld   e,a
 0802: 16 A0         ld   d,$00
 0804: 19            add  hl,de
@@ -2173,7 +2175,7 @@ memory_test_10F2:
 1125: CD 4A 39      call $11CA
 1128: 21 6E 92      ld   hl,$1246
 112B: CD 74 A1      call print_line_typewriter_style_29F4
-112E: 3A 28 90      ld   a,(dsw_1_9000)
+112E: 3A 28 90      ld   a,(dsw_1_9000_coinage)
 1131: CD CA 91      call $11CA
 1134: 21 E5 12      ld   hl,$124D
 1137: CD F4 A9      call print_line_typewriter_style_29F4

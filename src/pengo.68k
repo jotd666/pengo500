@@ -10,7 +10,7 @@
 * BC: manual
 * D: D3
 * E: D4
-* DE: A1
+* DE: A1 or D3
 * H: D5
 * L: D6
 * HL: A0 or D6 (video addresses)
@@ -457,8 +457,31 @@ l_015b:
 	**move.b	d0,dip_switches_9040            	| [ld   (dip_switches_9040),a]
 	rts
 	
-
+	* used a relative pointers table (why not ?)
+table_032D:
+	.word	l_034D-table_032D+0x85-0x4D
+	.word	l_034D-table_032D+0x61-0x4D
+	.word	l_034D-table_032D+0x71-0x4D
+	.word	l_034D-table_032D+0x59-0x4D
+	.word	l_034D-table_032D+0x7C-0x4D
+	.word	l_034D-table_032D+0x5D-0x4D
+	.word	l_034D-table_032D+0x65-0x4D
+	.word	l_034D-table_032D+0x52-0x4D
+	.word	l_034D-table_032D+0x7F-0x4D
+	.word	l_034D-table_032D+0x5F-0x4D
+	.word	l_034D-table_032D+0x6C-0x4D
+	.word	l_034D-table_032D+0x56-0x4D
+	.word	l_034D-table_032D+0x77-0x4D
+	.word	l_034D-table_032D+0x5B-0x4D
+	.word	l_034D-table_032D+0x63-0x4D
+	.word	l_034D-table_032D
 	
+l_034D:
+	.byte	0xFF,0x00,0x00,0x00,0x01,0xFF,0x00,0x00,0x01,0xFF,0x00,0x01,0xFF,0x01,0xFF,0x02
+	.byte	0xFF,0x03,0xFF,0x04,0xFF,0x05,0xFF,0x06,0xFF,0x00,0x01,0x00,0x01,0x01,0x01,0xFF
+	.byte	0x00,0x01,0x00,0x02,0xFF,0x01,0x01,0x01,0x01,0x02,0xFF,0x01,0x01,0x01,0x02,0xFF
+	.byte	0x01,0x02,0xFF,0x02,0x02,0x02,0x02,0x03,0xFF,0x02,0x02,0x02,0x03,0xFF
+
 l_03d4:
 * zero a lot of hardware stuff
 	jbsr	osd_sound_disable
@@ -513,7 +536,7 @@ loop_0478:
 loop_0480:
 	jbsr	display_title_screen_0521         	| [call display_title_screen_0521]
 	jbsr	pack_ice_screen_22CB              	| [call pack_ice_screen_22CB]
-	**jbsr	display_demo_and_top_scores_6E1   	| [call display_demo_and_top_scores_6E1]
+	jbsr	display_demo_and_top_scores_6E1   	| [call display_demo_and_top_scores_6E1]
 	move.b	#0x80,d0                        	| [ld   a,0x80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jeq	loop_0480                          	| [jr   z,loop_0480]
@@ -694,6 +717,255 @@ table_0670:
      .byte	0x01,0x41,0x01,0x41,0x01,0x41,0x02,0x41,0x41,0x01,0x00,0x01,0x41,0x41,0x01,0x41
      .byte	0x03,0x41,0x03,0x41,0x41,0x02,0x41,0x01,0x00,0x01,0x41,0x02,0x41,0x41,0x06,0x43
      .byte	0x41,0x44,0x02,0x00,0x01,0x42,0x01,0x81,0x46,0x47,0x84,0x02,0x42,0x45,0x01,0x00
+
+display_top_scores_6C0:
+	clr.b	d0                               	| [ld  a,$00]
+	*move.b	d0,flip_screen_9043             	| set normal mode (not cocktail) [ld   (flip_screen_9043),a]
+	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
+	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
+	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
+	jbsr	l_276c                            	| [call $276C]
+	lea	0x057E(pc),a0  FUCK                    	| [ld   hl,$057E]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	cmp.b	#0x51,d0                         	| [cp   $51]
+	jne	l_06df                             	| [jr   nz,$06DF]
+	st.b	d0                                	| [ld   a,$FF]
+	jbsr	delay_28D1                        	| [call delay_28D1]
+	rts                                    	| [ret]
+l_06df:
+	move.l	(sp)+,a0                        	| [pop  hl]
+	rts                                    	| [ret]
+ * demo mode
+display_demo_and_top_scores_6E1:
+	move.b	#0x05,d0                        	| [ld   a,$05]
+	move.b	d0,level_number_player1_8812    	| [ld   (level_number_player1_8812),a]
+	move.b	d0,level_number_player2_8813    	| [ld   (level_number_player2_8813),a]
+ * set main counter to 0
+											| [ld   hl,$0000]
+	clr.w	counter_lsb_8824             	| [ld   (counter_lsb_8824),hl]
+ * init number of lives
+	**move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
+	clr.b	d0	| TEMP
+	not.b	d0                               	| [cpl]
+	and.b	#0x18,d0                         	| [and  $18]
+	ror.b	#3,d0                            	| [rrca]
+												| [rrca]
+												| [rrca]
+	addq.b	#0x02,d0                        	| [add  a,$02]
+	move.b	d0,lives_counter_p1_8814        	| [ld   (lives_counter_p1_8814),a]
+	move.b	d0,lives_counter_p2_8815        	| [ld   (lives_counter_p2_8815),a]
+	clr.b	d0                               	| [xor  a]
+	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]
+	move.w	random_seed_8826,d6         	| [ld   hl,(random_seed_8826)]
+	move.w	d6,random_seed_backup_8CF0      	| backup random seed? [ld   (random_seed_backup_8CF0),hl]
+ * init random number generator to the same value so demo mode
+ * works properly
+	                      	| [ld   hl,$365A]
+	move.w	#0x365A,random_seed_8826             	| [ld   (random_seed_8826),hl]
+* choose demo sequence 1 or 2 depending on bit 0 of demo_run_counter_8CF6
+ * demo sequence 1
+	lea	move_table_6400(pc),a1             	| [ld   de,move_table_6400]
+	lea	demo_run_counter_8CF6,a0       	| [ld   hl,demo_run_counter_8CF6]
+	addq.b	#1,(a0)                         	| [inc  (hl)]
+	btst.b	#0,(a0)                         	| [bit  0,(hl)]
+	jeq	l_071e                             	| [jr   z,$071E]
+ * demo sequence 2
+	lea	move_table_6600(pc),a1             	| [ld   de,move_table_6600]
+l_071e:
+	move.l	a1,demo_move_table_pointer_8CF2 	| [ld   (demo_move_table_pointer_8CF2),de]
+	clr.b	d0                               	| [xor  a]
+	move.b	d0,demo_mode_var_8CF5           	| [ld   (demo_mode_var_8CF5),a]
+	jbsr	run_one_life_092D                 	| [call run_one_life_092D]
+	jbsr	display_top_scores_6C0            	| [call display_top_scores_6C0]
+	rts                                    	| [ret]
+
+
+wait_for_start_and_play_072D:
+	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
+	tst.b	d0                               	| [and  a]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	clr.b	d0                               	| [xor  a]
+	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]
+	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
+	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
+	jbsr	l_2a2c                            	| [call $2A2C]
+	lea	unknown_880B(pc),a0                	| [ld   hl,unknown_880B]
+	bset.b	#7,(a0)                         	| [set  7,(hl)]
+
+	move.l	a0,-(sp)                        	| [push hl]
+	jbsr	wait_for_start_0774               	| [call wait_for_start_0774]
+* game start
+	move.l	(sp)+,a0                        	| [pop  hl]
+	bclr.b	#7,(a0)                         	| [res  7,(hl)]
+	st.b	d0                                	| [ld   a,$FF]
+	move.b	d0,game_playing_8817            	| [ld   (game_playing_8817),a]
+	jbsr	play_one_game_087D                	| [call play_one_game_087D]
+	clr.b	d0                               	| [xor  a]
+	move.b	d0,game_playing_8817            	| [ld   (game_playing_8817),a]
+	*move.b	d0,flip_screen_9043             	| [ld   (flip_screen_9043),a]
+	lea	cursor_x_8800(pc),a0               	| [ld   hl,cursor_x_8800]
+												| [ld   de,$002A]
+	tst.b	d0                               	| [and  a]
+	add.w	#0x2A,a0							| [add  hl,de]
+	move.b	(a0),d1                         	| [ld   b,(hl)]
+	move.b	weird_variable_882A,d0          	| [ld   a,(weird_variable_882A)]
+	cmp.b	d1,d0                            	| [cp   b]
+	jeq	wait_for_start_and_play_072D       	| [jp   z,wait_for_start_and_play_072D]
+	clr.b	d0                               	| [xor  a]
+	not.b	d0                               	| [cpl]
+	lea	cursor_x_8800(pc),a0               	| [ld   hl,cursor_x_8800]
+											| [dec  hl]
+	move.b	d0,-(a0)                         	| [ld   (hl),a]
+	jra	wait_for_start_and_play_072D       	| [jp   wait_for_start_and_play_072D]
+
+wait_for_start_0774:
+	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
+ * initialize pengo structure
+
+	lea	pengo_struct_8D80(pc),a2           	| [ld   ix,pengo_struct_8D80]
+	move.b	#0xB0,(x_pos,a2)                	| 176 [ld   (ix+x_pos),$B0]
+	move.b	#0x58,(y_pos,a2)                	| 88 [ld   (ix+y_pos),$58]
+	move.b	#0x0B,(char_color,a2)           	| [ld   (ix+char_color),$0B]
+	move.b	#0x02,(facing_direction,a2)     	| facing direction [ld   (ix+facing_direction),$02]
+	move.b	#0x05,(char_id,a2)              	| ID of Pengo is 5 [ld   (ix+char_id),$05]
+	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
+	clr.b	(intermission_dance_push_anim_counter,a2)	| [ld   (ix+intermission_dance_push_anim_counter),$00]
+	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
+	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+l_079d:
+	jbsr	increase_counter_0875             	| [call increase_counter_0875]
+	jbsr	l_0819                            	| [call $0819]
+	move.b	0x9080,d0                       	| [ld   a,($9080)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x60,d0                         	| [and  $60]
+	jeq	l_079d                             	| [jr   z,$079D]
+	btst.b	#6,d0                           	| [bit  6,a]
+	jne	l_07bc                             	| [jr   nz,$07BC]
+	lea	number_of_credits_8808(pc),a0      	| [ld   hl,number_of_credits_8808]
+	subq.b	#1,(a0)                         	| [dec  (hl)]
+	clr.b	d0                               	| [ld   a,$00]
+	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]
+	jbsr	l_07d1                            	| [call $07D1]
+	rts                                    	| [ret]
+l_07bc:
+	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
+	cmp.b	#0x01,d0                         	| [cp   $01]
+	jeq	l_079d                             	| [jr   z,$079D]
+	lea	number_of_credits_8808(pc),a0      	| [ld   hl,number_of_credits_8808]
+	subq.b	#2,(a0)                         	| [dec  (hl)]
+	                         	| [dec  (hl)]
+	move.b	#0x80,d0                        	| [ld   a,$80]
+	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]
+	jbsr	l_07d1                            	| [call $07D1]
+	rts                                    	| [ret]
+l_07d1:
+	**move.b	dsw_1_9000_coinage,d0                   	| [ld   a,(dsw_1_9000_coinage)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
+	jbsr	l_07fb                            	| [call $07FB]
+	lea	unknown_880a(pc),a0                	| [ld   hl,unknown_880a]
+	**move.b	dsw_1_9000_coinage,d0                   	| [ld   a,(dsw_1_9000_coinage)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	move.b	d0,d1                           	| [ld   b,a]
+	**move.b	dsw_1_9000_coinage,d0                   	| [ld   a,(dsw_1_9000_coinage)]
+	not.b	d0                               	| [cpl]
+	ror.b	#4,d0                            	| [rrca]
+												| [rrca]
+												| [rrca]
+												| [rrca]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	cmp.b	d1,d0                            	| [cp   b]
+	jne	l_07f7                             	| [jr   nz,$07F7]
+	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
+l_07f7:
+	jbsr	l_07fb                            	| [call $07FB]
+	rts                                    	| [ret]
+l_07fb:
+
+	move.l	a0,-(sp)                        	| [push hl]
+	move.b	(a0),d2                         	| [ld   c,(hl)]
+	add.b	d0,d0                            	| [add  a,a]
+	lea	table_032D(pc),a0                      	| [ld   hl,$032D]
+	clr.w	d3                               	| [ld   d,$00]
+	move.b	d0,d3                           	| [ld   e,a]
+												| [add  hl,de]
+	* get proper (relative) pointer to data
+	add.w	(a0,d3.w),a0                         	| [ld   e,(hl)]
+	* now data offset
+												| [inc  hl]
+												| [ld   d,(hl)]
+	clr.w	d6                               	| [ld   h,$00]
+	move.b	d2,d6                           	| [ld   l,c]
+	add.w	d6,a0								| [add  hl,de]
+	clr.b	d2                               	| [ld   c,$00]
+l_080e:
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	or.b	d0,d0                             	| [or   a]
+	jne	l_0816                             	| [jr   nz,$0816]
+	addq.b	#1,d2                           	| [inc  c]
+	subq.b	#1,a0                           	| [dec  hl]
+	jra	l_080e                             	| [jr   $080E]
+l_0816:
+	move.l	(sp)+,a0                        	| [pop  hl]
+	move.b	d2,(a0)                         	| [ld   (hl),c]
+	rts                                    	| [ret]
+
+l_0819:
+	move.b	(intermission_dance_push_anim_counter,a2),d0	| [ld   a,(ix+intermission_dance_push_anim_counter)]
+	lea	table_0822(pc),a1                  	| [ld   de,table_0822]
+	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+
+table_0822:
+	.long	block_pushed_3FFA
+	.long	l_0830
+	.long	l_085c
+	.long	block_pushed_401F
+	.long	l_0846
+	.long	l_085c
+	.long	l_0870
+
+l_0830:
+										| [ld   h,$0C]
+										| [ld   l,$13]
+	move.w	#0x130C,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
+	jbsr	move_cursor_1_2919                	| [call move_cursor_1_2919]
+	move.b	#0x4E,d0                        	| [ld   a,$4E]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
+	rts                                    	| [ret]
+
+l_0846:
+										| [ld   h,$0C]
+										| [ld   l,$13]
+	move.w	#0x130C,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	move.b	#0x4E,d0                        	| [ld   a,$4E]
+	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
+	jbsr	move_cursor_1_2919                	| [call move_cursor_1_2919]
+	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
+	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
+	rts                                    	| [ret]
+
+l_085c:
+	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
+	bne	0f
+	jbsr	l_0867                            	| [call z,$0867]
+0:
+	jbsr	l_4082                            	| [call $4082]
+	rts                                    	| [ret]
+
+l_0867:
+	move.b	#0x20,(0x0a,a2)                 	| [ld   (ix+$0a),$20]
+	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
+	rts                                    	| [ret]
+
+l_0870:
+	clr.b	(intermission_dance_push_anim_counter,a2)	| [ld   (ix+intermission_dance_push_anim_counter),$00]
+	rts                                    	| [ret]
 
 increase_counter_0875:
 	addq.w	#1,counter_lsb_8824
@@ -8043,8 +8315,8 @@ l_4529:
 	move.b	d0,d3                           	| [ld   e,a]
 	lea	egg_location_table_8DC2(pc),a0     	| [ld   hl,egg_location_table_8DC2]
 	add.w	d3,a0								| [add  hl,de]
-	move.b	d2,(a0)                         	| [ld   (hl),c]
-	addq.w	#1,a0                           	| [inc  hl]
+	move.b	d2,(a0)+                         	| [ld   (hl),c]
+												| [inc  hl]
 	move.b	d1,(a0)                         	| [ld   (hl),b]
 	clr.b	(0x19,a2)                        	| [ld   (ix+$19),$00]
 l_454f:
