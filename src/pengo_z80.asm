@@ -735,7 +735,8 @@ display_thanks_for_playing_04A0:
 04AE: C0            ret  nz
 04AF: 21 D0 24      ld   hl,table_04D0
 04B2: CD 5C 29      call print_line_typewriter_style_29F4
-; this part is either a protection or buggy. It checks
+; this part is an anti-tampering check in case a bootleg
+; changes text here. It checks
 ; for space character but if not space, returns to bogus address
 ; push hl without pop hl
 04B5: E5            push hl
@@ -5160,6 +5161,7 @@ print_line_typewriter_style_29F4:
 2A26: 3E A4         ld   a,$04
 2A28: CD F9 A0      call delay_28D1
 2A2B: C9            ret
+
 2A2C: 21 55 A2      ld   hl,push_string_2A7D
 2A2F: CD F4 81      call print_line_typewriter_style_29F4
 2A32: 21 2F 2A      ld   hl,start_button_string_2A87

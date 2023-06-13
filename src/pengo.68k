@@ -3842,6 +3842,7 @@ l_2966:
 * < C: Y (D2)
 * > HL (D6)
 convert_coords_to_screen_address_296F:
+	move.l	A0,-(a7)
 	move.b	d1,d0                           	| load B into A [ld   a,b]
 	cmp.b	#0x20,d0                         	| is A < 0x20 [cp   0x20]
 	jcc	l_2989                             	| if A >= 0x20 goto 0x2989 [jr   nc,0x2989]
@@ -3858,6 +3859,7 @@ convert_coords_to_screen_address_296F:
 	move.b	d1,d6                           	| [ld   l,b]
 * acts like multiply table for Y plus X
 	add.w	d3,d6							| [add  hl,de]
+	move.l	(a7)+,a0
 	rts                                    	| [ret]
 * handle limit cases
 l_2989:
@@ -3884,9 +3886,11 @@ l_29a7:
 	clr		d3                               	| [ld   d,0x00]
 	move.b	d0,d3                           	| [ld   e,a]
 	add.w	d3,d6								| [add hl,de]
+	move.l	(a7)+,a0
 	rts                                    	| [ret]
 l_29b2:
 	move.w	#0x8000,d6      	| [ld   hl,video_tile_memory_8000]
+	move.l	(a7)+,a0
 	rts                                    	| [ret]
 
 screen_line_address_table_29B6:
@@ -3912,11 +3916,11 @@ print_line_typewriter_style_29F4:
 	move.b	d0,cursor_color_8802            	| store in current color [ld   (cursor_color_8802),a]
 	                           	| [inc  hl]
 l_2a03:
-	move.b	(a0),d0                         	| get character [ld   a,(hl)]
+	move.b	(a0)+,d0                         	| get character [ld   a,(hl)]
 	btst.b	#7,d0                           	| [bit  7,a]
 	jne	l_2a1a                             	| [jr   nz,0x2A1A]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
-	addq.w	#1,a0                           	| [inc  hl]
+	                           	| [inc  hl]
 	move.b	cursor_color_8802,d0            	| [ld   a,(cursor_color_8802)]
 	btst.b	#7,d0                           	| stop when last bit is set [bit  7,a]
 	jeq	l_2a03                             	| [jr   z,0x2A03]
@@ -3926,7 +3930,7 @@ l_2a03:
 l_2a1a:
 	and.b	#0x7F,d0                         	| [and  0x7F]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
-	addq.w	#1,a0                           	| [inc  hl]
+	                           	| [inc  hl]
 	move.b	cursor_color_8802,d0            	| [ld   a,(cursor_color_8802)]
 	btst.b	#7,d0                           	| [bit  7,a]
 	bne.b	0f
