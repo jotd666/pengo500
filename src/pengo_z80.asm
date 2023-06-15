@@ -5708,19 +5708,15 @@ draw_it_2E04:
 2E35: CD 3A 87      call draw_diamonds_2F3A
 2E38: C9            ret
 	
-to_copy_2E39: EB            ex   de,hl
-2E3A: 46            ld   b,(hl)
-2E3B: E9            jp   (hl)
-2E3C: 00            nop
-2E3D: 97            sub  a
-2E3E: 7F            ld   a,a
-2E3F: D7            rst  $10
-2E40: F7            rst  $30
-2E41: 57            ld   d,a
-2E42: F7            rst  $30
-2E43: 57            ld   d,a
-2E44: F7            rst  $30
-2E45: A0            and  b
+; copied from RAM after code has been changed
+; can be bit or res, and the bit number changes too
+to_copy_2E39:
+2E39:  CB 7E         bit  7,(hl)                                         
+2E3B:  C9            ret
+; table (installed in 8C27) of bits for the
+; blocks to visit                                             
+2E3C:  00 3F 7F 7F 7F 7F 7F 7F 7F 00
+
 	;; < a:	0:	draw up, 1 down, 2 left, 3 right
 	
 draw_one_path_in_maze_2E46:
@@ -6155,10 +6151,10 @@ set_way_right_clear_30C3:
 
 	;; returns z if way is clear, nz if not
 is_way_clear_30CA:
-30CA: 16 CE         ld   d,$46	; z80 operand mask
+30CA: 16 CE         ld   d,$46	; z80 operand mask for "bit"
 30CC: 18 8E         jr   $30D4
-	;; 30CE is not used
-30CE: 16 EE         ld   d,$C6	; z80 operand mask
+	;; 30CE is not used (ld)
+30CE: 16 EE         ld   d,$C6	; z80 operand mask for "res"
 30D0: 18 8A         jr   $30D4
 	
 set_way_clear_30D2:

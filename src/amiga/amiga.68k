@@ -1337,6 +1337,7 @@ update_bg_tile:
 	tst.B	alternate_bank_selectors
 	beq.b	0f
 	bset	#8,d0
+	bset	#5,d1
 0:
 	cmp.w	#0x3C0,d6
 	bcc.b	0f

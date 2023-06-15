@@ -1975,8 +1975,8 @@ l_0fa5:
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	move.l	(sp)+,a0                        	| [pop  hl]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
-	addq.w	#1,a0                           	| [inc  hl]
+	move.b	d0,(a0)+                         	| [ld   (hl),a]
+												| [inc  hl]
 	addq.b	#1,d2                           	| [inc  c]
 	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	subq.b	#1,d4                           	| [dec  e]
@@ -4464,15 +4464,16 @@ draw_maze_2DA1:
 
  * install a modifiable routine in ram_code_8C24 (self-modifying code used
  * for maze path drawing)
-
+ * plus the flags (array of bits installed in 8C27
+ 
 	move.b	#0x0D,d1                        	| [ld   b,$0D]
 	lea	to_copy_2E39(pc),a1                	| [ld   de,to_copy_2E39]
 	lea	ram_code_8C24,a0               	| [ld   hl,ram_code_8C24]
 l_2dbe:
-	move.b	(a1),d0                         	| [ld   a,(de)]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
-	addq.w	#1,a1                           	| [inc  de]
-	addq.w	#1,a0                           	| [inc  hl]
+	move.b	(a1)+,(a0)+                         	| [ld   a,(de)]
+												| [ld   (hl),a]
+												| [inc  de]
+												| [inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2dbe                             	| [djnz $2DBE]
 
@@ -4549,20 +4550,16 @@ l_2e19:
 	jbsr	draw_diamonds_2F3A                	| [call draw_diamonds_2F3A]
 	rts                                    	| [ret]
 
+* copied from RAM after code has been changed
+* can be bit or res, and the bit number changes too
 to_copy_2E39:
-**	.byte	0xEB            ex,0xde,hl
-**	move.b	(a0),d1                         	| [ld   b,(hl)]
-**	jra	(a0)                               	| [jp   (hl)]
-**nop
-**	sub.b	d0,d0                            	| [sub  a]
-**	move.b	d0,d0                           	| [ld   a,a]
-**rst  $10
-**rst  $30
-**	move.b	d0,d3                           	| [ld   d,a]
-**rst  $30
-**	move.b	d0,d3                           	| [ld   d,a]
-**rst  $30
-**	and.b	d1,d0                            	| [and  b]
+	.byte	0xCB,0x7E      |   bit  7,(hl)
+	.byte	0xC9         |   ret
+* table (installed in 8C27) of bits for the
+* blocks to visit
+l_2E3C:
+	.byte	0x00,0x3F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x00
+	.align	2
  * < a:	0:	draw up, 1 down, 2 left, 3 right
 
 draw_one_path_in_maze_2E46:
@@ -5050,8 +5047,10 @@ set_way_right_clear_30C3:
 	addq.b	#1,d2                           	| [inc  c]
 	jra	l_30b1                             	| [jr   $30B1]
 
- * those routines below use a self-modifying code technique to
+ * those routines below used a self-modifying code technique to
  * change opcode and op value (bit & res and value)
+ * this has been adapted to 68000, no need for SMC either...
+ *
  * 30CA tests if way is clear
  * 30D2 clears bits to mark that way is clear
  *
@@ -5059,33 +5058,30 @@ set_way_right_clear_30C3:
 
  * returns z if way is clear, nz if not
 is_way_clear_30CA:
-	move.b	#0x46,d3                        	| z80 operand mask [ld   d,$46]
-	jra	l_30d4                             	| [jr   $30D4]
- * 30CE is not used
-	move.b	#0xC6,d3                        	| z80 operand mask [ld   d,$C6]
+	lea		bit_set(pc),a5                 	| z80 bit operand mask [ld   d,$46]
 	jra	l_30d4                             	| [jr   $30D4]
 
 set_way_clear_30D2:
-	move.b	#0x86,d3                        	| z80 operand mask [ld   d,$86]
+	lea		bit_clear(pc),a5                 	| z80 bit operand mask [ld   d,$46]
+                        	| z80 res operand mask [ld   d,$86]
 l_30d4:
 	lea	maze_hole_wall_bit_table_8C27,a0	| [ld   hl,maze_hole_wall_bit_table_8C27]
 	move.b	d2,d0                           	| [ld   a,c]
 	not.b	d0                               	| [cpl]
 	and.b	#0x07,d0                         	| [and  $07]
-	rol.b	#3,d0                            	| [rlca]
-	or.b	d3,d0                             	| [or   d]
-	*ld   ram_code_8C24+1,a ; change operand of the bit/res/ld opcode
-	clr.b	d3                               	| [ld   d,$00]
-	move.b	d1,d4                           	| [ld   e,b]
-	*add  hl,de
-	illegal			| TODO handle this mess
-	*jra	ram_code_8C24                      	| calls self-modifying code bit/res test routine!! [jp   ram_code_8C24]
+	moveq	#0,d4
+	move.b	d0,d4								| store bit number
+	clr.w	d3                               	| [ld   d,$00]
+	move.b	d1,d3                           	| [ld   e,b]
+	add.w	d3,a0								| [add  hl,de]
+	jmp		(a5)
+bit_set:
+	bset.b	d4,(a0)
+	rts
+bit_clear:
+	bclr.b	d4,(a0)
+	rts
 
-* 8C24:
-* bit <xxx>,(hl)
-* or
-* res <xxx>,(hl)
-* ret
 
 * < ix: maze structure
 draw_2_holes_up_30E9:
