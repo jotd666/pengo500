@@ -58,7 +58,7 @@ palette = block_dict["palette"]["data"]
 ##print(len({tuple(x) for x in palette}))
 # looks that there are only 32 cluts for 16 colors totol
 
-palette = [tuple(x) for x in palette[:16]]
+palette = [tuple(x) for x in palette]
 
 with open(os.path.join(src_dir,"palette.68k"),"w") as f:
     bitplanelib.palette_dump(palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
@@ -78,13 +78,19 @@ for k,chardat in enumerate(block_dict["tile"]["data"]):
     img = Image.new('RGB',(8,8))
 
     character_codes = list()
-    for colors in rgb_cluts:
+    for cidx,colors in enumerate(rgb_cluts):
+        if cidx < 32:
+            local_palette = palette[0:16]
+            pshift = 0
+        else:
+            local_palette = palette[16:]
+            pshift = 16
         d = iter(chardat)
         for i in range(8):
             for j in range(8):
                 v = next(d)
                 img.putpixel((j,i),colors[v])
-        character_codes.append(bitplanelib.palette_image2raw(img,None,palette))
+        character_codes.append(bitplanelib.palette_image2raw(img,None,local_palette))
     character_codes_list.append(character_codes)
 
 ##    if dump_it:
@@ -107,14 +113,16 @@ sprites = collections.defaultdict(dict)
 clut_index = 12  # temp
 
 bg_cluts = block_dict["clut"]["data"]
-bg_cluts = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts]
+bg_cluts_bank_0 = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts[0:16]]
+# second bank
+bg_cluts_bank_1 = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts[16:]]
 
 hw_sprite_table = [False]*NB_POSSIBLE_SPRITES
 if False:
     for k,data in sprite_config.items():
         sprdat = block_dict["sprite"]["data"][k]
         for m,clut_index in enumerate(data["cluts"]):
-            spritepal = bg_cluts[clut_index]
+            spritepal = bg_cluts_bank_0[clut_index]
             hw_sprite = None #data.get("hw_sprite")
             d = iter(sprdat)
             img = Image.new('RGB',(16,16))
@@ -166,7 +174,7 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     bitplanelib.dump_asm_bytes(bytes(hw_sprite_table),f,mit_format=True)
 
     f.write("bg_cluts:")
-    amiga_cols = [bitplanelib.to_rgb4_color(x) for clut in bg_cluts for x in clut]
+    amiga_cols = [bitplanelib.to_rgb4_color(x) for clut in bg_cluts_bank_0 for x in clut]
     bitplanelib.dump_asm_bytes(amiga_cols,f,mit_format=True,size=2)
 
     f.write("character_table:\n")

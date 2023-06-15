@@ -11,8 +11,9 @@ var_re = "\w+_[0-9A-F]{4}"
 missing = 0
 anon = set()
 
-with open(os.path.join(this_dir,"pengo_z80.asm")) as f:
+with open(os.path.join(this_dir,"pengo_z80.asm"),"rb") as f:
     for line in f:
+        line = line.decode(errors="ignore")
         line = re.sub(comment_re,"",line)
         occs = re.findall(addr_re,line)
         for o in occs:

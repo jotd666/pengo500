@@ -560,6 +560,7 @@ osd_update_sprites:
 
 osd_set_bank_selectors:
 	move.b	d0,alternate_bank_selectors
+	bsr		load_palette_in_copperlist
 	rts
 	
 osd_sound_enable:	
@@ -797,8 +798,6 @@ platform_init:
 	
 	bsr		set_bg_bitplanes
 	
-	* load palette
-	bsr		load_palette_in_copperlist
 	* set copperlist
 	move.l	#copperlist,cop1lc(a5)
 
@@ -847,15 +846,20 @@ platform_init:
 
 	
 load_palette_in_copperlist:
-	movem.l	d0-d1/a1,-(a7)
+	movem.l	d0-d1/a0-a1,-(a7)
 	lea		palette,a0
+	tst.b	alternate_bank_selectors
+	beq.b	0f
+	* alternate palette
+	add.w	#32,a0
+0:
 	move.w	#TOTAL_NB_COLORS-1,d0
 	lea		copperlist_colors+2,a1
 1:
 	move.w	(a0)+,(a1)+
-	add.w	#2,a1
+	addq.w	#2,a1
 	dbf		d0,1b
-	movem.l	(a7)+,d0-d1/a1
+	movem.l	(a7)+,d0-d1/a0-a1
 	rts
 	
 

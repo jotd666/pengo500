@@ -485,6 +485,8 @@ l_03d4:
 * zero a lot of hardware stuff
 	jbsr	osd_sound_disable
 	clr.b	d0                               	| [xor  a]
+	jbsr	osd_set_bank_selectors
+	
 *	move.b	d0,dip_switches_9040            	| [ld   (dip_switches_9040),a]
 *	move.b	d0,sound_enable_9041            	| [ld   (sound_enable_9041),a]
 *	move.b	d0,flip_screen_9043             	| [ld   (flip_screen_9043),a]
