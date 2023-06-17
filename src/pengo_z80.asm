@@ -3810,6 +3810,7 @@ move_character_intermission_1F90:
 1FAC: 3E 60         ld   a,$48
 1FAE: DD BE 00      cp   (ix+x_pos)
 1FB1: CC 32 88      call z,$2032
+; check if X position is in the table (aligned on 8)
 1FB4: 21 5F 1F      ld   hl,table_1FF7
 1FB7: DD 7E 80      ld   a,(ix+x_pos)
 1FBA: 01 93 00      ld   bc,$0013

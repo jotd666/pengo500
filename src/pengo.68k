@@ -2404,7 +2404,7 @@ move_character_intermission_1F90:
 	jbsr	l_1fc5                            	| [call $1FC5]
 	st.b	d0                                	| [ld   a,$FF]
 	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
-	bne	0f
+	bne.b	0f
 	jbsr	change_last_3_characters_char_states_200a                            	| [call z,$200A]
 0:
 	move.b	#0x48,d0                        	| [ld   a,$48]
@@ -2412,11 +2412,12 @@ move_character_intermission_1F90:
 	jne	0f
 	jbsr	l_2032                            	| [call z,$2032]
 0:
+	* check if X position is in the table (aligned on 8)
 	lea	table_1FF7(pc),a0                  	| [ld   hl,table_1FF7]
 	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
 	move.w	#0x13,d1	                      	| [ld   bc,$0013]
 	jbsr	cpir                              	| [cpir]
-	bne	0f
+	bne.b	0f
 	jbsr	l_203d                            	| [call z,$203D]
 0:
 	jra	move_character_according_to_direction_3DD7	| [jp   move_character_according_to_direction_3DD7]
@@ -7085,11 +7086,12 @@ pengo_nominal_move_3DBF:
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
 	jbsr	l_3e06            	
 move_character_according_to_direction_3DD7:
-	pea	l_3de4(pc)                      	| [ld   hl,$3DE4]
+	jsr		osd_break
+	                      	| [ld   hl,$3DE4]
 											| [push hl]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	lea	jump_table_3DEE(pc),a1             	| [ld   de,jump_table_3DEE]
-	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+	jbsr	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
 
 l_3de4:
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
