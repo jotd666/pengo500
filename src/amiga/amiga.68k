@@ -18,11 +18,6 @@ NO68020 = 1
 
 SCREEN_ADDRESS = 0x8000
 
-STAR_SPRITE_INDEX = 7
-STAR_SPRITE_COLOR_REG = color+(STAR_SPRITE_INDEX/2)*8+34
-
-SPRITE_X_OFFSET = 8
-SPRITE_Y_OFFSET = 1
 
 SCORE_FILE_SIZE = 3
 BOB_16X16_PLANE_SIZE = 4*16
@@ -75,9 +70,17 @@ BG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 FG_SCREEN_PLANE_SIZE = BG_SCREEN_PLANE_SIZE
 FG_SCREEN_SIZE =  FG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 
-NB_SPRITES_TOTAL = 6
+* we're going to try to fit 6 sprites into 8 sprites
+* the extra 2 sprites will hopefully help to get more
+* independent colors
+NB_HOST_SPRITES = 8
+NB_TARGET_SPRITES = 6
 
-
+SPRITE_X = 0
+SPRITE_Y = 1
+SPRITE_CLUT = 2
+SPRITE_CODE = 3
+SPRITE_SIZEOF = 4
 
 	move.l	a7,old_stack
 	bra	_user
@@ -540,19 +543,125 @@ osd_calibrate_display:
 *                        X flip (bit 1); the second byte the color
 * < A1: pointer on 9022 zone (X,Y coords)
 osd_update_sprites:
-	* check active sprites, we'll disable the sprites that aren't active anymore
-	move.l	a1,a6		| save pointer on X,Y sprites for later
-	
-	
-	move.l	a6,a1		| pointer on X,Y sprites
-	moveq	#NB_SPRITES_TOTAL,d0
+	* clear host sprites
+	move.w	#NB_HOST_SPRITES-1,d0
+
+	lea		host_sprites(pc),a2
 0:
-	tst.w	(a1)+
-	bne.b	1f
-	* sprite is not active: hide it
-	nop
-1:
+	clr.b	(SPRITE_X,a2)	| clear X is enough to know it's free
+	st.b	(SPRITE_CLUT,a2) | invalid clut
+	add.w	#SPRITE_SIZEOF,a2
 	dbf		d0,0b
+	
+	* check active sprites, we'll disable the sprites that aren't active anymore
+	moveq	#NB_TARGET_SPRITES-1,d7
+1:
+	move.w	(a1)+,d1
+	beq.b	2f
+	move.w	d1,d0	| D1 holds Y
+	lsr.w	#8,d0	| fetch X
+	move.w	(a0),d3	| clut index
+	move.w	d3,d2
+	lsr.w	#8,d2	| code & flip bits
+	* sprite active: allocate a sprite in host table
+	* it HAS to succeed
+	bsr		alloc_sprite
+2:
+	addq.w	#2,a0
+	dbf		d7,1b
+	rts
+
+* < D0: sprite X
+* < D1: sprite Y
+* < D2: sprite code & flags
+* < D3: sprite color (clut index)
+* > D6: allocated sprite index
+alloc_sprite:
+	* first pass: find a free sprite next to a sprite with
+	* same clut
+	lea		host_sprites(pc),a2
+	moveq	#0,d6
+0:
+	cmp.b	(SPRITE_CLUT,a2),d3
+	bne.b	10f
+	* allocated (else would be -1/invalid) + same clut
+	* check even/odd index
+	btst	#0,d6
+	beq.b	1f
+	* odd: check if previous entry is free
+	tst.b	(SPRITE_X-SPRITE_SIZEOF,a2)
+	bne.b	10f
+	* previous entry is free, same clut: we can use that
+	* entry, no color conflict
+	lea		(-SPRITE_SIZEOF,a2),a2
+9:
+	move.b	d0,(a2)+		| X
+	move.b	d1,(a2)+		| Y
+	move.b	d2,(a2)+		| code
+	move.b	d3,(a2)+		| clut
+	rts						| done
+1:
+	* even: check if next entry is free
+	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
+	bne.b	10f
+	* next entry is free, same clut: we can use that
+	* entry, no color conflict
+	lea		(SPRITE_SIZEOF,a2),a2
+	bra.b	9b
+10:
+	* next entry
+	addq.w	#SPRITE_SIZEOF,a2
+	addq	#1,d6
+	cmp.w	#NB_HOST_SPRITES,d6
+	bne.b	0b
+	* second pass if first pass failed (could not match
+	* a pair with one occupied slot with compatible clut,
+	* which happens when there are very few sprites
+	* displayed): we have to find 2 consecutive free slots
+
+	lea		host_sprites(pc),a2
+	moveq	#0,d6
+11:
+	tst.b	(SPRITE_X,a2)
+	bne.b	20f
+	* not allocated: test odd sprite
+	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
+	beq.b	9b		| ok, both slots are free, allocate the first one
+20:
+	* next sprite pair
+	lea		(2*SPRITE_SIZEOF,a2),a2
+	addq	#2,d6
+	cmp.w	#NB_HOST_SPRITES,d6
+	bne.b	11b
+	
+	* third pass: last chance/emergency: there ARE free slots
+	* (since only 6 sprites on the target) but maybe too many
+	* different cluts so we can't find a suitable slot. In that
+	* case, pick the first free slot, we'll handle the color changes
+	* with a dynamic copperlist, let's hope that it works out
+	* (only happens in demo screens)
+	*
+	* the strategy globally works because during game, all 4 enemies
+	* share the same palette. Pengo uses another one, and ice block
+	* another one too. Blinking stunned enemies can be a problem
+	* because of the extra blue color
+	*
+	lea		host_sprites(pc),a2
+	moveq	#0,d6
+21:
+	tst.b	(SPRITE_X,a2)
+	beq.b	9b		| ok, a slot is free, allocate it
+30:
+	* next sprite
+	lea		(SPRITE_SIZEOF,a2),a2
+	addq	#1,d6
+	cmp.w	#NB_HOST_SPRITES,d6
+	bne.b	21b
+	* just cannot happen
+	* if we reach that point there's a big problem
+	illegal
+	illegal
+	illegal
 	rts
 	
 * this enables alternate bank selectors
@@ -878,29 +987,10 @@ osd_disable_vblank_interrupt:
 
 
 	
-
-	
-* < a0: sprite structures (4 bytes)
-* < a4: backup previous data (A4 is updated to previous bullets on exit)
 draw_sprites:
 	rts
 
 
-	
-
-	
-* < A4: previous sprite data (updated on exit)
-
-delete_sprites:
-	movem.l	a0-a3,-(a7)
-   lea _custom,a5
-	
-	move.w	#NB_SPRITES_TOTAL-1,d5
-
-11:
-	dbf		d5,2b
-	movem.l	(a7)+,a0-a3
-	rts
 	
 * < D4: sprite properties
 *     Y code+attrs clut X
@@ -1857,7 +1947,9 @@ highscore_loaded:
 flip_flop:
 	.byte	0
 	.align	2
-	
+
+host_sprites:
+	ds.b	8*SPRITE_SIZEOF
 keyboard_table:
 	ds.b	0x100
 dirty_rows_values:
