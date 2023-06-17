@@ -2,9 +2,7 @@ General:
 
 - CLUTs seem wrong: alphanum chars OK, graphic chars wrong
   (try to swap colors in cluts ex clut $0E pengo title ??)
-- end transcode
 - dip switches (see ** code)
-- debug routine which writes "thanks for playing..." because regression!!!
 
 Amiga:
 
@@ -12,3 +10,7 @@ Amiga:
 - sound
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization
+- sprite allocation: when drawing a sprite try to find a free slot
+  first find slot where other occupied slot has same clut, else
+  find free slot
+- also set all 3 colors at the copperlist Y just in case

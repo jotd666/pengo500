@@ -883,166 +883,6 @@ osd_disable_vblank_interrupt:
 * < a0: sprite structures (4 bytes)
 * < a4: backup previous data (A4 is updated to previous bullets on exit)
 draw_sprites:
-	movem.l	a2-a3,-(a7)
-	moveq	#0,d6
-	moveq	#0,d5
-	* start by the end, sprite 0 has max priority, draw it last
-	moveq	#NB_SPRITES_TOTAL-1,d3
-	lea		(4*NB_SPRITES_TOTAL,a0),a2
-	lea		(4*NB_SPRITES_TOTAL,a4),a4
-2:
-	* d0 and d1 are changed at each loop
-	* make sure that their bits 8-15 are cleared
-	moveq	#0,d0
-	moveq	#0,d1
-	* get sprite x,y,clut,index
-	move.l	-(a2),d4
-	move.l	d4,-(a4)		| save for next time
-	move.l	d4,d7
-	jeq		11f
-	and.l	#0xFF0000FF,d7
-	cmp.l	#0xF80000F8,d7	| X=Y=0xF8: means disabled
-	beq.w	11f
-	
-	bsr		decode_sprite_data
-
-	
-	lea		sprite_table,a1
-	move.b	d6,d2		| save attributes xflip/yflip
-	and.w	#0x3F,d6	| mask attributes
-	add.w	d6,d6
-	add.w	d6,d6
-	move.l	(a1,d6.w),d7
-	jeq	11f			| invalid sprite
-	move.l	d7,a1
-	and.w	#7,d5		| mask attributes
-	add.w	d5,d5
-	add.w	d5,d5
-	move.l	(a1,d5.w),d7
-	jbeq	11f			| invalid clut index
-	move.l	d7,a1
-	move.w	(a1)+,d7	| type
-	bne.b	4f			| sprite
-	* BOB
-	btst	#7,d2
-	beq.b	3f
-	* YFlip: get mirrored version
-	addq.w	#4,a1
-3:
-	move.l	(a1),a0		| BOB data
-	.ifne	SPRITE_X_OFFSET
-	addq.w	#SPRITE_X_OFFSET,d0
-	.endif
-	.ifne	SPRITE_Y_OFFSET
-	addq.w	#SPRITE_Y_OFFSET,d0
-	.endif
-	jbsr		blit_16x16_bob
-	jra			11f
-4:
-	* sprite: memorize pointer on palette
-	move.l	a1,current_sprite_palette
-	* skip to sprite frames
-	addq.w	#8,a1
-	move.l	(a1)+,a0		| memorize sprite frame table in a0
-	* now was the sprite active in the previous occurrence?
-	***lea		previous_sprite_state_3(pc),a6
-	move.w	d3,d7
-	lsl.w	#2,d7		| because SPRITE_MEM_SIZE=4
-	cmp.b	#0xF8,(a6,d7.w)
-	beq.b	5f			| was not active
-	* active: was it a hw sprite?
-	move.b	(1,a6,d7.w),d7	| get previous sprite code
-	and.w	#0x3F,d7
-	lea		hw_sprite_flag_table,a5
-	tst.b	(a5,d7.w)
-	beq.b	5f			| was not a HW sprite
-	st.b	d2
-	* already active: reuse current slot as it is the same hardware
-	* sprite on the emulated display too
-
-	bra.b	10f
-5:
-	lea		amiga_sprite_slots(pc),a3
-	moveq	#0,d2
-6:
-	* sprite just appeared in the playfield: find free slot
-	move.b	(a1)+,d2	| index of the amiga sprite
-	bmi.b	11f			| no slot available
-	* check if that slot is available
-	tst.b	(a3,d2.w)
-	bne.b	6b
-	* slot is available: amiga hardware sprite d2 is free
-	st.b	(a3,d2.w)		| reserve it
-10:
-	* update hw sprite table
-	move.w	d3,d7
-	lsl.w	#3,d7
-	lea		hw_sprite_slots,a5
-	add.w	d7,a5		| select proper slot
-	tst.b	d2
-	bmi.b	100f
-	* new sprite: must set amiga sprite index value
-	move.w	d2,(4,a5)
-	bra.b	101f
-100:
-	* get previous value
-	* issue: if another sprite type follows and the
-	* slot list is not compatible, this will fail
-	move.w	(4,a5),d2
-	* if it's zero, it means that
-	* all slots were previously taken (sprite 0 is reserved)
-	* so don't display anything
-	beq.b	11f
-101:
-	* set palette
-	add.w	d2,d2
-	add.w	d2,d2		| d2 *= 4
-	move.w	d2,d4		| save d2
-	add.w	d2,d2		| d2 *= 8
-	bclr	#3,d2		| same palette for 2 sprites
-	lea		sprite_cols,a1
-	add.w	d2,a1
-	move.l	current_sprite_palette(pc),a3
-	* copy 4 no 3 colors
-	addq	#2,a3
-	*move.w	(a3)+,(2,a1)
-	move.w	(a3)+,(6,a1)
-	move.w	(a3)+,(10,a1)
-	move.w	(a3)+,(14,a1)
-
-	move.w	d4,d2	| restore d2*4
-	
-	* get sprite frame for current amiga hw sprite
-	move.l	(a0,d2.w),a0
-	* and store it in hw_sprite_slots table
-	
-	move.l	a0,(a5)
-
-	* set sprite X,Y
-	.ifne	SPRITE_X_OFFSET
-	addq.w	#SPRITE_X_OFFSET,d0
-	.endif
-	.ifne	SPRITE_Y_OFFSET
-	addq.w	#SPRITE_Y_OFFSET,d0
-	.endif
-	bsr		store_sprite_pos_16
-	move.l	d0,(a0)
-	
-	* set in copperlist at the proper location
-	lea		sprites,a5
-	add.w	d2,d2		| hw sprite index times 8
-	add.w	d2,a5
-	move.l	a0,d2		| sprite pointer
-	
-	move.w	d2,(6,a5)
-	swap	d2
-	move.w	d2,(2,a5)
-
-11:
-	dbf	d3,2b
-	lea		(4*NB_SPRITES_TOTAL,a2),a0		| restore A0 pointing to the end
-	lea		(4*NB_SPRITES_TOTAL,a4),a4	
-	movem.l	(a7)+,a2-a3
 	rts
 
 
@@ -1053,53 +893,10 @@ draw_sprites:
 
 delete_sprites:
 	movem.l	a0-a3,-(a7)
-
-	lea		hw_sprite_flag_table,a3
-    lea _custom,a5
+   lea _custom,a5
 	
 	move.w	#NB_SPRITES_TOTAL-1,d5
-2:
-	move.l	(a4)+,d4
-	move.l	d4,d7
-	beq.w	11f				| 0 means not used yet (bootup)
-	and.l	#0xFF0000FF,d7
-	cmp.l	#0xF80000F8,d7	| X=Y=0xF8: means disabled
-	beq.w	11f
-	* get data
-* < D4: sprite properties
-*     Y code+attrs clut X
-* > D0,D1: X,Y.W
-* > D6: sprite index.W
 
-	moveq	#0,d0	| make sure .W value is correct
-	moveq	#0,d1
-	moveq	#0,d6
-	move.b	d4,d1	| sprite X (aka Y on amiga)
-	swap	d4
-	move.b	d4,d6	| sprite index
-	and.b	#0x3F,d6  | only sprite code
-	lsr.l	#8,d4	
-	move.b	d4,d0	| sprite Y (aka X on amiga)
-
-	* is it a hw sprite?
-	tst.b	(a3,d6.w)
-	jne		11f		| real sprite: skip erase
-	
-	* erase previous sprite position (but not if sprite type
-	* is hardware sprite)
-
-	moveq	#4,d2	| width
-    move.w  #16,d4		| max single size height
-
-*	move.l	fg_drawed_screen_ptr(pc),a1
-*	.ifne	SPRITE_X_OFFSET
-*	addq.w	#SPRITE_X_OFFSET,d0
-*	.endif
-*	.ifne	SPRITE_Y_OFFSET
-*	addq.w	#SPRITE_Y_OFFSET,d0
-*	.endif
-*	moveq	#NB_PLAYFIELD_PLANES,d3
-*	jbsr		clear_planes_any_blitter_internal
 11:
 	dbf		d5,2b
 	movem.l	(a7)+,a0-a3
@@ -2138,6 +1935,9 @@ _end_of_ng_code:
 	.align 2
 palette:
 	.include "palette.68k"
+	* sprites "individual" 4-color palettes
+palette_cluts:
+	.include "palette_cluts.68k"
 
 		.bss
 

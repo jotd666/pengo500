@@ -12,8 +12,8 @@
 	* cheats to test game
     * score is BCD format, only 6 digits
     OPT_START_SCORE=0x000000
-	OPT_ALIENS_DONT_SHOOT=0	
-	OPT_SMALL_SWARM=0
+	OPT_SKIP_TITLE_SCREENS=0
+	OPT_SKIP_ICE_PACK_SCREEN=0
 ***
 *** end of BUILD OPTIONS
 ***
