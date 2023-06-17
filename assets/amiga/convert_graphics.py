@@ -180,6 +180,8 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("bg_cluts:")
     amiga_cols = [bitplanelib.to_rgb4_color(x) for clut in bg_cluts_bank_0 for x in clut]
     bitplanelib.dump_asm_bytes(amiga_cols,f,mit_format=True,size=2)
+    amiga_cols = [bitplanelib.to_rgb4_color(x) for clut in bg_cluts_bank_1 for x in clut]
+    bitplanelib.dump_asm_bytes(amiga_cols,f,mit_format=True,size=2)
 
     f.write("character_table:\n")
     for i,c in enumerate(character_codes_list):
