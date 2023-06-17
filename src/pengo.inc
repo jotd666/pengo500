@@ -1,5 +1,4 @@
 
-* galaxian.inc
 
 ***    
 *** BUILD OPTIONS
@@ -12,7 +11,7 @@
 	* cheats to test game
     * score is BCD format, only 6 digits
     OPT_START_SCORE=0x000000
-	OPT_SKIP_TITLE_SCREENS=0
+	OPT_SKIP_THANKS_SCREEN=1
 	OPT_SKIP_ICE_PACK_SCREEN=0
 ***
 *** end of BUILD OPTIONS

@@ -1036,7 +1036,7 @@ wait_for_start_0774:
 078F: DD 36 81 00   ld   (ix+$09),$00
 0793: DD 36 83 00   ld   (ix+intermission_dance_push_anim_counter),$00
 0797: CD CE 33      call display_snobee_sprite_33CE
-079A: CD 0B 39      call display_character_sprite_39AB
+079A: CD 0B 39      call set_character_sprite_code_and_color_39AB
 079D: CD 75 80      call increase_counter_0875
 07A0: CD B1 88      call $0819
 07A3: 3A A0 10      ld   a,(dip_switches_9080)
@@ -1309,7 +1309,7 @@ run_one_life_092D:
 09A0: CD C4 8D      call $0D44
 09A3: DD 21 00 85   ld   ix,pengo_struct_8D80
 09A7: CD C6 9B      call display_snobee_sprite_33CE
-09AA: CD 2B 19      call display_character_sprite_39AB
+09AA: CD 2B 19      call set_character_sprite_code_and_color_39AB
 09AD: CD 58 BE      call get_div8_ix_coords_3E78
 09B0: CD 09 43      call clear_2x2_tiles_at_current_pos_43A9
 09B3: 06 FF         ld   b,$FF		; stop sound
@@ -1610,7 +1610,7 @@ handle_pengo_stumble_0CA0:
 0CAB: C8            ret  z
 ; once out of 2, pengo stumbles/rests
 0CAC: DD 36 2A 68   ld   (ix+animation_frame),$E0
-0CB0: CD 8B 39      call display_character_sprite_39AB
+0CB0: CD 8B 39      call set_character_sprite_code_and_color_39AB
 0CB3: 3E 40         ld   a,$40
 0CB5: CD D1 80      call delay_28D1
 0CB8: C9            ret
@@ -1624,7 +1624,7 @@ handle_pengo_stumble_0CB9:
 0CC4: C8            ret  z
 ; once out of 2, pengo stumbles/rests
 0CC5: DD 36 A2 42   ld   (ix+animation_frame),$E2
-0CC9: CD 83 11      call display_character_sprite_39AB
+0CC9: CD 83 11      call set_character_sprite_code_and_color_39AB
 0CCC: 3E E0         ld   a,$40
 0CCE: CD F9 28      call delay_28D1
 0CD1: C9            ret
@@ -3569,10 +3569,14 @@ move_character_following_path_1DBA:
 1DBA: DD 21 80 25   ld   ix,pengo_struct_8D80
 1DBE: 18 84         jr   $1DC4
 
+; moves character in auto mode with 3 modes
+; not playing (title)
+; intermission
+; intermission >= level 10
 move_character_intermission_path_1DC0:
 1DC0: DD 21 20 05   ld   ix,moving_block_struct_8DA0
 
-1DC4: 11 D1 9D      ld   de,table_1DF9
+1DC4: 11 D1 9D      ld   de,table_title_1DF9	; table for demo/title
 1DC7: 3A 99 00      ld   a,(currently_playing_8819)
 1DCA: A7            and  a
 ; not playing, skip (we can branch that test in demo mode with invincibility on
@@ -3580,33 +3584,34 @@ move_character_intermission_path_1DC0:
 1DCB: 28 8D         jr   z,$1DDA
 ; get level number to know what dance to do
 1DCD: CD 0F A0      call get_level_number_288F
-1DD0: 11 49 1D      ld   de,table_1DE1
+1DD0: 11 49 1D      ld   de,table_low_levels_1DE1
 1DD3: FE 0A         cp   $0A
 1DD5: 38 03         jr   c,$1DDA	; less than level 10
 ; >= level 10
-1DD7: 11 ED B5      ld   de,table_1DED	; table for level 10 and more
+1DD7: 11 ED B5      ld   de,table_high_levels_1DED	; table for level 10 and more
+
 1DDA: DD 7E 1F      ld   a,(ix+char_state)		; get char to know where to jump
 1DDD: C3 8F AD      jp   indirect_jump_2D8F
 
 do_nothing_1DE0:
 1DE0: C9            ret
 
-table_1DE1:
+table_low_levels_1DE1:
 	dc.w	init_characters_for_intermission_1E05
 	dc.w	do_nothing_1DE0
 	dc.w	move_character_intermission_1EC4
 	dc.w	how_to_dance_20DC
 	dc.w	move_character_intermission_1EC4
 	dc.w	do_nothing_1DE0
-table_1DED:
-	dc.w	move_during_title_screen_1E54
+table_high_levels_1DED:
+	dc.w	init_characters_level_10_1E54
 	dc.w	do_nothing_1DE0
 	dc.w	move_character_intermission_1F52
 	dc.w	do_nothing_1DE0
 	dc.w	how_to_dance_20DC
 	dc.w	do_nothing_1DE0
-table_1DF9:
-	dc.w	change_character_intermission_phase_1E9C
+table_title_1DF9:
+	dc.w	change_character_title_phase_1E9C
 	dc.w	do_nothing_1DE0
 	dc.w	move_character_intermission_1F90
 	dc.w	move_character_intermission_204E
@@ -3623,7 +3628,7 @@ init_characters_for_intermission_1E05:
 1E14: 3C            inc  a
 1E15: 3C            inc  a
 1E16: DD 77 03      ld   (ix+char_color),a
-1E19: CD 26 1E      call init_characters_for_auto_mode_1E26
+1E19: CD 26 1E      call init_character_for_auto_mode_1E26
 1E1C: DD 7E 05      ld   a,(ix+char_id)
 1E1F: FE 01         cp   $01
 1E21: C0            ret  nz
@@ -3631,7 +3636,7 @@ init_characters_for_intermission_1E05:
 1E25: C9            ret
 
 ; called in intermission, in menu ...
-init_characters_for_auto_mode_1E26:
+init_character_for_auto_mode_1E26:
 1E26: DD 36 04 8B   ld   (ix+facing_direction),$03
 1E2A: DD 36 06 82   ld   (ix+instant_move_period),$0A
 1E2E: DD 36 07 88   ld   (ix+current_period_counter),$00
@@ -3643,12 +3648,13 @@ init_characters_for_auto_mode_1E26:
 1E45: 0F            rrca
 1E46: 3D            dec  a
 1E47: DD 77 96      ld   (ix+ai_mode),a ; set mode as level number / 2:	level 16: hardest hunt mode
-1E4A: CD 23 39      call display_character_sprite_39AB
+1E4A: CD 23 39      call set_character_sprite_code_and_color_39AB
 1E4D: CD E6 1B      call display_snobee_sprite_33CE
 1E50: DD 34 1F      inc  (ix+char_state)
 1E53: C9            ret
 
-move_during_title_screen_1E54:
+; different intermission: only piano + pengo playing
+init_characters_level_10_1E54:
 1E54: 21 84 1E      ld   hl,table_1E84
 1E57: CD 64 1E      call next_auto_move_1E64
 1E5A: DD 7E 05      ld   a,(ix+char_id)
@@ -3677,14 +3683,14 @@ next_auto_move_1E64:
 1E7D: 7E            ld   a,(hl)
 1E7E: 23            inc  hl
 1E7F: DD 77 8B      ld   (ix+char_color),a
-1E82: 18 2A         jr   init_characters_for_auto_mode_1E26
+1E82: 18 2A         jr   init_character_for_auto_mode_1E26
 
 
 table_1E84:
   00 98 08 09 70 88 70 10 80 88 70 10 70 98 70 10  
 1E94  80 98 70 10 70 90 F0 0B
 
-change_character_intermission_phase_1E9C:
+change_character_title_phase_1E9C:
 1E9C: 21 24 1E      ld   hl,table_1EAC
 1E9F: CD 4C 96      call next_auto_move_1E64
 1EA2: DD 7E 05      ld   a,(ix+char_id)
@@ -4029,7 +4035,7 @@ jump_table_214C
 
 2170: 06 50         ld   b,$78
 2172: DD 70 02      ld   (ix+animation_frame),b
-2175: CD AB 11      call display_character_sprite_39AB
+2175: CD AB 11      call set_character_sprite_code_and_color_39AB
 2178: DD 34 0B      inc  (ix+intermission_dance_push_anim_counter)
 217B: C9            ret
 217C: 06 54         ld   b,$7C
@@ -4055,12 +4061,12 @@ jump_table_2180:
 21A1: C9            ret
 
 21A2: DD 36 AA 14   ld   (ix+animation_frame),$94
-21A6: CD 2B 19      call display_character_sprite_39AB
+21A6: CD 2B 19      call set_character_sprite_code_and_color_39AB
 21A9: DD 34 A3      inc  (ix+intermission_dance_push_anim_counter)
 21AC: C9            ret
 
 21AD: DD 36 82 12   ld   (ix+animation_frame),$12
-21B1: CD AB 11      call display_character_sprite_39AB
+21B1: CD AB 11      call set_character_sprite_code_and_color_39AB
 21B4: DD 34 0B      inc  (ix+intermission_dance_push_anim_counter)
 21B7: C9            ret
 
@@ -4123,11 +4129,11 @@ jump_table_21CC:
 2226: DD 34 AB      inc  (ix+intermission_dance_push_anim_counter)
 2229: C9            ret
 222A: DD 36 2A 7C   ld   (ix+animation_frame),$F4
-222E: CD 0B 39      call display_character_sprite_39AB
+222E: CD 0B 39      call set_character_sprite_code_and_color_39AB
 2231: DD 34 A3      inc  (ix+intermission_dance_push_anim_counter)
 2234: C9            ret
 2235: DD 36 22 F0   ld   (ix+animation_frame),$F0
-2239: CD AB 91      call display_character_sprite_39AB
+2239: CD AB 91      call set_character_sprite_code_and_color_39AB
 223C: DD 34 0B      inc  (ix+intermission_dance_push_anim_counter)
 223F: C9            ret
 
@@ -4190,11 +4196,11 @@ jump_table_2265:
 22B4: C9            ret
 
 22B5: DD 36 22 E8   ld   (ix+animation_frame),$E8
-22B9: CD AB 91      call display_character_sprite_39AB
+22B9: CD AB 91      call set_character_sprite_code_and_color_39AB
 22BC: DD 34 0B      inc  (ix+intermission_dance_push_anim_counter)
 22BF: C9            ret
 22C0: DD 36 2A 4C   ld   (ix+animation_frame),$EC
-22C4: CD 0B B1      call display_character_sprite_39AB
+22C4: CD 0B B1      call set_character_sprite_code_and_color_39AB
 22C7: DD 34 83      inc  (ix+intermission_dance_push_anim_counter)
 22CA: C9            ret
 
@@ -4368,7 +4374,7 @@ table_23B7:
 2423: DD CB B2 6E   bit  0,(ix+$12)
 2427: 28 2C         jr   z,$242D
 2429: DD CB A2 CE   set  1,(ix+animation_frame)
-242D: CD 83 11      call display_character_sprite_39AB
+242D: CD 83 11      call set_character_sprite_code_and_color_39AB
 2430: C9            ret
 
 2431: CD 85 91      call $3985
@@ -6241,8 +6247,8 @@ draw_one_hole_311D:
 	
 ; < A: sprite number to display
 ; < HL: points on X,Y
-display_sprite_3154:
-3154: FD 21 20 10   ld   iy,sprite_ram_9020
+set_character_sprite_position_3154:
+3154: FD 21 20 10   ld   iy,sprite_ram_9022-2
 3158: 87            add  a,a
 3159: 16 00         ld   d,$00
 315B: 5F            ld   e,a
@@ -6255,7 +6261,7 @@ display_sprite_3154:
 3166: 18 2A         jr   $316A
 3168: 7E            ld   a,(hl)
 3169: 2F            cpl
-316A: FD 77 80      ld   (iy+x_pos),a
+316A: FD 77 80      ld   (iy),a		; store sprite X
 316D: 23            inc  hl
 316E: CD F7 31      call must_flip_screen_317F
 3171: 28 05         jr   z,$3178
@@ -6266,7 +6272,7 @@ display_sprite_3154:
 3178: 7E            ld   a,(hl)
 3179: 2F            cpl		; 255-Y
 317A: 3C            inc  a
-317B: FD 77 81      ld   (iy+y_pos),a
+317B: FD 77 81      ld   (iy+$01),a		; store sprite Y
 317E: C9            ret
 
 must_flip_screen_317F:
@@ -6279,8 +6285,8 @@ must_flip_screen_317F:
 	
 ; < HL: pengo/snobee struct 8Dxx
 ; < A: pengo sprite index
-display_character_sprite_318A:
-318A: FD 21 70 07   ld   iy,stack_pointer_8FF0
+set_character_sprite_code_and_color_318A:
+318A: FD 21 70 07   ld   iy,sprites_8FF2-2
 318E: 23            inc  hl
 318F: 23            inc  hl		; skip coordinates
 3190: 87            add  a,a	; we only read sprite index & color
@@ -6309,7 +6315,7 @@ display_character_sprite_318A:
 31B6: C9            ret
 
 clear_sprites_31B7:
-31B7: 21 20 10      ld   hl,sprite_ram_9020
+31B7: 21 20 10      ld   hl,sprite_ram_9022-2
 31BA: 06 90         ld   b,$10
 31BC: 36 80         ld   (hl),$00
 31BE: 23            inc  hl
@@ -6413,7 +6419,7 @@ init_moving_block_3283:
 329B: DD 36 9E 00   ld   (ix+$16),$00
 329F: DD 36 9F 00   ld   (ix+$17),$00
 32A3: DD 36 97 00   ld   (ix+char_state),$00
-32A7: CD AB 11      call display_character_sprite_39AB
+32A7: CD AB 11      call set_character_sprite_code_and_color_39AB
 32AA: C9            ret
 
 ; 5 slots of 5-byte states for breaking blocks
@@ -6581,7 +6587,7 @@ display_snobee_sprite_33CE:
 33CE: DD 7E 05      ld   a,(ix+char_id)		; load sprite index
 33D1: DD E5         push ix
 33D3: E1            pop  hl
-33D4: CD D4 31      call display_sprite_3154
+33D4: CD D4 31      call set_character_sprite_position_3154
 33D7: C9            ret
 	
 handle_snobee_direction_change_33D8:
@@ -7002,7 +7008,7 @@ table_368E:
 36DF: C9            ret
 
 36E0: CD 8E 1F      call $3706
-36E3: CD DE 1E      call $36F6
+36E3: CD DE 1E      call get_opposite_direction_36f6
 36E6: DD E5         push ix
 36E8: E1            pop  hl
 36E9: 11 11 88      ld   de,$0011
@@ -7014,6 +7020,7 @@ table_368E:
 36F2: DD 77 04      ld   (ix+facing_direction),a
 36F5: C9            ret
 
+get_opposite_direction_36f6:
 36F6: DD 7E 04      ld   a,(ix+facing_direction)
 36F9: 16 00         ld   d,$00
 36FB: 5F            ld   e,a
@@ -7056,7 +7063,7 @@ table_3702:
 3732: 19            add  hl,de
 3733: 7E            ld   a,(hl)
 3734: F5            push af
-3735: CD F6 9E      call $36F6
+3735: CD F6 9E      call get_opposite_direction_36f6
 3738: 47            ld   b,a
 3739: F1            pop  af
 373A: B8            cp   b
@@ -7407,13 +7414,13 @@ animate_pengo_39A4:
 399D: DD 77 82      ld   (ix+animation_frame),a
 39A0: DD 7E 84      ld   a,(ix+facing_direction)
 39A3: FE 83         cp   $03
-39A5: 20 84         jr   nz,display_character_sprite_39AB
+39A5: 20 84         jr   nz,set_character_sprite_code_and_color_39AB
 39A7: DD CB 2A 4E   set  1,(ix+animation_frame)
-display_character_sprite_39AB:
+set_character_sprite_code_and_color_39AB:
 39AB: DD 7E 2D      ld   a,(ix+char_id)
 39AE: DD E5         push ix
 39B0: E1            pop  hl
-39B1: CD 8A 99      call display_character_sprite_318A
+39B1: CD 8A 99      call set_character_sprite_code_and_color_318A
 39B4: C9            ret
 	
 _04_snobee_stunned_39B5:
@@ -7442,7 +7449,7 @@ _04_snobee_stunned_39B5:
 39E8: 28 2A         jr   z,$39EC
 39EA: CB CF         set  1,a
 39EC: DD 77 82      ld   (ix+animation_frame),a
-39EF: CD AB B9      call display_character_sprite_39AB
+39EF: CD AB B9      call set_character_sprite_code_and_color_39AB
 39F2: C9            ret
 	
 _05_snobee_blinking_stunned_39F3:
@@ -7472,7 +7479,7 @@ _05_snobee_blinking_stunned_39F3:
 3A24: C6 89         add  a,$01
 3A26: 47            ld   b,a
 3A27: DD 70 8B      ld   (ix+char_color),b
-3A2A: CD 23 39      call display_character_sprite_39AB
+3A2A: CD 23 39      call set_character_sprite_code_and_color_39AB
 3A2D: C9            ret
 	;; no longer stunned
 3A2E: DD 7E 00      ld   a,(ix+x_pos)
@@ -7498,7 +7505,7 @@ _05_snobee_blinking_stunned_39F3:
 3A59: E6 07         and  $07
 3A5B: C6 01         add  a,$01
 3A5D: DD 77 8B      ld   (ix+char_color),a
-3A60: CD 23 39      call display_character_sprite_39AB
+3A60: CD 23 39      call set_character_sprite_code_and_color_39AB
 3A63: DD 36 96 02   ld   (ix+ai_mode),$02 ; wake up from "stunned" -> A.I. mode set to breaking block mode
 3A67: DD 36 97 02   ld   (ix+char_state),$02 ; set state to "alive"
 3A6B: C9            ret
@@ -7512,7 +7519,7 @@ _06_stunned_picked_3A6C:
 3A77: DD 36 0A 08   ld   (ix+stunned_push_block_counter),$08
 3A7B: DD 36 09 0F   ld   (ix+$09),$0F
 3A7F: DD 36 8A 80   ld   (ix+animation_frame),$80
-3A83: CD AB 11      call display_character_sprite_39AB
+3A83: CD AB 11      call set_character_sprite_code_and_color_39AB
 3A86: 11 82 00      ld   de,$000A
 3A89: CD AF 00      call add_to_current_player_score_28AF
 3A8C: 06 8A         ld   b,$02
@@ -7582,7 +7589,7 @@ _03_snobee_aligns_for_stunned_3AAD:
 3B16: 3A 0F 8D      ld   a,(moving_block_struct_8DA0+7)
 3B19: DD 77 87      ld   (ix+current_period_counter),a
 3B1C: CD 66 33      call display_snobee_sprite_33CE
-3B1F: CD 2B B1      call display_character_sprite_39AB
+3B1F: CD 2B B1      call set_character_sprite_code_and_color_39AB
 3B22: DD 36 89 28   ld   (ix+$09),$00
 3B26: DD 34 9F      inc  (ix+char_state)
 3B29: C9            ret
@@ -7641,7 +7648,7 @@ ice_block_hits_snobee_right_3B41:
 3B71: FE 03         cp   $03
 3B73: 20 04         jr   nz,$3B79
 3B75: DD CB 82 CE   set  1,(ix+animation_frame)
-3B79: CD AB B9      call display_character_sprite_39AB
+3B79: CD AB B9      call set_character_sprite_code_and_color_39AB
 3B7C: C9            ret
 3B7D: DD CB A1 C6   bit  0,(ix+$09)
 3B81: CC 08 B3      call z,$3B88
@@ -7663,7 +7670,7 @@ ice_block_hits_snobee_right_3B41:
 3BA4: FE 2B         cp   $03
 3BA6: 20 2C         jr   nz,$3BAC
 3BA8: DD CB 82 46   set  1,(ix+animation_frame)
-3BAC: CD 83 B9      call display_character_sprite_39AB
+3BAC: CD 83 B9      call set_character_sprite_code_and_color_39AB
 3BAF: DD 36 A0 FF   ld   (ix+$08),$FF
 3BB3: C9            ret
 3BB4: DD CB 09 C6   bit  0,(ix+$09)
@@ -7692,7 +7699,7 @@ ice_block_hits_snobee_right_3B41:
 3BF2: 87            add  a,a
 3BF3: 16 00         ld   d,$00
 3BF5: 5F            ld   e,a
-3BF6: 21 81 3C      ld   hl,table_3C01
+3BF6: 21 81 3C      ld   hl,snobee_squash_score_table_3C01
 3BF9: 19            add  hl,de
 3BFA: 5E            ld   e,(hl)
 3BFB: 23            inc  hl
@@ -7700,7 +7707,9 @@ ice_block_hits_snobee_right_3B41:
 3BFD: CD AF A8      call add_to_current_player_score_28AF
 3C00: C9            ret
 
-table_3C01:
+; 400,1600,3200,6400
+
+snobee_squash_score_table_3C01:
   28 00 A0 00 40 01 80 02
 
 3C09: DD 7E 92      ld   a,(ix+$1a)
@@ -7712,7 +7721,7 @@ table_3C01:
 3C15: 19            add  hl,de
 3C16: 7E            ld   a,(hl)
 3C17: DD 77 8A      ld   (ix+animation_frame),a
-3C1A: CD 23 39      call display_character_sprite_39AB
+3C1A: CD 23 39      call set_character_sprite_code_and_color_39AB
 3C1D: C9            ret
 
 table_3C1E:
@@ -7779,7 +7788,7 @@ table_3C1E:
 3C91: E6 07         and  $07
 3C93: 3C            inc  a
 3C94: DD 77 03      ld   (ix+char_color),a ;  sets color
-3C97: CD AB 39      call display_character_sprite_39AB
+3C97: CD AB 39      call set_character_sprite_code_and_color_39AB
 3C9A: DD 7E 1C      ld   a,(ix+move_period)
 3C9D: DD 77 8E      ld   (ix+instant_move_period),a
 3CA0: DD 36 21 88   ld   (ix+$09),$00
@@ -7851,7 +7860,7 @@ table_3C1E:
 3D1C: DD 7E 02      ld   a,(ix+animation_frame)
 3D1F: D6 84         sub  $04
 3D21: DD 77 2A      ld   (ix+animation_frame),a
-3D24: CD 83 B9      call display_character_sprite_39AB
+3D24: CD 83 B9      call set_character_sprite_code_and_color_39AB
 3D27: C9            ret
 3D28: DD 34 9F      inc  (ix+char_state)
 3D2B: C9            ret
@@ -7876,7 +7885,7 @@ table_3C1E:
 3D54: DD 7E 02      ld   a,(ix+animation_frame)
 3D57: C6 04         add  a,$04
 3D59: DD 77 82      ld   (ix+animation_frame),a
-3D5C: CD 2B 39      call display_character_sprite_39AB
+3D5C: CD 2B 39      call set_character_sprite_code_and_color_39AB
 3D5F: C9            ret
 3D60: DD 34 9F      inc  (ix+char_state)
 3D63: 21 18 05      ld   hl,remaining_alive_snobees_8D98
@@ -7945,7 +7954,7 @@ l_3de4:
 3DE4: DD 7E 85      ld   a,(ix+char_id)
 3DE7: DD E5         push ix
 3DE9: E1            pop  hl
-3DEA: CD 7C B1      call display_sprite_3154
+3DEA: CD 7C B1      call set_character_sprite_position_3154
 3DED: C9            ret
 
 jump_table_3DEE:
@@ -8235,7 +8244,7 @@ pengo_dies_3FB3:
 3FC6: 07            rlca
 3FC7: 07            rlca
 3FC8: DD 77 82      ld   (ix+animation_frame),a
-3FCB: CD 2B B1      call display_character_sprite_39AB
+3FCB: CD 2B B1      call set_character_sprite_code_and_color_39AB
 3FCE: 3E 20         ld   a,$08
 3FD0: CD 51 28      call delay_28D1
 3FD3: C1            pop  bc
@@ -8285,7 +8294,7 @@ block_pushed_3FFA:
 4010: FE 23         cp   $03
 4012: 20 24         jr   nz,$4018
 4014: DD CB 02 EE   set  1,(ix+animation_frame)
-4018: CD 8B 39      call display_character_sprite_39AB
+4018: CD 8B 39      call set_character_sprite_code_and_color_39AB
 401B: DD 34 A3      inc  (ix+intermission_dance_push_anim_counter)
 401E: C9            ret
 
@@ -8562,7 +8571,7 @@ table_41CB:
 424B: 28 2A         jr   z,$424F
 424D: 3E 74         ld   a,$74
 424F: DD 77 22      ld   (ix+animation_frame),a
-4252: CD 8B 39      call display_character_sprite_39AB
+4252: CD 8B 39      call set_character_sprite_code_and_color_39AB
 4255: DD 34 B7      inc  (ix+char_state)
 4258: 06 25         ld   b,$05
 425A: CD 8F 18      call sound_18AF
@@ -8792,7 +8801,7 @@ clear_2x2_tiles_at_current_pos_43A9:
 43DB: DD 7E A5      ld   a,(ix+char_id)
 43DE: DD E5         push ix
 43E0: E1            pop  hl
-43E1: CD FC 99      call display_sprite_3154
+43E1: CD FC 99      call set_character_sprite_position_3154
 43E4: C9            ret
 	
 43E5: DD 7E 80      ld   a,(ix+x_pos)
@@ -9862,7 +9871,7 @@ snobee_collides_pengo_4C2E:
 4C3C: 07            rlca
 4C3D: 07            rlca
 4C3E: DD 77 2A      ld   (ix+animation_frame),a
-4C41: CD 83 11      call display_character_sprite_39AB
+4C41: CD 83 11      call set_character_sprite_code_and_color_39AB
 4C44: CD 9E A0      call get_nb_lives_289E
 4C47: 3D            dec  a
 4C48: C8            ret  z

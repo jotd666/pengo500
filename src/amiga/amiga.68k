@@ -78,8 +78,8 @@ NB_TARGET_SPRITES = 6
 
 SPRITE_X = 0
 SPRITE_Y = 1
-SPRITE_CLUT = 2
-SPRITE_CODE = 3
+SPRITE_CODE = 2
+SPRITE_CLUT = 3
 SPRITE_SIZEOF = 4
 
 	move.l	a7,old_stack
@@ -543,6 +543,8 @@ osd_calibrate_display:
 *                        X flip (bit 1); the second byte the color
 * < A1: pointer on 9022 zone (X,Y coords)
 osd_update_sprites:
+	*lea		test_sprites_xy,a1
+	*lea		test_sprites_code,a0
 	* clear host sprites
 	move.w	#NB_HOST_SPRITES-1,d0
 
@@ -587,7 +589,6 @@ osd_update_sprites:
 	move.w	d4,(2,a3)
 	jra		30f
 20:
-	blitz
 	* lookup sprite code
 	
 	and.w	#0xFF,d0
@@ -595,9 +596,13 @@ osd_update_sprites:
 	move.b	(SPRITE_Y,a2),d1
 	moveq	#0,d2
 	move.b	(SPRITE_CODE,a2),d2
-	move.b	d2,D4
+	move.w	d2,d4
 	and.b	#0xFC,d4	| mask 2 last bits
 	move.l	(a4,d4.w),a5	| get pointer
+	move.w	d6,d4
+	add.w	d4,d4
+	add.w	d4,d4
+	move.l	(a5,d4.W),a5			| get buffer for this sprite index
 	btst	#1,d2			| x flip bit
 	beq.b	21f
 	addq.w	#4,a5
@@ -607,6 +612,8 @@ osd_update_sprites:
 	blitz		| should not happen
 22:
 	move.l	d4,a5	| sprite pointer
+	not.b	d0
+	not.b	d1
 	bsr		store_sprite_pos_16
 	move.l	d0,(a5)
 	* set colors
@@ -621,6 +628,7 @@ osd_update_sprites:
 	bclr	#0,d5
 	lsl.w	#4,d5	| times 16
 	lea		_custom+color+34,a5	| sprite palette + 2 (first color skipped)
+	add.w	d5,a5
 	* copy 3 colors
 	move.l	(a6)+,(a5)+
 	move.w	(a6)+,(a5)+
@@ -636,6 +644,15 @@ osd_update_sprites:
 	cmp.w	#NB_HOST_SPRITES,d6
 	jne	10b	
 	rts
+
+test_sprites_xy:
+	dc.b	0xEA,0xD8,0xEB,0xB0,0xEB,0x90,0xFF,0xF8,0xFF,0xE8,0xFF,0xC8,0x00,0x00
+
+test_sprites_code:
+	dc.b	0x5E,0x0A,0x16,0x0B,0x5E,0x01,0x08,0x0B,0x08,0x0D,0x08,0x0C,0x00,0x00
+
+
+
 
 * < D0: sprite X
 * < D1: sprite Y
@@ -2167,8 +2184,8 @@ bg_bitplanes:
 	DECL_4_BITPLANES	0
 copperlist_colors:
 	DECL_16_COLORS	0
-sprite_cols:
-	DECL_16_COLORS	16
+*sprite_cols:
+*	DECL_16_COLORS	16
 sprites:
     * #0
     .word    sprpt+0,0
