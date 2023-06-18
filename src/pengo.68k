@@ -1456,9 +1456,9 @@ l_0c70:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 * small cpu-dependent loop
 	move.b	#0x80,d1                        	| [ld   b,$80]
-l_0c75:
-	subq.b	#1,d1                           	| [...]
-	jne	l_0c75                             	| [djnz $0C75]
+	jbsr	osd_small_wait
+												| [...]
+												| [djnz $0C75]
 	jbsr	animate_pengo_39A4                	| [call animate_pengo_39A4]
 	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
 	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
@@ -2065,9 +2065,14 @@ pengo_intermission_or_title_1D29:
 	move.b	#0x40,d0                        	| [ld   a,$40]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jbsr	init_all_characters_states_1D60   	| [call init_all_characters_states_1D60]
+	* this loops 
 l_1d36:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 
+	* here we have to wait some time. Z80 code was performing
+	* a 256 djnz active cpu loop, obviously we can't do that.
+	clr.b		d1
+	jbsr		osd_small_wait
 
 * here we move 6 objects max: 6 pengos, using the ice block
 * sprite structure
@@ -2077,6 +2082,7 @@ l_1d36:
 	jbsr	move_snobee_4_title_1DB4          	| 4 [call move_snobee_4_title_1DB4]
 	jbsr	move_character_following_path_1DBA	| pengo [call move_character_following_path_1DBA]
 	jbsr	move_character_intermission_path_1DC0	| moving block [call move_character_intermission_path_1DC0]
+	* loop until this character reaches state 5
 	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 	move.b	#0x05,d0                        	| [ld   a,$05]
 	cmp.b	(char_state,a2),d0               	| [cp   (ix+char_state)]
@@ -2133,7 +2139,7 @@ move_character_intermission_path_1DC0:
 	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 
 l_1dc4:
-	lea	table_1DF9(pc),a1                  	| [ld   de,table_1DF9]
+	lea	table_title_1DF9(pc),a1                  	| [ld   de,table_title_1DF9]
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
 	tst.b	d0                               	| [and  a]
 	jeq	l_1dda                             	| not playing, skip [jr   z,$1DDA]
@@ -2164,7 +2170,7 @@ table_high_levels_1DED:
 	.long	do_nothing_1DE0
 	.long	how_to_dance_20DC
 	.long	do_nothing_1DE0
-table_1DF9:
+table_title_1DF9:
 	.long	change_character_title_phase_1E9C
 	.long	do_nothing_1DE0
 	.long	move_character_intermission_1F90
@@ -2887,13 +2893,10 @@ pack_ice_screen_22CB:
 l_22d4:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 * active wait
-	clr.b	d1                               	| [ld   b,$00]
-l_22d9:
-	subq.b	#1,d1                           	| [...]
-	jne	l_22d9                             	| [djnz $22D9]
-l_22db:
-	subq.b	#1,d1                           	| [...]
-	jne	l_22db                             	| [djnz $22DB]
+	clr.b	d1									| [ld   b,$00]
+	jbsr	osd_small_wait						| [djnz $22D9]
+	jbsr	osd_small_wait						| [djnz $22D9]
+							
 	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	jne	l_22e9                             	| [jr   nz,$22E9]
@@ -2951,7 +2954,6 @@ show_ice_pack_screen_2325:
 	jbsr	osd_w_videoram
 	addq.w	#1,d6
 	dbf		d1,1b
-	bsr		osd_break
 	rts                                    	| [ret]
 
 move_snobee_pack_ice_1_233E:
@@ -5431,11 +5433,12 @@ snobee_jump_table_332D:
 _00_snobee_do_nothing_3353:
  * active loop to keep roughly the same game speed
  * regardless of the number of currently active monsters
+	jbsr	osd_break
 	move.b	#0x05,d1                        	| [ld b,$05]
 	subq.b	#1,d1                           	| [dec  b]
-l_3355:
-	subq.b	#1,d1                           	| [...]
-	jne	l_3355                             	| [djnz $3355]
+	jbsr	osd_small_wait
+												| [...]
+											| [djnz $3355]
 	rts                                           	| [ret]
 
 do_nothing_3358:
@@ -7086,7 +7089,6 @@ pengo_nominal_move_3DBF:
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
 	jbsr	l_3e06            	
 move_character_according_to_direction_3DD7:
-	jsr		osd_break
 	                      	| [ld   hl,$3DE4]
 											| [push hl]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
@@ -9306,8 +9308,8 @@ l_4ba1:
 l_4bbb:
 	move.l	(sp)+,a0                        	| [pop  hl]
 	move.w	(sp)+,d1                        	| [pop  bc]
-	addq.w	#1,a0                           	| [inc  hl]
-	addq.w	#1,a0                           	| [inc  hl]
+	addq.w	#2,a0                           	| [inc  hl]
+												| [inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_4ba1                             	| [djnz $4BA1]
 	rts                                    	| [ret]
@@ -9317,16 +9319,16 @@ set_2x2_tile_color_0C_4BC2:
 	move.b	#0x0C,d0                        	| [ld   a,$0C]
 set_2x2_tile_color_4BC4:
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
+	jbsr	osd_w_colorram                     	| [ld   (hl),a]
 	addq.b	#1,d2                           	| [inc  c]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
+	jbsr	osd_w_colorram                     	| [ld   (hl),a]
 	addq.b	#1,d1                           	| [inc  b]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
+	jbsr	osd_w_colorram                     	| [ld   (hl),a]
 	subq.b	#1,d2                           	| [dec  c]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
+	jbsr	osd_w_colorram                     	| [ld   (hl),a]
 	rts                                    	| [ret]
 
 set_2x2_tile_color_09_4BD8:
