@@ -616,6 +616,10 @@ osd_update_sprites:
 	move.b	(SPRITE_CODE,a2),d2
 	move.w	d2,d4
 	and.b	#0xFC,d4	| mask 2 last bits
+	tst.b	alternate_bank_selectors
+	beq.b	1f
+	add.w	#0x40*4,d4	| alternate bank (ice pack)
+1:
 	move.l	(a4,d4.w),a5	| get pointer
 	move.w	d6,d4
 	add.w	d4,d4
@@ -641,6 +645,10 @@ osd_update_sprites:
 	move.b	(SPRITE_CLUT,a2),d3
 	lea		bg_cluts+2,a6
 	lsl.w	#3,d3		| times 8
+	tst.b	alternate_bank_selectors
+	beq.b	23f
+	add.w	#16*4,d3		| not sure!
+23:
 	add.w	d3,a6
 	
 	* d6 is the sprite index: compute/set proper color
