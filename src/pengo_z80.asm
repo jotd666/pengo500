@@ -5755,6 +5755,7 @@ draw_borders_2E5D:
 2E5D: 3A 19 A8 		ld   a,(currently_playing_8819)
 2E60: A7            and  a
 2E61: 28 2F         jr   z,draw_borders_2E6A
+; in-game (drawing maze at start doesn't qualify!)
 2E63: 3E 28         ld   a,$00
 2E65: 32 2A 88      ld   (cursor_color_8802),a
 2E68: 18 A5         jr   $2E6F
@@ -5762,27 +5763,27 @@ draw_borders_2E5D:
 draw_borders_2E6A:
 2E6A: 3E 81         ld   a,$09
 2E6C: 32 A2 88      ld   (cursor_color_8802),a
-2E6F: 1E 10         ld   e,$10
-2E71: CD 81 86      call draw_vertical_walls_2E81
-2E74: 1E 31         ld   e,$11
-2E76: CD 3A 2E      call draw_horizontal_walls_2E92
+2E6F: 1E 10         ld   e,$10	; horizontal wall tile
+2E71: CD 81 86      call draw_horizontal_walls_2E81
+2E74: 1E 31         ld   e,$11	; vertical wall tile
+2E76: CD 3A 2E      call draw_vertical_walls_2E92
 2E79: C9            ret
 ; used to replace walls by stars when diamonds are aligned
 draw_borders_2E7A:
-2E7A: CD 29 2E      call draw_vertical_walls_2E81
-2E7D: CD 92 86      call draw_horizontal_walls_2E92
+2E7A: CD 29 2E      call draw_horizontal_walls_2E81
+2E7D: CD 92 86      call draw_vertical_walls_2E92
 2E80: C9            ret
 
-draw_vertical_walls_2E81:
+draw_horizontal_walls_2E81:
 2E81: 01 28 A1      ld   bc,$0100
 2E84: 16 94         ld   d,$1C
-2E86: CD 2B A6      call write_character_and_code_at_xy_2EA3
+2E86: CD 2B A6      call write_character_and_code_line_at_xy_2EA3
 2E89: 01 28 20      ld   bc,$2000
 2E8C: 16 94         ld   d,$1C
-2E8E: CD 2B 2E      call write_character_and_code_at_xy_2EA3
+2E8E: CD 2B 2E      call write_character_and_code_line_at_xy_2EA3
 2E91: C9            ret
 
-draw_horizontal_walls_2E92:
+draw_vertical_walls_2E92:
 2E92: 01 20 01      ld   bc,$0100
 2E95: 16 20         ld   d,$20
 2E97: CD B8 86      call fill_line_with_character_current_color_2EB8
@@ -5796,7 +5797,7 @@ draw_horizontal_walls_2E92:
 ; < C: Y
 ; < E: character
 
-write_character_and_code_at_xy_2EA3:
+write_character_and_code_line_at_xy_2EA3:
 2EA3: D5            push de
 2EA4: CD 47 A1      call convert_coords_to_screen_address_296F
 2EA7: D1            pop  de
@@ -5809,7 +5810,7 @@ write_character_and_code_at_xy_2EA3:
 2EB2: D1            pop  de
 2EB3: 0C            inc  c
 2EB4: 15            dec  d
-2EB5: 20 EC         jr   nz,write_character_and_code_at_xy_2EA3
+2EB5: 20 EC         jr   nz,write_character_and_code_line_at_xy_2EA3
 2EB7: C9            ret
 
 ; BC: X,Y

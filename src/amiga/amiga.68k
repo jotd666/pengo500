@@ -1165,7 +1165,6 @@ osd_w_videoram:
 	move.w	#0,d6
 1:
 	lea		bg_videoram,a1
-	move.l	a1,0x100
 	add.w	d6,a1
 	cmp.b	(a1),d0
 	beq.b	0f		| already the proper value

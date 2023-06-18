@@ -3,17 +3,17 @@ General:
 - CLUTs seem wrong: alphanum chars OK, graphic chars wrong
   (try to swap colors in cluts ex clut $0E pengo title ??)
 - dip switches (see ** code)
+- drawing grid OK, maze locks up no paths
 
 Amiga:
 
+- lower part of screen not shown (diwstop?? last line vertical???)
 - sprites
 - sound
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization
-- sprite allocation: when drawing a sprite try to find a free slot
-  first find slot where other occupied slot has same clut, else
-  find free slot
-- also set all 3 colors at the copperlist Y just in case
+- title: wrong color for snobee that erase "squash the snobees" message
+- also set all 3 colors at the copperlist Y (would fix title screen 4 snobees)
 - redundant bg_cluts / clut asm file
 - alternate tileset: all symmetric? plus slow and wrong chars (ok in the end)
 

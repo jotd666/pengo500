@@ -4603,45 +4603,46 @@ table_2E55:
 	
 draw_borders_2E5D:
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
 	jeq	draw_borders_2E6A                             	| [jr   z,$2E6A]
-	clr.b	d0                               	| [ld   a,$00]
-	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	                               	| [ld   a,$00]
+	clr.b	cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	jra	l_2e6f                             	| [jr   $2E6F]
 
 draw_borders_2E6A:
-	move.b	#0x09,d0                        	| [ld   a,$09]
-	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+												| [ld   a,$09]
+	move.b	#0x09,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 l_2e6f:
-	move.b	#0x10,d4                        	| [ld   e,$10]
-	jbsr	draw_vertical_walls_2E81          	| [call draw_vertical_walls_2E81]
-	move.b	#0x11,d4                        	| [ld   e,$11]
-	jbsr	draw_horizontal_walls_2E92        	| [call draw_horizontal_walls_2E92]
+	move.b	#0x10,d4                        	| horizontal wall tile [ld   e,$10] 
+	jbsr	draw_horizontal_walls_2E81          	| [call draw_horizontal_walls_2E81]
+	move.b	#0x11,d4                        	| vertical wall tile [ld   e,$11]
+	jbsr	draw_vertical_walls_2E92        	| [call draw_vertical_walls_2E92]
+	bsr		osd_break
 	rts                                    	| [ret]
 * used to replace walls by stars when diamonds are aligned
+* < D4: character code
 draw_borders_2E7A:
-	jbsr	draw_vertical_walls_2E81          	| [call draw_vertical_walls_2E81]
-	jbsr	draw_horizontal_walls_2E92        	| [call draw_horizontal_walls_2E92]
+	jbsr	draw_horizontal_walls_2E81          	| [call draw_horizontal_walls_2E81]
+	jbsr	draw_vertical_walls_2E92        	| [call draw_vertical_walls_2E92]
 	rts                                    	| [ret]
 
-draw_vertical_walls_2E81:
-	move.b	#0x0,d1                      	| [ld   bc,$0100]
-	move.b	#0x1,d2                      	| [ld   bc,$0100]
+draw_horizontal_walls_2E81:
+	move.b	#0x1,d1                      	| [ld   bc,$0100]
+	move.b	#0x0,d2                      	| [ld   bc,$0100]
 	move.b	#0x1C,d3                        	| [ld   d,$1C]
-	jbsr	write_character_and_code_at_xy_2EA3	| [call write_character_and_code_at_xy_2EA3]
-	move.b	#0x0,d1                      	| [ld   bc,$2000]
-	move.b	#0x20,d2                      	| [ld   bc,$2000]
+	jbsr	write_character_and_code_line_at_xy_2EA3	| [call write_character_and_code_line_at_xy_2EA3]
+	move.b	#0x20,d1                      	| [ld   bc,$2000]
+	move.b	#0x0,d2                      	| [ld   bc,$2000]
 	move.b	#0x1C,d3                        	| [ld   d,$1C]
-	jbsr	write_character_and_code_at_xy_2EA3	| [call write_character_and_code_at_xy_2EA3]
+	jbsr	write_character_and_code_line_at_xy_2EA3	| [call write_character_and_code_line_at_xy_2EA3]
 	rts                                    	| [ret]
 
 * BC: X,Y
 * D: number of repeats
 * E: character to set (with current cursor color)
 fill_line_with_character_current_color_2EB8:
-	move.w	d3,-(sp)                        	| [push de]
+	movem.w	d3/d4,-(sp)                        	| [push de]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
-	move.w	(sp)+,d3                        	| [pop  de]
+	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	move.b	d4,d0
 	jbsr		osd_w_videoram					| [ld   (hl),e]
 												| [push de]
@@ -4656,13 +4657,13 @@ fill_line_with_character_current_color_2EB8:
 	rts                                    	| [ret]
 
 
-draw_horizontal_walls_2E92:
-	move.b	#0x0,d1                      	| [ld   bc,$0100]
-	move.b	#0x1,d2                      	| [ld   bc,$0100]
+draw_vertical_walls_2E92:
+	move.b	#0x1,d1                      	| [ld   bc,$0100]
+	move.b	#0x0,d2                      	| [ld   bc,$0100]
 	move.b	#0x20,d3                        	| [ld   d,$20]
 	jbsr	fill_line_with_character_current_color_2EB8	| [call fill_line_with_character_current_color_2EB8]
-	move.b	#0x1B,d2                      	| [ld   bc,$2000]
-	move.b	#0x01,d3                        	| [ld   d,$1C]
+	move.b	#0x1B,d2                      	| [ld   bc,$011B]
+	move.b	#0x01,d1                        
 	move.b	#0x20,d3                        	| [ld   d,$20]
 	jbsr	fill_line_with_character_current_color_2EB8	| [call fill_line_with_character_current_color_2EB8]
 	rts                                    	| [ret]
@@ -4670,12 +4671,13 @@ draw_horizontal_walls_2E92:
 * < A: code
 * < B: X
 * < C: Y
+* < D: number of times to repeat
 * < E: character
 
-write_character_and_code_at_xy_2EA3:
-	move.w	d3,-(sp)                        	| [push de]
+write_character_and_code_line_at_xy_2EA3:
+	movem.w	d3/d4,-(sp)                        	| [push de]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
-	move.w	(sp)+,d3                        	| [pop  de]
+	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	move.b	d4,d0                         	| [ld   (hl),e]
 	jbsr	osd_w_videoram
 												| [ld   de,$0400]
@@ -4685,7 +4687,7 @@ write_character_and_code_at_xy_2EA3:
 												| [pop  de]
 	addq.b	#1,d2                           	| [inc  c]
 	subq.b	#1,d3                           	| [dec  d]
-	jne	write_character_and_code_at_xy_2EA3	| [jr   nz,write_character_and_code_at_xy_2EA3]
+	jne	write_character_and_code_line_at_xy_2EA3	| [jr   nz,write_character_and_code_line_at_xy_2EA3]
 	rts                                    	| [ret]
 	
 
