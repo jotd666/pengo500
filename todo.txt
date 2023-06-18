@@ -3,7 +3,7 @@ General:
 - CLUTs seem wrong: alphanum chars OK, graphic chars wrong
   (try to swap colors in cluts ex clut $0E pengo title ??)
 - dip switches (see ** code)
-- wrong characters in intro
+
 Amiga:
 
 - sprites
@@ -15,3 +15,4 @@ Amiga:
   find free slot
 - also set all 3 colors at the copperlist Y just in case
 - redundant bg_cluts / clut asm file
+- alternate tileset: all symmetric? plus slow and wrong chars (ok in the end)

@@ -573,8 +573,8 @@ osd_update_sprites:
 	add.w	#SPRITE_SIZEOF,a2
 	dbf		d0,0b
 	
-	**blitz
-	
+	move.l	a0,0X200
+	move.l	a1,0X204
 	* check active sprites, we'll disable the sprites that aren't active anymore
 	moveq	#NB_TARGET_SPRITES-1,d7
 1:

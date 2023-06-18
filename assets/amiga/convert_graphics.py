@@ -106,9 +106,9 @@ with open(os.path.join(this_dir,"sprite_config.json")) as f:
 
 for j,c in enumerate(["pengo","snobee"]):
     for i in range(0x8):
-        sprite_config[0x20*j+i+0x40] = {"name":f"{c}_zooming_front_{i}"}
+        sprite_config[0x20*j+i+0x40] = {"name":f"{c}_zooming_front_left{i}"}
     for i in range(0x10):
-        sprite_config[0x20*j+i+0x48] = {"name":f"{c}_zooming_back_{i}"}
+        sprite_config[0x20*j+i+0x48] = {"name":f"{c}_zooming_back_left{i}"}
     for i in range(0x8):
         sprite_config[0x20*j+i+0x58] = {"name":f"{c}_zooming_left_{i}"}
 # remove the remainder of pacman sprite sheet

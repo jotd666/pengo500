@@ -394,7 +394,7 @@ l_0057:
 l_0061:
 	move.b	unknown_87FF,d0                       	| [ld   a,(0x87FF)]
 	jne	l_013f                             	| [jp   nz,0x013F]
-	addq.w	#1,timer_16bit_8822         	| [ld   hl,(timer_16bit_8822)]
+	addq.w	#1,timer_16bit_8822_msb         	| [ld   hl,(timer_16bit_8822)]
 	jbsr	l_32bc                            	| [call 0x32BC]
 	* temp coin shit disabled
 	*jbsr	l_02a2   coin                         	| [call 0x02A2]
@@ -740,7 +740,7 @@ display_demo_and_top_scores_6E1:
 	move.b	d0,level_number_player2_8813    	| [ld   (level_number_player2_8813),a]
  * set main counter to 0
 											| [ld   hl,$0000]
-	clr.w	counter_lsb_8824             	| [ld   (counter_lsb_8824),hl]
+	clr.w	counter_msb_8824             	| [ld   (counter_lsb_8824),hl]
  * init number of lives
 	**move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
 	clr.b	d0	| TEMP
@@ -966,7 +966,7 @@ l_0870:
 	rts                                    	| [ret]
 
 increase_counter_0875:
-	addq.w	#1,counter_lsb_8824
+	addq.w	#1,counter_msb_8824
 	rts                                    	| [ret]
 
 
@@ -1168,8 +1168,8 @@ l_09cb:
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 * a timer which is used for instance for egg blink
 	lea	timer_16_bit_8DDE,a0           	| [ld   hl,timer_16_bit_8DDE]
-	move.b	#0x08,(a0)                      	| [ld   (hl),$08]
-	addq.w	#1,a0                           	| [inc  hl]
+	move.b	#0x08,(a0)+                      	| [ld   (hl),$08]
+												| [inc  hl]
 	move.b	#0x80,(a0)                      	| [ld   (hl),$80]
 
 main_game_loop_09E7:
@@ -2305,7 +2305,7 @@ move_character_intermission_1EC4:
 	jra	move_character_according_to_direction_3DD7	| [jp   move_character_according_to_direction_3DD7]
 
 animate_intermission_penguins_1ef0:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -2328,7 +2328,7 @@ l_1f08:
 	rts                                    	| [ret  nz]
 0:
 	addq.b	#1,(alive_walk_counter,a2)      	| [inc  (ix+alive_walk_counter)]
-	jra	l_3985                             	| [jp   $3985]
+	jra	base_frame_selected_3985                             	| [jp   $3985]
 
 l_1f17:
 	                        	| [push ix]
@@ -2454,13 +2454,14 @@ l_1fe4:
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
 	cmp.b	#0x02,d0                         	| [cp   $02]
 	jeq	animate_intermission_penguins_1ef0 	| [jp   z,animate_intermission_penguins_1ef0]
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
+	move.b	#1,0x208
  * counter 1 out of 32 xxx
-	move.b	#0x12,d1                        	| [ld   b,$12]
+	move.b	#0x12,d1                        	| [ld   b,$12] set bouncing snobee up as base
 	jra	l_1f08                             	| [jp   $1F08]
 table_1FF7:
 	.byte	0x38,0x40,0x48,0x50,0x58,0x60,0x68,0x70,0x78,0x80,0x88,0x90,0x98,0xA0,0xA8,0xB0
@@ -2897,10 +2898,10 @@ l_22d4:
 	jbsr	osd_small_wait						| [djnz $22D9]
 	jbsr	osd_small_wait						| [djnz $22D9]
 							
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	jne	l_22e9                             	| [jr   nz,$22E9]
-	move.b	counter_msb_8825,d0             	| [ld   a,(counter_msb_8825)]
+	move.b	counter_msb_8824,d0             	| [ld   a,(counter_msb_8825)]
 	jbsr	set_sky_color_24FC                	| [call set_sky_color_24FC]
 * move 6 characters. For that, use the 6 sprites
 * (4 snobees, pengo, and ice block) to display 2 snobees
@@ -3059,7 +3060,7 @@ l_23e7:
 	rts                                    	| [ret]
 
 l_23ff:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x07,d0                         	| [and  $07]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -3085,7 +3086,7 @@ l_242d:
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	rts                                    	| [ret]
 
-	jbsr	l_3985                            	| [call $3985]
+	jbsr	base_frame_selected_3985                            	| [call $3985]
 	rts                                    	| [ret]
 
 * this is wrong 0x10,0x11 is a 16-bit pointer on smth
@@ -3526,11 +3527,11 @@ l_26f4:
 	rts                                    	| [ret]
 l_2712:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
-	move.b	counter_msb_8825,d0             	| [ld   a,(counter_msb_8825)]
+	move.b	counter_msb_8824,d0             	| [ld   a,(counter_msb_8825)]
 	and.b	#0x07,d0                         	| [and  $07]
 	jne	l_26f4                             	| [jr   nz,$26F4]
 	move.b	#0x10,d1                        	| [ld   b,$10]
-	move.b	counter_msb_8825,d0             	| [ld   a,(counter_msb_8825)]
+	move.b	counter_msb_8824,d0             	| [ld   a,(counter_msb_8825)]
 	btst.b	#3,d0                           	| [bit  3,a]
 	jne	l_2727                             	| [jr   nz,$2727]
 	move.b	#0x16,d1                        	| [ld   b,$16]
@@ -5191,10 +5192,11 @@ set_character_sprite_code_and_color_318A:
 	lea	sprite_ram_8FF2-2,a3          	| [ld   iy,stack_pointer_8FF0]
 	addq.w	#2,a0                           	| [inc  hl]
 											  | skip coordinates [inc  hl]
-	add.b	d0,d0                            	| we only read sprite index & color [add  a,a]
+	* we only read sprite index & color 									  
+	add.b	d0,d0                            	| [add  a,a]
 	clr.w	d3                               	| [ld   d,$00]
 	move.b	d0,d3                           	| [ld   e,a]
-	add.w	d3,a3								| [add  iy,de]
+	add.w	d3,a3								| [add  iy,de] 	set to proper character sprite address
 	move.b	(a0)+,d3                         	| [ld   d,(hl)]
 
 	move.b	d3,(0x00,a3)                    	| [ld   (iy+$00),d]
@@ -5343,7 +5345,7 @@ l_32bc:
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
-	move.b	timer_16bit_8822,d0             	| [ld   a,(timer_16bit_8822)]
+	move.b	timer_16bit_8823_lsb,d0             	| [ld   a,(timer_16bit_8822)]
 	and.b	#0x1F,d0                         	| [and  0x1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -5356,7 +5358,7 @@ l_32bc:
 	move.b	#0x13,d1                      	| [ld   bc,0x2213]
 	move.b	#0x22,d2                      	| [ld   bc,0x2213]
 l_32d4:
-	move.b	timer_16bit_8822,d0             	| [ld   a,(timer_16bit_8822)]
+	move.b	timer_16bit_8823_lsb,d0             	| [ld   a,(timer_16bit_8822)]
 	btst.b	#5,d0                           	| [bit  5,a]
 	jeq	l_32ea                             	| [jr   z,0x32EA]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
@@ -5464,9 +5466,9 @@ chicken_mode_3372:
 	rts                                    	| [ret]
 
 _01_snobee_not_moving_3377:
-	jbsr	l_3957                            	| [call $3957]
+	jbsr	animate_snobee_3957                            	| [call $3957]
 	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
-	bne	0f
+	bne.b	0f
 	jbsr	l_3385                            	| [call z,$3385]
 0:
 	jbsr	l_338e                            	| [call $338E]
@@ -5477,7 +5479,7 @@ l_3385:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_338e:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -5494,7 +5496,7 @@ l_339d:
 
 _02_snobee_moving_33A5:
  * is period time reached?
-	jbsr	l_3957                            	| [call $3957]
+	jbsr	animate_snobee_3957                            	| [call $3957]
 	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
 	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
 	cmp.b	(instant_move_period,a2),d0      	|  snobee period (copied from ix+move_period) [cp   (ix+instant_move_period)]
@@ -5555,9 +5557,9 @@ handle_snobee_direction_change_33D8:
  * only 2 snobees remaining
  * reset counter
 	clr.b	d0                               	| [xor  a]
-	move.b	d0,five_second_counter_8823     	| [ld   (five_second_counter_8823),a]
+	move.b	d0,timer_16bit_8822_msb     	| [ld   (five_second_counter_8823),a]
 l_33fc:
-	move.b	five_second_counter_8823,d0     	| [ld   a,(five_second_counter_8823)]
+	move.b	timer_16bit_8822_msb,d0     	| [ld   a,(five_second_counter_8823)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
 	jcs	l_342e                             	| [jr   c,$342E]
  * after 15 seconds, the last snobee runs and disappears
@@ -6409,7 +6411,7 @@ animate_pengo_39A4:
 	bne.b	0f
 	rts                                    	| returns if a == 0 [ret  z]
 0:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| returns if counter_lsb_8824 isn't dividable by 32? [ret  nz]
@@ -6417,12 +6419,12 @@ animate_pengo_39A4:
  * counter 1 out of 32 pengo animation moves
 	jra	l_396b                             	| [jr   $396B]
 
-l_3957:
+animate_snobee_3957:
 	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -6438,16 +6440,16 @@ l_396b:
 	clr.b	d1                               	| [ld   b,$00]
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
 	cmp.b	#0x05,d0                         	| [cp   $05]
-	jeq	l_3985                             	| [jr   z,$3985]
+	jeq	base_frame_selected_3985                             	| [jr   z,$3985]
 	move.b	#0x26,d1                        	| [ld   b,$26]
 	move.b	(ai_mode,a2),d0                 	| [ld   a,(ix+ai_mode)]
 	cmp.b	#0x02,d0                         	| [cp   $02]
-	jeq	l_3985                             	| [jr   z,$3985]
+	jeq	base_frame_selected_3985                             	| [jr   z,$3985]
 	move.b	#0x2C,d1                        	| [ld   b,$2C]
 	cmp.b	#0x09,d0                         	| [cp   $09]
-	jcc	l_3985                             	| [jr   nc,$3985]
+	jcc	base_frame_selected_3985                             	| [jr   nc,$3985]
 	move.b	#0x12,d1                        	| [ld   b,$12]
-l_3985:
+base_frame_selected_3985:
 	addq.b	#1,(alive_walk_counter,a2)      	| [inc  (ix+alive_walk_counter)]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
@@ -6492,7 +6494,7 @@ l_39c3:
 	rts                                    	| [ret]
 
 l_39d1:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x7F,d0                         	| [and  $7F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -6527,7 +6529,7 @@ l_3a01:
 	rts                                    	| [ret]
 
 l_3a0a:
-	move.b	counter_lsb_8824,d0             	| count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| count mask [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -6599,7 +6601,7 @@ l_3a77:
 	rts                                    	| [ret]
 
 l_3a92:
-	move.b	counter_lsb_8824,d0             	|  count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	|  count mask [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -6832,7 +6834,7 @@ table_3C1E:
 
 
 l_3c22:
-	move.b	counter_lsb_8824,d0             	|  count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	|  count mask [ld   a,(counter_lsb_8824)]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
@@ -6967,7 +6969,7 @@ l_3cf6:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_3cff:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x3F,d0                         	| [and  $3F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -7000,7 +7002,7 @@ l_3d2c:
 	jbsr	l_3d37                            	| [call $3D37]
 	rts                                    	| [ret]
 l_3d37:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x3F,d0                         	| [and  $3F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -7061,7 +7063,7 @@ l_3d9e:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_3da7:
-	move.b	counter_lsb_8824,d0             	|  count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	|  count mask [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -7504,7 +7506,7 @@ l_402e:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_4037:
-	move.b	counter_lsb_8824,d0             	| count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| count mask [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -7549,7 +7551,7 @@ l_4079:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_4082:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -8981,7 +8983,7 @@ l_4967:
 	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
 	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
 l_4972:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -9074,7 +9076,7 @@ l_4a17:
 	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
 	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
 l_4a22:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -9120,7 +9122,7 @@ l_4a77:
 	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
 	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
 l_4a82:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -9172,7 +9174,7 @@ l_4ac6:
 	move.b	#0x98,d0                        	| [ld   a,$98]
 	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
 l_4ae5:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x3F,d0                         	| [and  $3F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -9199,7 +9201,7 @@ l_4b0c:
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	move.b	d0,d1                           	| [ld   b,a]
 	and.b	#0x3F,d0                         	| [and  $3F]
 	beq.b	0f
@@ -9250,7 +9252,7 @@ l_4b5c:
 	rts                                    	| [ret]
 
 l_4b69:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	beq.b	0f
 	rts                                    	| [ret  nz]

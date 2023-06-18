@@ -3734,12 +3734,13 @@ animate_intermission_penguins_1ef0:
 1F02: FE 2B         cp   $03
 1F04: 20 2A         jr   nz,$1F08
 1F06: 06 B2         ld   b,$3A
+; can be called directly with b = $12
 1F08: DD 34 8C      inc  (ix+alive_walk_counter)
 1F0B: DD 7E 24      ld   a,(ix+alive_walk_counter)
 1F0E: E6 2B         and  $03
 1F10: C0            ret  nz
 1F11: DD 34 A4      inc  (ix+alive_walk_counter)
-1F14: C3 05 39      jp   $3985
+1F14: C3 05 39      jp   base_frame_selected_3985
 
 1F17: DD E5         push ix
 1F19: 11 20 80      ld   de,$0020
@@ -3839,6 +3840,11 @@ move_character_intermission_1F90:
 1FEF: E6 1F         and  $1F
 1FF1: C0            ret  nz
 	;; counter 1 out of 32 xxx
+; set bouncing snobee up as base
+; when stepping on title screen, we can notice that the
+; 4 snobees dragging the "pengo" titles aren't all snobees
+; at first, but facing penguins. The code below turns them
+; to snobees
 1FF2: 06 92         ld   b,$12
 1FF4: C3 A0 1F      jp   $1F08
 table_1FF7:
@@ -3879,6 +3885,7 @@ change_last_3_characters_char_states_200a:
 204A: CD A0 A1      call put_blank_at_current_pos_2900
 204D: C9            ret
 
+; snobees drag title
 move_character_intermission_204E:
 204E: CD 6C 1F      call $1FE4
 2051: DD 34 27      inc  (ix+current_period_counter)
@@ -4378,7 +4385,7 @@ table_23B7:
 242D: CD 83 11      call set_character_sprite_code_and_color_39AB
 2430: C9            ret
 
-2431: CD 85 91      call $3985
+2431: CD 85 91      call base_frame_selected_3985
 2434: C9            ret
 
 2435: DD 6E 30      ld   l,(ix+path_address_pointer_or_misc_flags)
@@ -6293,11 +6300,12 @@ set_character_sprite_code_and_color_318A:
 3190: 87            add  a,a	; we only read sprite index & color
 3191: 16 00         ld   d,$00
 3193: 5F            ld   e,a
-3194: FD 19         add  iy,de
+3194: FD 19         add  iy,de	; set to proper character sprite address
 3196: 56            ld   d,(hl)
 3197: 3A 18 20      ld   a,(cocktail_mode_8818)
 319A: A7            and  a
 319B: 28 11         jr   z,$31AE
+; flip for player 2 in cocktail mode
 319D: 3A 16 20      ld   a,(player_number_8816)
 31A0: E6 29         and  $01
 31A2: 28 22         jr   z,$31AE
@@ -6309,10 +6317,11 @@ set_character_sprite_code_and_color_318A:
 31AA: E6 D4         and  $FC
 31AC: B3            or   e
 31AD: 57            ld   d,a
-31AE: FD 72 00      ld   (iy+x_pos),d
+
+31AE: FD 72 00      ld   (iy+$00),d		; sprite code & bits
 31B1: 23            inc  hl
 31B2: 7E            ld   a,(hl)
-31B3: FD 77 81      ld   (iy+y_pos),a
+31B3: FD 77 81      ld   (iy+$01),a		; sprite colors
 31B6: C9            ret
 
 clear_sprites_31B7:
@@ -6539,7 +6548,7 @@ chicken_mode_3372:
 3376: C9            ret
 	
 _01_snobee_not_moving_3377:
-3377: CD 57 B9      call $3957
+3377: CD 57 B9      call animate_snobee_3957
 337A: DD CB 09 C6   bit  0,(ix+$09)
 337E: CC 05 B3      call z,$3385
 3381: CD 0E BB      call $338E
@@ -6562,7 +6571,7 @@ _01_snobee_not_moving_3377:
 	
 _02_snobee_moving_33A5:
 	;; is period time reached?
-33A5: CD D7 B1      call $3957
+33A5: CD D7 B1      call animate_snobee_3957
 33A8: DD 34 87      inc  (ix+current_period_counter)
 33AB: DD 7E 2F      ld   a,(ix+current_period_counter)
 33AE: DD BE 06      cp   (ix+instant_move_period) ;  snobee period (copied from ix+move_period)
@@ -7376,7 +7385,8 @@ animate_pengo_39A4:
 3954: C0            ret  nz	; returns if counter_lsb_8824 isn't dividable by 32?
 	;; counter 1 out of 32 pengo animation moves
 3955: 18 14         jr   $396B
-	
+
+animate_snobee_3957:
 3957: DD 7E A0      ld   a,(ix+$08)
 395A: A7            and  a
 395B: C8            ret  z
@@ -7384,6 +7394,7 @@ animate_pengo_39A4:
 395F: E6 9F         and  $1F
 3961: C0            ret  nz
 	;; counter 1 out of 32 snobees animation moves
+	; this selects snobee state: bouncing/walking/frightened
 3962: DD 34 8C      inc  (ix+alive_walk_counter)
 3965: DD 7E 24      ld   a,(ix+alive_walk_counter)
 3968: E6 2B         and  $03
@@ -7391,15 +7402,17 @@ animate_pengo_39A4:
 396B: 06 80         ld   b,$00
 396D: DD 7E 2D      ld   a,(ix+char_id)
 3970: FE 85         cp   $05
-3972: 28 91         jr   z,$3985
-3974: 06 8E         ld   b,$26
+3972: 28 91         jr   z,base_frame_selected_3985
+3974: 06 8E         ld   b,$26			; walking, up
 3976: DD 7E 1E      ld   a,(ix+ai_mode)
 3979: FE 02         cp   $02
-397B: 28 08         jr   z,$3985
-397D: 06 2C         ld   b,$2C
+397B: 28 08         jr   z,base_frame_selected_3985
+397D: 06 2C         ld   b,$2C			; frightened, up
 397F: FE 89         cp   $09
-3981: 30 82         jr   nc,$3985
-3983: 06 92         ld   b,$12
+3981: 30 82         jr   nc,base_frame_selected_3985
+3983: 06 92         ld   b,$12			; bouncing, up
+; base frame is selected then adjust direction and animation
+base_frame_selected_3985:
 3985: DD 34 24      inc  (ix+alive_walk_counter)
 3988: DD 7E 84      ld   a,(ix+facing_direction)
 398B: FE 83         cp   $03
@@ -7410,12 +7423,13 @@ animate_pengo_39A4:
 3995: 20 01         jr   nz,$3998
 3997: 3C            inc  a
 3998: 80            add  a,b
-3999: CB 27         sla  a
-399B: CB 27         sla  a
+3999: CB 27         sla  a			; shift character code
+399B: CB 27         sla  a			; twice
 399D: DD 77 82      ld   (ix+animation_frame),a
 39A0: DD 7E 84      ld   a,(ix+facing_direction)
 39A3: FE 83         cp   $03
 39A5: 20 84         jr   nz,set_character_sprite_code_and_color_39AB
+; enable X-flip bit
 39A7: DD CB 2A 4E   set  1,(ix+animation_frame)
 set_character_sprite_code_and_color_39AB:
 39AB: DD 7E 2D      ld   a,(ix+char_id)
