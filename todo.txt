@@ -16,3 +16,7 @@ Amiga:
 - also set all 3 colors at the copperlist Y just in case
 - redundant bg_cluts / clut asm file
 - alternate tileset: all symmetric? plus slow and wrong chars (ok in the end)
+
+	int code = m_videoram[tile_index] | (m_charbank << 8);
+	int attr = (m_colorram[tile_index] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6);
+

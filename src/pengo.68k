@@ -539,8 +539,12 @@ loop_0478:
  * loop
 
 loop_0480:
+	.ifeq	OPT_SKIP_TITLE_SCREEN
 	jbsr	display_title_screen_0521         	| [call display_title_screen_0521]
+	.endif
+	.ifeq	OPT_SKIP_ICE_PACK_SCREEN
 	jbsr	pack_ice_screen_22CB              	| [call pack_ice_screen_22CB]
+	.endif
 	jbsr	display_demo_and_top_scores_6E1   	| [call display_demo_and_top_scores_6E1]
 	move.b	#0x80,d0                        	| [ld   a,0x80]
 	jbsr	delay_28D1                        	| [call delay_28D1]

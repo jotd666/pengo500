@@ -573,8 +573,7 @@ osd_update_sprites:
 	add.w	#SPRITE_SIZEOF,a2
 	dbf		d0,0b
 	
-	move.l	a0,0X200
-	move.l	a1,0X204
+
 	* check active sprites, we'll disable the sprites that aren't active anymore
 	moveq	#NB_TARGET_SPRITES-1,d7
 1:
@@ -643,18 +642,22 @@ osd_update_sprites:
 	* set colors
 	moveq	#0,d3
 	move.b	(SPRITE_CLUT,a2),d3
+	cmp.b	#0x0B,d3
+	bne		33f
+	move.b	#1,0x200
+33:
 	lea		bg_cluts+2,a6
 	lsl.w	#3,d3		| times 8
 	tst.b	alternate_bank_selectors
 	beq.b	23f
-	add.w	#16*4,d3		| not sure!
+	add.w	#16*8,d3		| not sure!
 23:
 	add.w	d3,a6
 	
 	* d6 is the sprite index: compute/set proper color
 	move.w	d6,d5
 	bclr	#0,d5
-	lsl.w	#4,d5	| times 16
+	lsl.w	#2,d5	| times 4*2
 	lea		_custom+color+34,a5	| sprite palette + 2 (first color skipped)
 	add.w	d5,a5
 	* copy 3 colors

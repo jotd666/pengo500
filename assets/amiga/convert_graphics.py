@@ -63,12 +63,14 @@ palette = [tuple(x) for x in palette]
 with open(os.path.join(src_dir,"palette.68k"),"w") as f:
     bitplanelib.palette_dump(palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
+# for some reason, colors 1 and 2 of the cluts must be swapped to match
+# the palette! invert the colors back for perfect coloring of sprites & tiles!!
+bg_cluts = block_dict["clut"]["data"]
+bg_cluts = [[clut[0],clut[2],clut[1],clut[3]] for clut in bg_cluts]
 
-cluts = block_dict["clut"]["data"][:32]
+cluts = bg_cluts[:32]
 
 character_codes_list = list()
-
-clut_index = 7  # TEMP
 
 
 rgb_cluts = [[tuple(palette[pidx]) for pidx in clut] for clut in cluts]
@@ -128,7 +130,6 @@ sprites = collections.defaultdict(dict)
 
 clut_index = 12  # temp
 
-bg_cluts = block_dict["clut"]["data"]
 bg_cluts_bank_0 = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts[0:16]]
 # second bank
 bg_cluts_bank_1 = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts[16:]]
