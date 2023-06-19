@@ -7093,8 +7093,8 @@ pengo_nominal_move_3DBF:
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
 	jbsr	l_3e06            	
 move_character_according_to_direction_3DD7:
-	                      	| [ld   hl,$3DE4]
-											| [push hl]
+												| [ld   hl,$3DE4]
+	pea		l_3de4(pc)							| [push hl]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	lea	jump_table_3DEE(pc),a1             	| [ld   de,jump_table_3DEE]
 	jbsr	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
@@ -7150,9 +7150,12 @@ l_3e1a:
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	lea	table_3E36(pc),a1                  	| [ld   de,table_3E36]
 	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
-l_3E33: 
-	.byte	0x40,0xE1,0x41,0x00		| unused?
-
+	bne.b	0f		
+	rts			| [ret  z]  back to 3DE4 
+0:
+	move.l	(sp)+,a0	| pop  hl    exit from move_character_according_to_direction_3DD7 normally
+	rts				| [ret]
+        
 table_3E36:
 	.long	pengo_moves_up_3E3E
 	.long	pengo_moves_down_3E5E
@@ -7190,7 +7193,7 @@ l_3e5a:
 	cmp.b	d0,d0                            	| [cp   a]
 	rts                                    	| [ret]
 l_3e5c:
-	move.l	(sp)+,a0                        	| [pop  hl]
+	move.l	(sp)+,a0                        	| [pop  hl] exit from move_character_according_to_direction_3DD7 normally
 	rts                                    	| [ret]
 
 pengo_moves_down_3E5E:

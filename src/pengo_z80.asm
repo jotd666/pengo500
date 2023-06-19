@@ -8014,7 +8014,9 @@ pengo_goes_right_3E02:
 3E2A: DD 7E 04      ld   a,(ix+facing_direction)
 3E2D: 11 1E 16      ld   de,table_3E36
 3E30: CD 07 2D      call indirect_jump_2D8F
-3E33: $40,$E1,$41
+3E33: C8 			ret  z   	; back to 3DE4                                           
+3E34  E1			pop  hl     ; exit from function                                        
+3E35  C9			ret                                                                                    CD 44 16
 
 table_3E36:
   .word	pengo_moves_up_3E3E  
@@ -8041,8 +8043,10 @@ pengo_moves_xxx_3E44:
 3E55: FE 9C         cp   $9C
 3E57: 38 01         jr   c,$3E5A
 3E59: C9            ret
-3E5A: BF            cp   a
+3E5A: BF            cp   a		; set Z flag
 3E5B: C9            ret
+; give up current call from 3D73 (hl doesn't matter)
+; and return to 0A06
 3E5C: E1            pop  hl
 3E5D: C9            ret
 
