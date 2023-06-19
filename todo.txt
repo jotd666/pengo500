@@ -7,7 +7,7 @@ General:
 
 Amiga:
 
-- lower part of screen not shown (diwstop?? last line vertical???)
+- lower part of screen not shown (diwstop?? +last line vertical???)
 - sprites
 - sound
 - log used cluts to filter out unused clut/char combination

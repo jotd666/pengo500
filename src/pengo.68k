@@ -345,8 +345,8 @@ get_diamond_block_3_xy_8DB4_to_de:
 	rts
 	
 load_maze_data:
-	move.w	maze_data_8C20,d2           	| [ld   bc,(maze_data_8C20)]
-	move.w	maze_data_8C20+1,d1           	| [ld   bc,(maze_data_8C20)]
+	move.b	maze_data_8C20,d2           	| [ld   bc,(maze_data_8C20)]
+	move.b	maze_data_8C20+1,d1           	| [ld   bc,(maze_data_8C20)]
 	rts
 	
 set_current_cursor_from_bc:
@@ -3893,7 +3893,7 @@ l_2997:
 	jra	l_29a7                             	| [jr   0x29A7]
 l_2999:
 	cmp.b	#0x24,d0                         	| [cp   0x24]
-	jcc	l_29b2                             	| [jr   nc,0x29B2]
+	jcc	l_29b2                             	| [jr   nc,0x29B2]: above 34: limit
 	move.w	#0x83C2,d6                      	| set screen address to 83C2 [ld   hl,0x83C2]
 	btst.b	#0,d0                           	| [bit  0,a]
 	jeq	l_29a7                             	| [jr   z,0x29A7]
@@ -4498,6 +4498,8 @@ l_2dbe:
 	subq.b	#1,d1                           	| [...]
 	jne	l_2dbe                             	| [djnz $2DBE]
 
+	bsr		osd_break
+	
  * initialize
 	lea	maze_data_8C20,a2              	| [ld   ix,maze_data_8C20]
 	clr.b	(0x3f,a2)                        	| [ld   (ix+$3f),$00]
@@ -4514,7 +4516,7 @@ l_2dbe:
 * loop to draw the paths of the maze maze here
 
 l_2dd7:
-	move.l	a4,-(sp)                        	| [push bc]
+	move.w	d1,-(sp)                        	| [push bc]
 	move.b	#0x07,d2                        	|  inside loop done 7 times [ld   c,$07]
 
 * draw one path
@@ -4525,7 +4527,7 @@ l_2dda:
 	move.b	d0,(0x01,a2)                    	| [ld   (ix+$01),a]
 	move.b	#0x08,d0                        	| [ld   a,$08]
 	sub.b	d2,d0                            	| [sub  c]
-	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
+	move.b	d0,(a2)                    	| [ld   (ix+$00),a]
 	bsr		load_maze_data
  * can something be drawn from this point?
 	jbsr	is_way_clear_30CA                 	| [call is_way_clear_30CA]
@@ -4554,7 +4556,7 @@ l_2e19:
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d2                           	| [dec  c]
 	jne	l_2dda                             	| [jr   nz,$2DDA]
-	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	move.w	(sp)+,d1                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2dd7                             	| [djnz $2DD7]
 
@@ -4616,7 +4618,6 @@ l_2e6f:
 	jbsr	draw_horizontal_walls_2E81          	| [call draw_horizontal_walls_2E81]
 	move.b	#0x11,d4                        	| vertical wall tile [ld   e,$11]
 	jbsr	draw_vertical_walls_2E92        	| [call draw_vertical_walls_2E92]
-	bsr		osd_break
 	rts                                    	| [ret]
 * used to replace walls by stars when diamonds are aligned
 * < D4: character code
@@ -4703,7 +4704,6 @@ l_2ed7:
 	move.b	#0x0F,d1                        	| [ld   b,$0F]
 l_2edd:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.l	a4,-(sp)                        	| [push bc]
 	move.b	#0x0D,d2                        	| [ld   c,$0D]
 l_2ee0:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
@@ -4722,7 +4722,6 @@ l_2ee0:
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d2                           	| [dec  c]
 	jne	l_2ee0                             	| [jr   nz,$2EE0]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2edd                             	| [djnz $2EDD]
@@ -4985,7 +4984,7 @@ _02_path_draw_left_305E:
 	rts                                    	| [ret  z]
 0:
 	jbsr	set_way_left_clear_30BC           	| [call set_way_left_clear_30BC]
-	subq.b	#1,(0x00,a2)                    	| xlen-- [dec  (ix+$00)]
+	subq.b	#1,(a2)                    	| xlen-- [dec  (ix+$00)]
 	jbsr	draw_2_holes_left_3103            	| [call draw_2_holes_left_3103]
 	jra	handle_path_end_307C               	| [jr   handle_path_end_307C]
 
@@ -4996,7 +4995,7 @@ _03_path_draw_right_306D:
 	rts                                    	| [ret  z]
 0:
 	jbsr	set_way_right_clear_30C3          	| [call set_way_right_clear_30C3]
-	addq.b	#1,(0x00,a2)                    	| xlen++ [inc  (ix+$00)]
+	addq.b	#1,(a2)                    	| xlen++ [inc  (ix+$00)]
 	jbsr	draw_2_holes_right_3110           	| [call draw_2_holes_right_3110]
 	jra	handle_path_end_307C               	| [jr   handle_path_end_307C]
 
@@ -5139,8 +5138,8 @@ draw_2_holes_right_3110:
 	rts                                    	| [ret]
 
 draw_one_hole_311D:
-	move.w	maze_data_8C20+2,d2           
-	move.w	maze_data_8C20+3,d1           	| | [ld   bc,(maze_data_8C20+2)]
+	move.b	maze_data_8C20+2,d2           
+	move.b	maze_data_8C20+3,d1           	| | [ld   bc,(maze_data_8C20+2)]
 	move.b	d2,d0                           	| [ld   a,c]
 	add.b	d0,d0                            	| [add  a,a]
 	addq.b	#1,d0                           	| [inc  a]
@@ -5624,7 +5623,6 @@ l_344b:
  * after 1 minute, accelerate snobees & set A.I. mode to breaking block mode
 	jbsr	compute_snobee_speed_324E         	| [call compute_snobee_speed_324E]
 	subq.b	#0x01,d0                        	| [sub  $01]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	sub.b	d1,d0                            	| [sub  b]
 	move.b	d0,(move_period,a2)             	| change/adjust speed [ld   (ix+move_period),a]
@@ -8501,31 +8499,25 @@ l_4658:
 	move.b	#0x40,d1                        	| [ld   b,$40]
 l_4668:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.l	a4,-(sp)                        	| [push bc]
 	move.b	d1,d0                           	| [ld   a,b]
 	and.b	#0x03,d0                         	| [and  $03]
 	lea	table_479E(pc),a1                  	| [ld   de,table_479E]
 	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.l	a4,-(sp)                        	| [push bc]
 	move.b	d1,d0                           	| [ld   a,b]
 	subq.b	#1,d0                           	| [dec  a]
 	and.b	#0x07,d0                         	| [and  $07]
 	addq.b	#1,d0                           	| [inc  a]
 	jbsr	l_47fe                            	| [call $47FE]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.l	a4,-(sp)                        	| [push bc]
 	move.b	d1,d2                           	| [ld   c,b]
 	jbsr	l_4817                            	| [call $4817]
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_4668                             	| [djnz $4668]

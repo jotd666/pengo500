@@ -989,7 +989,7 @@ platform_init:
 	
 	* restrict borders: we don't see bobs on the borders!
     move.w #0x1C99,diwstrt(a5)
-    move.w #0x1C81-8,diwstop(a5)
+    move.w #0x3881-8,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
     move.w #0x4200,bplcon0(a5) | 4 bitplanes
@@ -1341,6 +1341,8 @@ update_bg_tile:
 0:
 	cmp.w	#0x3C0,d6
 	bcc.b	0f
+	cmp.w	#0x40,d6
+	bcs.b	2f
 	move.w	d6,d3
 	lsr.w	#5,d6		| this is X
 	neg.w	d6
@@ -1348,12 +1350,21 @@ update_bg_tile:
 	and.w	#0x1F,d3	| this is Y
 	addq.w	#2,d3
 	bra.b	1f
-	* two first rows
+	* two first rows are special
 0:
 	move.w	d6,d3
 	lsr.w	#5,d3		| this is Y
 	neg.w	d3
 	add.w	#30,d3		| minus 2
+	and.w	#0x1F,d6	| this is X
+	neg.w	d6
+	add.w	#32,d6
+	bra.b	1f
+	* two last rows as well
+2:
+	move.w	d6,d3
+	lsr.w	#5,d3		| this is Y
+	add.w	#34,d3		| plus 2
 	and.w	#0x1F,d6	| this is X
 	neg.w	d6
 	add.w	#32,d6
