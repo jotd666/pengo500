@@ -4497,8 +4497,6 @@ l_2dbe:
 												| [inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2dbe                             	| [djnz $2DBE]
-
-	bsr		osd_break
 	
  * initialize
 	lea	maze_data_8C20,a2              	| [ld   ix,maze_data_8C20]
@@ -5098,7 +5096,7 @@ l_30d4:
 	add.w	d3,a0								| [add  hl,de]
 	jmp		(a5)
 bit_set:
-	bset.b	d4,(a0)
+	btst.b	d4,(a0)
 	rts
 bit_clear:
 	bclr.b	d4,(a0)
