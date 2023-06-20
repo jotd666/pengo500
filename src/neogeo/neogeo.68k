@@ -220,15 +220,15 @@ osd_kick_wdog:
     
 * NEO GEO sprite allocations
 * -   0- 31 (unused)
-* -  64- 95 (32) foreground tilemap
+* -  32- 67 (36) foreground tilemap
 * -  96-103 (8) Pengo sprites
 * - 128-131 (4) visible display masking sprites
 
-    .equ    FGSS,                   64
+    .equ    FGSS,                   32
     .equ    PSSS,                   96
     .equ    DMSS,                   128
                                      
-    .equ    FGNS,                   32
+    .equ    FGNS,                   36
     .equ    PSNS,                   8
     .equ    DMNS,                   4
 
@@ -294,7 +294,7 @@ platform_init:
 
 *   - vertical position, sticky, size           
     move.w    #(SCB3+FGSS),-2(a0)               | VRAM_ADDR=SCB3
-    move.w    #(SPRITEY_0)<<7,d0                | YPOS=0
+    move.w    #(0)<<7,d0                        | YPOS=0
     ori.w     #33,d0                            | SIZE=33
     moveq     #FGNS-1,d7
 3:  move.w    d0,(a0)                           | visible
@@ -303,10 +303,10 @@ platform_init:
 *   - horizontal position
     move.w    #(SCB4+FGSS),-2(a0)               | VRAM_ADDR=SCB4
     moveq     #FGNS-1,d7
-    move.w    #(SPRITEX_0+16)<<7,d0              | XPOS=0
-5:  move.w    d0,(a0)             
+    move.w    #(SPRITEX_0)<<7,d0                | XPOS=0
+4:  move.w    d0,(a0)             
     add.w     #(8<<7),d0                        | next XPOS
-    dbf       d7,5b
+    dbf       d7,4b
 
 .endif | OPT_DISABLE_BG_LAYER
 
@@ -358,22 +358,57 @@ platform_init:
     * generate lookup table for fg offset
     lea       fg_offset_lookup_tbl,a0
     moveq     #0,d7
-4:  move.w    d7,d3
+5:  move.w    d7,d3
+    cmp.w     #0x040,d3
+    bge       not_bottom
+    * bottom 2 rows
+    lsr.w     #5,d3                             | sprite #0/1 (inverted)
+    eori.w    #1,d3                             | fix
+    lsl.w     #6,d3
+    move.w    d3,d2                             | d2=sprite offset in SCB1
+    move.w    d7,d0
+    andi.w    #0x1f,d0
+    move.w    #0x1f,d3
+    sub.w     d0,d3                             | d3=sprite tile #
+    lsl.w     #1,d3                             | d3=tile offset in SCB1
+    jra       store_entry    
+not_bottom:
+    cmp.w     #0x3c0,d3
+    blt       not_top
+    * top 2 rows
+    lsr.w     #5,d3                             | sprite #0/1 (inverted)
+    andi.w    #1,d3
+    eori.w    #1,d3                             | fix
+    add.w     #34,d3                            | sprite=34/35
+    lsl.w     #6,d3
+    move.w    d3,d2                             | d2=sprite offset in SCB1
+    move.w    d7,d0
+    andi.w    #0x1f,d0
+    move.w    #0x1f,d3
+    sub.w     d0,d3                             | d3=sprite tile #
+    lsl.w     #1,d3                             | d3=tile offset in SCB1
+    jra       store_entry    
+not_top:
+    * middle area
     and.w     #0x1f,d3                          | row (sprite number indirectly)
     move.w    #31,d2                            | 
-    sub.w     d3,d2                             | sprite #
+    sub.w     d3,d2                             | sprite #0-31
+    addi.w    #2,d2                             | 2-33
     lsl.w     #6,d2                             | d2=sprite offset in SCB1
     move.w    d7,d3
+    subi.w    #0x40,d3
     lsr.w     #5,d3                             | sprite tile #
+    add.w     #2,d3                             | 2-29
     not.w     d3                                | reverse column
     and.w     #0x1f,d3                          | column (tile number)
     lsl.w     #1,d3                             | d3=tile offset in SCB1
+store_entry:
     add.w     d2,d3                             | combine for SCB1 address
     add.w     #SCB1+(FGSS*64),d3
     move.w    d3,(a0)+                          | store entry
     addq.w    #1,d7
     cmp.w     #0x0400,d7
-    blt       4b
+    blt       5b
     
     lea       snd_playing,a0
     moveq     #0x20-1,d7
@@ -440,7 +475,7 @@ splash:
     .ascii    "                                "
     .ascii    "             PENGO      Beta1   "
     .ascii    "                                "
-    .ascii    "            NGH 422             "
+    .ascii    "            NGH 423             "
     .ascii    "                                "
     .ascii    "  This is a 68K transcode of    "
     .ascii    "  the arcade game Pengo         "
@@ -824,7 +859,7 @@ check_memcard_data:
     jsr       BIOSF_CARD
     move.b    (BIOS_CRDRESULT),d0
     bne.b     2f
-    * found some data for Galaxian
+    * found some data for Pengo
     move.b    #0x02,(BIOS_CRDF)
     move.w    #__NGH__,(BIOS_CRDNGH)
     move.b    #0,d0
@@ -856,7 +891,7 @@ check_memcard_data:
 9:  movem.l   (a7)+,d0-d7/a0-a6
     rts
 
-* a0 = high scotr buffer (3 bytes)    
+* a0 = high score buffer (3 bytes)    
 osd_write_high_scores:
     movem.l   d0-d7/a0-a6,-(a7)
     * init memcard buffer
