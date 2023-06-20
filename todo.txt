@@ -1,13 +1,11 @@
 General:
 
-- CLUTs seem wrong: alphanum chars OK, graphic chars wrong
-  (try to swap colors in cluts ex clut $0E pengo title ??)
 - dip switches (see ** code)
-- drawing grid OK, maze locks up no paths
+- merge with copy of pengo.asm (potential bugfixes)
+- add speed regulation in mainloop: game is too fast
 
 Amiga:
 
-- lower part of screen not shown (diwstop?? +last line vertical???)
 - sprites
 - sound
 - log used cluts to filter out unused clut/char combination

@@ -1131,7 +1131,7 @@ osd_r_videoram:
 	bcs.b	1f
 	* should not happen
 	move.w	#0,d6
-	
+1:
 	lea		bg_videoram,a0
 	move.b	(a0,d6.w),d0
 	movem.l	(a7)+,a0/d6
@@ -1144,7 +1144,7 @@ osd_r_colorram:
 	bcs.b	1f
 	* should not happen
 	move.w	#0,d6
-	
+1:	
 	lea		bg_colorram,a0
 	move.b	(a0,d6.w),d0
 	movem.l	(a7)+,a0/d6

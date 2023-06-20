@@ -1860,11 +1860,11 @@ l_0ecc:
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	move.w	d0,-(sp)                        	| [push af]
 	move.b	(a1),d0                         	| [ld   a,(de)]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
+	move.b	d0,(a0)+                         	| [ld   (hl),a]
 	move.w	(sp)+,d0                        	| [pop  af]
-	move.b	d0,(a1)                         	| [ld   (de),a]
-	addq.w	#1,a0                           	| [inc  hl]
-	addq.w	#1,a1                           	| [inc  de]
+	move.b	d0,(a1)+                         	| [ld   (de),a]
+											| [inc  hl]
+											| [inc  de]
 	subq.b	#1,d1                           	| [...]
 	jne	l_0ecc                             	| [djnz $0ECC]
 	rts                                    	| [ret]
@@ -1892,7 +1892,7 @@ l_0ef2:
 	jeq	l_0f11                             	| [jr   z,$0F11]
 	addq.b	#1,(a0)                         	| [inc  (hl)]
 	btst.b	#0,(a0)                         	| [bit  0,(hl)]
-	bne	0f
+	bne.b	0f
 	jbsr	swap_players_0EC4                 	| [call z,swap_players_0EC4]
 0:
 	rts                                    	| [ret]
@@ -3857,12 +3857,11 @@ l_2966:
 	rts                                    	| [ret]
 
 * converts coordinates to screen address
-* 8000 is bottom of screen
+* 8000 is bottom of screen (2 status lines on top + bottom)
 * < B: X (D1)
 * < C: Y (D2)
 * > HL (D6)
 convert_coords_to_screen_address_296F:
-	move.l	A0,-(a7)
 	move.b	d1,d0                           	| load B into A [ld   a,b]
 	cmp.b	#0x20,d0                         	| is A < 0x20 [cp   0x20]
 	jcc	l_2989                             	| if A >= 0x20 goto 0x2989 [jr   nc,0x2989]
@@ -3872,14 +3871,15 @@ convert_coords_to_screen_address_296F:
 	add.b	d0,d0                            	| multiply a by 2 [add  a,a]
 	clr.w	d3                               	| [ld   d,0x00]
 	move.b	d0,d3                           	| extend a into DE [ld   e,a]
+	move.l	A0,-(a7)
 	lea	screen_line_address_table_29B6(pc),a0	| [ld   hl,screen_line_address_table_29B6]
 	move.w	(a0,d3.w),d3						| to get an entry into address table
-	move.b	(a0),d4                         	| load e [ld   e,(hl)]
+												| [ld   e,(hl)]
+	move.l	(a7)+,a0
 	clr		d6                               	| [ld   h,0x00]
 	move.b	d1,d6                           	| [ld   l,b]
 * acts like multiply table for Y plus X
 	add.w	d3,d6							| [add  hl,de]
-	move.l	(a7)+,a0
 	rts                                    	| [ret]
 * handle limit cases
 l_2989:
@@ -3887,7 +3887,7 @@ l_2989:
 	jcc	l_2999                             	| [jr   nc,0x2999]
 	move.w	#0x8002,d6                      	| [ld   hl,0x8002]
 	btst.b	#0,d0                           	| [bit  0,a]
-	jeq	l_2997                             	| [jr   z,0x2997]
+	jeq	l_29a7                             	| [jr   z,0x2997]
 	move.w	#0x8022,d6                     	| [ld   hl,0x8022]
 l_2997:
 	jra	l_29a7                             	| [jr   0x29A7]
@@ -3906,11 +3906,9 @@ l_29a7:
 	clr		d3                               	| [ld   d,0x00]
 	move.b	d0,d3                           	| [ld   e,a]
 	add.w	d3,d6								| [add hl,de]
-	move.l	(a7)+,a0
 	rts                                    	| [ret]
 l_29b2:
 	move.w	#0x8000,d6      	| [ld   hl,video_tile_memory_8000]
-	move.l	(a7)+,a0
 	rts                                    	| [ret]
 
 screen_line_address_table_29B6:
@@ -4019,16 +4017,8 @@ for_50000_pts_2AF3:
 
 * > A (active low): control bits
 read_player_inputs_2AFB:
-	move.b	cocktail_mode_8818,d0           	| [ld   a,(cocktail_mode_8818)]
-	tst.b	d0                               	| [and  a]
-	jeq	l_2b0c                             	| [jr   z,$2B0C]
-	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
-	and.b	#0x01,d0                         	| [and  $01]
-	jeq	l_2b0c                             	| [jr   z,$2B0C]
-* read player 2 joystick
-	**move.b	0x9080,d0                       	| [ld   a,($9080)]
-	rts                                    	| [ret]
-* read player 1 joystick
+* cocktail mode is ignored
+* so just read player 1 joystick
 l_2b0c:
 	**move.b	coin_input_90C0,d0              	| [ld   a,(coin_input_90C0)]
 	rts                                    	| [ret]
@@ -7171,7 +7161,7 @@ pengo_moves_up_3E3E:
 	addq.b	#1,d2                           	| [inc  c]
 pengo_moves_xxx_3E44:
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
-	move.b	(a0),d0                         	| [ld   a,(hl)]
+	jbsr	osd_r_videoram                        	| [ld   a,(hl)]
 	cmp.b	#0x20,d0                         	| [cp   $20]
 	bne.b	0f
 	rts                                    	| [ret  z]
@@ -7631,30 +7621,30 @@ l_40d4:
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	move.b	d0,(path_address_pointer_or_misc_flags,a2)                    	| [ld   (ix+$10),a]
 l_40ef:
-	move.l	d3,-(sp)                        	| [push de]
+	movem.w	d3/d4,-(sp)                        	| [push de]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
-	move.l	(sp),d3                        	| [pop  de]
+	movem.w	(sp),d3/d4                        	| [pop  de] (not useful, let's skip it)
 											| [push de]
 	btst.b	#2,(path_address_pointer_or_misc_flags,a2)                    	| [bit  2,(ix+$10)]
 	jeq	l_40fc                             	| [jr   z,$40FC]
 	addq.b	#1,d4                           	| [inc  e]
 l_40fc:
 	move.b	d4,(a0)                         	| [ld   (hl),e]
-	move.l	(sp)+,d3                        	| [pop  de]
+	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	jbsr	l_4118                            	| [call $4118]
-	move.l	d3,-(sp)                        	| [push de]
+	movem.w	d3/d4,-(sp)                        	| [push de]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
-	move.l	(sp),d3                        	| [pop  de]
+	movem.w	(sp),d3/d4                        	| [pop  de] (not useful, let's skip it)
 	                        	| [push de]
 	btst.b	#2,(path_address_pointer_or_misc_flags,a2)                    	| [bit  2,(ix+$10)]
 	jne	l_410e                             	| [jr   nz,$410E]
 	addq.b	#1,d4                           	| [inc  e]
 l_410e:
 	move.b	d4,(a0)                         	| [ld   (hl),e]
-	move.l	(sp)+,d3                        	| [pop  de]
+	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	jbsr	l_4118                            	| [call $4118]
-	subq.b	#1,d3                           	| [dec  d]
-	subq.b	#1,d3                           	| [dec  d]
+	subq.b	#2,d3                           	| [dec  d]
+												| [dec  d]
 	jne	l_40ef                             	| [jr   nz,$40EF]
 	rts                                    	| [ret]
 
@@ -7794,15 +7784,15 @@ l_420f:
 	jbsr	l_425e                            	| [call $425E]
 	jbsr	move_snobee_current_direction_4378	| [call move_snobee_current_direction_4378]
 	move.b	d1,d0                           	| [ld   a,b]
-	rol.b	#1,d0                            	| [rlca]
-	rol.b	#1,d0                            	| [rlca]
-	rol.b	#1,d0                            	| [rlca]
+	rol.b	#3,d0                            	| [rlca]
+												| [rlca]
+												| [rlca]
 	move.b	d0,d1                           	| [ld   b,a]
 	move.b	d2,d0                           	| [ld   a,c]
 	addq.b	#0x02,d0                        	| [add  a,$02]
-	rol.b	#1,d0                            	| [rlca]
-	rol.b	#1,d0                            	| [rlca]
-	rol.b	#1,d0                            	| [rlca]
+	rol.b	#3,d0                            	| [rlca]
+												| [rlca]
+												| [rlca]
 	move.b	d0,d2                           	| [ld   c,a]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 
@@ -7867,8 +7857,8 @@ l_4294:
 l_42a3:
 	jbsr	move_snobee_current_direction_4378	| [call move_snobee_current_direction_4378]
 
-	move.l	a3,-(sp)                        	| [push iy]
-	move.l	(sp)+,a2                        	| [pop  ix]
+	move.l	a3,a2                       	| [push iy]
+											| [pop  ix]
 	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
 	movem.w	d1/d2,-(sp)                    	| [push bc]
 	move.b	#0x02,d1                        	| [ld   b,$02]
@@ -7933,6 +7923,7 @@ l_42ef:
 	rts                                    	| [ret  nc]
 0:
 	clr.b	(a0)+                         	| [ld   (hl),a]
+											| [inc  hl]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	st.b	d7	| scf		; set carry flag
 	rts                                    	| [ret]
@@ -8036,8 +8027,8 @@ move_snobee_current_direction_4378:
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	move.b	(facing_direction,a2),d0        	| facing direction [ld   a,(ix+facing_direction)]
 	lea	table_4385(pc),a1                  	| [ld   de,table_4385]
-	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
-	rts                                    	| [ret]
+	jbra	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
+												| [ret]
 
 table_4385:
 	.long	l_438d
@@ -8046,27 +8037,27 @@ table_4385:
 	.long	l_439c
 
 l_438d:
-	move.b	d1,d0                           	| [ld   a,b]
-	subq.b	#0x02,d0                        	| [sub  $02]
-	move.b	d0,d1                           	| [ld   b,a]
+												| [ld   a,b]
+	subq.b	#0x02,d1                        	| [sub  $02]
+												| [ld   b,a]
 	rts                                    	| [ret]
 
 l_4392:
-	move.b	d1,d0                           	| [ld   a,b]
-	addq.b	#0x02,d0                        	| [add  a,$02]
-	move.b	d0,d1                           	| [ld   b,a]
+	                          	| [ld   a,b]
+	addq.b	#0x02,d1                        	| [add  a,$02]
+	                           	| [ld   b,a]
 	rts                                    	| [ret]
 
 l_4397:
-	move.b	d2,d0                           	| [ld   a,c]
-	subq.b	#0x02,d0                        	| [sub  $02]
-	move.b	d0,d2                           	| [ld   c,a]
+	                           	| [ld   a,c]
+	subq.b	#0x02,d2                        	| [sub  $02]
+	                           	| [ld   c,a]
 	rts                                    	| [ret]
 
 l_439c:
-	move.b	d2,d0                           	| [ld   a,c]
-	addq.b	#0x02,d0                        	| [add  a,$02]
-	move.b	d0,d2                           	| [ld   c,a]
+	                           	| [ld   a,c]
+	addq.b	#0x02,d2                        	| [add  a,$02]
+	                           	| [ld   c,a]
 	rts                                    	| [ret]
 	
 is_grid_free_jump_table_43A1:
@@ -8104,8 +8095,8 @@ l_43bd:
 l_43db:
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
 
-	move.l	a2,-(sp)                        	| [push ix]
-	move.l	(sp)+,a0                        	| [pop  hl]
+	move.l	a2,a0                        	| [push ix]
+											| [pop  hl]
 	jbsr	set_character_sprite_position_3154               	| [call set_character_sprite_position_3154]
 	rts                                    	| [ret]
 
@@ -8194,8 +8185,8 @@ go_up_test_4467:
 	addq.b	#1,d0                           	| [inc  a]
 	cmp.b	d1,d0                            	| [cp   b]
 	jeq	l_447f                             	| [jr   z,$447F]
-	subq.b	#1,d0                           	| [dec  a]
-	subq.b	#1,d0                           	| [dec  a]
+	subq.b	#2,d0                           	| [dec  a]
+											| [dec  a]
 	cmp.b	d1,d0                            	| [cp   b]
 	jeq	l_447f                             	| [jr   z,$447F]
 	subq.b	#1,d0                           	| [dec  a]
@@ -8229,8 +8220,8 @@ go_down_test_448E:
 	subq.b	#1,d0                           	| [dec  a]
 	cmp.b	d1,d0                            	| [cp   b]
 	jeq	l_447f                             	| [jr   z,$447F]
-	addq.b	#1,d0                           	| [inc  a]
-	addq.b	#1,d0                           	| [inc  a]
+	addq.b	#2,d0                           	| [inc  a]
+												| [inc  a]
 	cmp.b	d1,d0                            	| [cp   b]
 	jeq	l_447f                             	| [jr   z,$447F]
 	addq.b	#1,d0                           	| [inc  a]
@@ -8284,8 +8275,8 @@ go_right_test_44CF:
 	subq.b	#1,d0                           	| [dec  a]
 	cmp.b	d2,d0                            	| [cp   c]
 	jeq	l_44c0                             	| [jr   z,$44C0]
-	addq.b	#1,d0                           	| [inc  a]
-	addq.b	#1,d0                           	| [inc  a]
+	addq.b	#2,d0                           	| [inc  a]
+											| [inc  a]
 	cmp.b	d2,d0                            	| [cp   c]
 	jeq	l_44c0                             	| [jr   z,$44C0]
 	addq.b	#1,d0                           	| [inc  a]
@@ -8506,15 +8497,15 @@ l_4668:
 	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	movem.w	(sp)+,d1/d2                    	| [pop  bc]
-	movem.w	d1/d2,-(sp)                    	| [push bc]
+	movem.w	(sp),d1/d2                    	| [pop  bc]
+											| [push bc]
 	move.b	d1,d0                           	| [ld   a,b]
 	subq.b	#1,d0                           	| [dec  a]
 	and.b	#0x07,d0                         	| [and  $07]
 	addq.b	#1,d0                           	| [inc  a]
 	jbsr	l_47fe                            	| [call $47FE]
-	movem.w	(sp)+,d1/d2                    	| [pop  bc]
-	movem.w	d1/d2,-(sp)                    	| [push bc]
+	movem.w	(sp),d1/d2                    	| [pop  bc]
+											| [push bc]
 	move.b	d1,d2                           	| [ld   c,b]
 	jbsr	l_4817                            	| [call $4817]
 	move.b	#0x02,d0                        	| [ld   a,$02]
@@ -8549,7 +8540,7 @@ l_46a7:
 l_46d0:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
 
-	move.l	d6,-(sp)                        	| [push hl]
+	move.w	d6,-(sp)                        	| [push hl]
 	move.b	d1,d0                           	| [ld   a,b]
 	and.b	#0x03,d0                         	| [and  $03]
 	bne	0f
@@ -8557,12 +8548,12 @@ l_46d0:
 0:
 	move.w	#0x000A,d3                      	| [ld   de,$000A]
 	jbsr	add_to_current_player_score_28AF  	| [call add_to_current_player_score_28AF]
-	move.l	(sp)+,d6                        	| [pop  hl]
+	move.w	(sp)+,d6                        	| [pop  hl]
 	move.w	#0x000A,d3                      	| [ld   de,$000A]
 												| [xor  a]
 	sub.w	d3,d6 							 | [sbc  hl,de]
 
-	move.l	d6,-(sp)                        	| [push hl]
+	move.w	d6,-(sp)                        	| [push hl]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 										| [ld   h,$12]
 										| [ld   l,$0A]
@@ -8570,14 +8561,14 @@ l_46d0:
 	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	move.l	(sp)+,a0                        	| [pop  hl]
-	movem.w	(sp)+,d1/d2                    	| [pop  bc]
-	movem.w	d1/d2,-(sp)                    	| [push bc]
+	move.w	(sp)+,d6                        	| [pop  hl]
+	movem.w	(sp),d1/d2                    	| [pop  bc]
+										| [push bc]
 
-	move.l	a0,-(sp)                        	| [push hl]
+	move.w	d6,-(sp)                        	| [push hl]
 	move.b	d1,d2                           	| [ld   c,b]
 	jbsr	l_4817                            	| [call $4817]
-	move.l	(sp)+,a0                        	| [pop  hl]
+	move.w	(sp)+,d6                        	| [pop  hl]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_46d0                             	| [djnz $46D0]
@@ -8698,7 +8689,7 @@ l_4806:
 	addq.w	#1,d6
 	dbf		d1,0b
 
-	addq.w	#3,d6                           	| [inc  hl]
+	addq.w	#3,d6                           	| [inc  hl] * 3
 	move.w	(sp)+,d1                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_4806                             	| [djnz $4806]
@@ -8918,8 +8909,8 @@ l_4906:
 											| [inc  hl]
 	rts                                    	| [ret]
 l_490e:
-	subq.b	#1,a0                           	| [dec  hl]
-	move.b	(a0),d0                         	| [ld   a,(hl)]
+										| [dec  hl]
+	move.b	-(a0),d0                         	| [ld   a,(hl)]
 	move.b	d4,(a0)+                         	| [ld   (hl),e]
 	move.b	d0,d4                           	| [ld   e,a]
 	                           	| [inc  hl]
@@ -8964,7 +8955,7 @@ table_4939:
 
 
 l_494d:
-	btst.b	#6,(0x00,a2)                    	| [bit  6,(ix+$00)]
+	btst.b	#6,(a2)                    	| [bit  6,(ix+$00)]
 	jeq	l_4960                             	| [jr   z,$4960]
 	lea	remaining_eggs_to_hatch_8DC1,a0	| [ld   hl,remaining_eggs_to_hatch_8DC1]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
@@ -8977,9 +8968,9 @@ l_4960:
 	lea	maze_data_8C20+0x3F,a0         	| [ld   hl,maze_data_8C20+$3F]
 	subq.b	#1,(a0)                         	| [dec  (hl)]
 l_4967:
-	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	move.b	(a2),d0                    	| [ld   a,(ix+$00)]
 	or.b	#0x02,d0                          	| [or   $02]
-	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
+	move.b	d0,(a2)                    	| [ld   (ix+$00),a]
 	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
 l_4972:
 	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
@@ -8988,7 +8979,7 @@ l_4972:
 	rts                                    	| [ret  nz]
 0:
  * counter 1 out of 32 broken block shatters
-	subq.b	#1,(0x00,a2)                    	| [dec  (ix+$00)]
+	subq.b	#1,(a2)                    	| [dec  (ix+$00)]
 	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
 	and.b	#0x07,d0                         	| [and  $07]
 	beq.b	0f
@@ -9002,7 +8993,7 @@ l_4972:
 	move.b	d0,d1                           	| [ld   b,a]
 	move.b	#0x08,d0                        	| [ld   a,$08]
 	sub.b	d1,d0                            	| [sub  b]
-	btst.b	#6,(0x00,a2)                    	| [bit  6,(ix+$00)]
+	btst.b	#6,(a2)                    	| [bit  6,(ix+$00)]
 	jeq	l_499d                             	| [jr   z,$499D]
 	cmp.b	#0x06,d0                         	| [cp   $06]
 	jcs	l_499d                             	| [jr   c,$499D]
@@ -9035,11 +9026,10 @@ l_49c8:
 	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
 	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
 	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
-	btst.b	#5,(0x00,a2)                    	| [bit  5,(ix+$00)]
 	move.w	#3,d3                      	| [ld   de,$0003]
-
-	move.l	a2,-(sp)                        	| [push ix]
-	beq	0f
+	btst.b	#5,(0x00,a2)                    	| [bit  5,(ix+$00)]
+	movem.l	a2,-(sp)                        	| [push ix]
+	beq.b	0f
 	jbsr	add_to_current_player_score_28AF  	| [call nz,add_to_current_player_score_28AF]
 0:
 	move.l	(sp)+,a2                        	| [pop  ix]
@@ -9108,7 +9098,7 @@ l_4a40:
 	move.b	(0x03,a2),d1                    	| [ld   b,(ix+$03)]
 	move.b	(0x02,a2),d2                    	| [ld   c,(ix+$02)]
 	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
-	clr.b	(0x00,a2)                        	| [ld   (ix+$00),$00]
+	clr.b	(a2)                        	| [ld   (ix+$00),$00]
 	clr.b	(0x05,a2)                        	| [ld   (ix+$05),$00]
 	rts                                    	| [ret]
 l_4a6f:
@@ -9116,9 +9106,9 @@ l_4a6f:
 	move.b	#0x05,(0x01,a2)                 	| [ld   (ix+$01),$05]
 	rts                                    	| [ret]
 l_4a77:
-	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	move.b	(a2),d0                    	| [ld   a,(ix+$00)]
 	or.b	#0x03,d0                          	| [or   $03]
-	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
+	move.b	d0,(a2)                    	| [ld   (ix+$00),a]
 	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
 l_4a82:
 	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
@@ -9127,8 +9117,8 @@ l_4a82:
 	rts                                    	| [ret  nz]
 0:
  * counter 1 out of 32 ???
-	subq.b	#1,(0x00,a2)                    	| [dec  (ix+$00)]
-	move.b	(0x00,a2),d0                    	| [ld   a,(ix+$00)]
+	subq.b	#1,(a2)                    	| [dec  (ix+$00)]
+	move.b	(a2),d0                    	| [ld   a,(ix+$00)]
 	and.b	#0x07,d0                         	| [and  $07]
 	beq.b	0f
 	rts                                    	| [ret  nz]
