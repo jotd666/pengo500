@@ -2,8 +2,8 @@
 
 PLATFORM = neogeo
 #PLATFORM = amiga
-TARGET = galaxian
-NGH = 0x0422
+TARGET = pengo
+NGH = 0x0423
 MAMEDIR = .
 
 #######################################
@@ -51,8 +51,8 @@ ISODIR = $(CDDIR)\iso
 ##############################
 
 OBJS = 	$(OBJDIR)/$(PLATFORM).o \
-				$(OBJDIR)/galaxian.o \
-				$(OBJDIR)/galaxian_ram.o
+				$(OBJDIR)/pengo.o \
+				$(OBJDIR)/pengo_ram.o
 
 BIN = $(BINDIR)\$(TARGET).bin
 								
@@ -82,7 +82,7 @@ ifeq ($(OUTPUT),cart)
 	V1 = $(ASSETDIR)\$(TARGET).v1
 	SPRITES = $(C1) $(C2)
 	OUTPUT_INSTALL = install_cart
-	MAMEROMDIR = $(MAMEDIR)\roms\neogeo\galaxian
+	MAMEROMDIR = $(MAMEDIR)\roms\neogeo\pengo
 endif
 
 ifeq ($(OUTPUT),cd)
@@ -151,13 +151,13 @@ $(PRG): $(BIN)
 $(BIN) : $(OBJS) src/$(PLATFORM)/neo$(OUTPUT).x makefile.ng
 	$(LD) -L$(LIBDIR) $(CCFLAGS) $(LDFLAGS) $(OBJS) $(LIBS) -o $@
 
-$(OBJDIR)/%.o : src/$(PLATFORM)/%.68k src/galaxian.inc makefile.ng
+$(OBJDIR)/%.o : src/$(PLATFORM)/%.68k src/pengo.inc makefile.ng
 	$(AS) -a=$*.lst $(ASFLAGS) $< -o $@
 
-$(OBJDIR)/%.o : src/%.68k src/galaxian.inc makefile.ng
+$(OBJDIR)/%.o : src/%.68k src/pengo.inc makefile.ng
 	$(AS) -a=$*.lst $(ASFLAGS) --defsym OPT_SUPER=0 $< -o $@
 
-$(OBJDIR)/s%.o : src/%.68k src/galaxian.inc makefile.ng
+$(OBJDIR)/s%.o : src/%.68k src/pengo.inc makefile.ng
 	$(AS) -a=$*.lst $(ASFLAGS) --defsym OPT_SUPER=1 $< -o $@
 
 ### CLEAN AND INSTALL
