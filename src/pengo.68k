@@ -376,6 +376,7 @@ INITIALISE_SYSTEM:
 	
 
 pengo_irq:
+	clr.b	vbl_sync_flag
 	lea		sprite_ram_8FF2,a0		| type & color
 	lea		sprite_ram_9022,a1		| X,Y
 	jbsr	osd_update_sprites
@@ -1177,6 +1178,19 @@ l_09cb:
 	move.b	#0x80,(a0)                      	| [ld   (hl),$80]
 
 main_game_loop_09E7:
+	move.b	vbl_sync_counter,d0
+	addq.b	#1,d0
+	cmp.b	#OPT_SYNC_COUNTER,d0
+	bne.b	1f
+	* wait for vbl sync
+	st.b	vbl_sync_flag
+0:
+	tst.b	vbl_sync_flag
+	bne.b	0b
+	moveq	#0,d0
+1:
+	move.b	d0,vbl_sync_counter
+	
 	move.b	sound_channel_0_struct_8C60,d0  	| [ld   a,(sound_channel_0_struct_8C60)]
 	tst.b	d0                               	| [and  a]
 	jne	l_09f4                             	| [jr   nz,$09F4]
@@ -5429,9 +5443,9 @@ _00_snobee_do_nothing_3353:
  * active loop to keep roughly the same game speed
  * regardless of the number of currently active monsters
 	jbsr	osd_break
-	move.b	#0x05,d1                        	| [ld b,$05]
-	subq.b	#1,d1                           	| [dec  b]
-	jbsr	osd_small_wait
+*	move.b	#0x05,d1                        	| [ld b,$05]
+*	subq.b	#1,d1                           	| [dec  b]
+*	jbsr	osd_small_wait
 												| [...]
 											| [djnz $3355]
 	rts                                           	| [ret]

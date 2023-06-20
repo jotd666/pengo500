@@ -3,6 +3,8 @@
 ***    
 *** BUILD OPTIONS
 ***
+	* speed regulation, the bigger, the faster
+	OPT_SYNC_COUNTER=12
 
     * hardware options
     OPT_DISABLE_BG_LAYER=0
