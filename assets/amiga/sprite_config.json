@@ -113,7 +113,7 @@
       3,
       4
     ],
-    "name": "wtf"
+    "name": "snobee_up_1"
   },
   "19": {
     "cluts": [
@@ -121,21 +121,21 @@
       3,
       4
     ],
-    "name": "wtf"
-  },
+    "name": "snobee_up_2"
+ },
   "20": {
     "cluts": [
       2
     ],
-    "name": "wtf"
-  },
+    "name": "snobee_down_1"
+ },
   "21": {
     "cluts": [
       2,
       3,
       4
     ],
-    "name": "wtf"
+    "name": "snobee_down_2"
   },
   "22": {
     "cluts": [
@@ -143,7 +143,7 @@
       3,
       4
     ],
-    "name": "wtf"
+    "name": "snobee_left_1"
   },
   "23": {
     "cluts": [
@@ -151,8 +151,8 @@
       3,
       4
     ],
-    "name": "wtf"
-  },
+    "name": "snobee_left_2"
+   },
   "24": {
     "cluts": [
       1
@@ -164,28 +164,24 @@
       1
     ],
     "name": "snobee_stunned_2"
-  },
+    },
   "26": {
     "cluts": [
       1
     ],
     "name": "pengo_dying_1"
-  },
+
+ },
   "27": {
     "cluts": [
       1
     ],
     "name": "pengo_dying_2"
+
   },
   "28": {
     "cluts": [
       7
-    ],
-    "hw_sprite": [
-      2,
-      3,
-      4,
-      5
     ],
     "name": "ice_block"
   },
@@ -193,23 +189,11 @@
     "cluts": [
       7
     ],
-    "hw_sprite": [
-      2,
-      3,
-      4,
-      5
-    ],
     "name": "diamond_block"
   },
   "30": {
     "cluts": [
       7
-    ],
-    "hw_sprite": [
-      2,
-      3,
-      4,
-      5
     ],
     "name": "pengo_shake_booty_1"
   },
@@ -217,23 +201,11 @@
     "cluts": [
       7
     ],
-    "hw_sprite": [
-      2,
-      3,
-      4,
-      5
-    ],
     "name": "pengo_shake_booty_2"
   },
   "32": {
     "cluts": [
       7
-    ],
-    "hw_sprite": [
-      2,
-      3,
-      4,
-      5
     ],
     "name": "score_100"
   },
@@ -241,23 +213,11 @@
     "cluts": [
       7
     ],
-    "hw_sprite": [
-      2,
-      3,
-      4,
-      5
-    ],
     "name": "score_400"
   },
   "34": {
     "cluts": [
       7
-    ],
-    "hw_sprite": [
-      2,
-      3,
-      4,
-      5
     ],
     "name": "score_1600"
   },
@@ -265,23 +225,11 @@
     "cluts": [
       7
     ],
-    "hw_sprite": [
-      2,
-      3,
-      4,
-      5
-    ],
     "name": "score_3200"
   },
   "36": {
     "cluts": [
       7
-    ],
-    "hw_sprite": [
-      2,
-      3,
-      4,
-      5
     ],
     "name": "score_6400"
   },

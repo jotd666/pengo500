@@ -138,13 +138,13 @@ delay_timer_8820:
 	ds.b	0x01
 delay_timer_2_8821:
 	ds.b	0x01
-timer_16bit_8822:
+timer_16bit_8822_msb:
 	ds.b	0x01
-five_second_counter_8823:
+timer_16bit_8823_lsb:
 	ds.b	0x01
-counter_lsb_8824:
+counter_msb_8824:
 	ds.b	0x01
-counter_msb_8825:
+counter_lsb_8825:
 	ds.b	0x01
 random_seed_8826:
 	ds.b	0x02

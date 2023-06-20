@@ -238,6 +238,8 @@ backup_ai_mode = 0x1D
 ai_mode = 0x1E
 char_state = 0x1F
 
+	.include "pengo.inc"
+
  * snobee move routine is "02_snobee_moving_33A5"
  * the A.I. is done in handle_snobee_direction_change_33D8
 
@@ -343,8 +345,8 @@ get_diamond_block_3_xy_8DB4_to_de:
 	rts
 	
 load_maze_data:
-	move.w	maze_data_8C20,d2           	| [ld   bc,(maze_data_8C20)]
-	move.w	maze_data_8C20+1,d1           	| [ld   bc,(maze_data_8C20)]
+	move.b	maze_data_8C20,d2           	| [ld   bc,(maze_data_8C20)]
+	move.b	maze_data_8C20+1,d1           	| [ld   bc,(maze_data_8C20)]
 	rts
 	
 set_current_cursor_from_bc:
@@ -392,7 +394,7 @@ l_0057:
 l_0061:
 	move.b	unknown_87FF,d0                       	| [ld   a,(0x87FF)]
 	jne	l_013f                             	| [jp   nz,0x013F]
-	addq.w	#1,timer_16bit_8822         	| [ld   hl,(timer_16bit_8822)]
+	addq.w	#1,timer_16bit_8822_msb         	| [ld   hl,(timer_16bit_8822)]
 	jbsr	l_32bc                            	| [call 0x32BC]
 	* temp coin shit disabled
 	*jbsr	l_02a2   coin                         	| [call 0x02A2]
@@ -530,13 +532,19 @@ l_03d4:
 loop_0478:
 	                               	| [ld   a,0x00]
 	clr.b	currently_playing_8819       	| [ld   (currently_playing_8819),a]
+	.ifeq	OPT_SKIP_THANKS_SCREEN
 	jbsr	display_thanks_for_playing_04A0   	| [call display_thanks_for_playing_04A0]
-
+	.endif
+	
  * loop
 
 loop_0480:
+	.ifeq	OPT_SKIP_TITLE_SCREEN
 	jbsr	display_title_screen_0521         	| [call display_title_screen_0521]
+	.endif
+	.ifeq	OPT_SKIP_ICE_PACK_SCREEN
 	jbsr	pack_ice_screen_22CB              	| [call pack_ice_screen_22CB]
+	.endif
 	jbsr	display_demo_and_top_scores_6E1   	| [call display_demo_and_top_scores_6E1]
 	move.b	#0x80,d0                        	| [ld   a,0x80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
@@ -736,7 +744,7 @@ display_demo_and_top_scores_6E1:
 	move.b	d0,level_number_player2_8813    	| [ld   (level_number_player2_8813),a]
  * set main counter to 0
 											| [ld   hl,$0000]
-	clr.w	counter_lsb_8824             	| [ld   (counter_lsb_8824),hl]
+	clr.w	counter_msb_8824             	| [ld   (counter_lsb_8824),hl]
  * init number of lives
 	**move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
 	clr.b	d0	| TEMP
@@ -827,7 +835,7 @@ wait_for_start_0774:
 	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
 	clr.b	(intermission_dance_push_anim_counter,a2)	| [ld   (ix+intermission_dance_push_anim_counter),$00]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 l_079d:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 	jbsr	l_0819                            	| [call $0819]
@@ -962,7 +970,7 @@ l_0870:
 	rts                                    	| [ret]
 
 increase_counter_0875:
-	addq.w	#1,counter_lsb_8824
+	addq.w	#1,counter_msb_8824
 	rts                                    	| [ret]
 
 
@@ -1137,7 +1145,7 @@ l_09a0:
 	jbsr	l_0d44                            	| [call $0D44]
 	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
 	st.b	d1                                	| stop sound [ld   b,$FF]
@@ -1164,8 +1172,8 @@ l_09cb:
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 * a timer which is used for instance for egg blink
 	lea	timer_16_bit_8DDE,a0           	| [ld   hl,timer_16_bit_8DDE]
-	move.b	#0x08,(a0)                      	| [ld   (hl),$08]
-	addq.w	#1,a0                           	| [inc  hl]
+	move.b	#0x08,(a0)+                      	| [ld   (hl),$08]
+												| [inc  hl]
 	move.b	#0x80,(a0)                      	| [ld   (hl),$80]
 
 main_game_loop_09E7:
@@ -1452,9 +1460,9 @@ l_0c70:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 * small cpu-dependent loop
 	move.b	#0x80,d1                        	| [ld   b,$80]
-l_0c75:
-	subq.b	#1,d1                           	| [...]
-	jne	l_0c75                             	| [djnz $0C75]
+	jbsr	osd_small_wait
+												| [...]
+												| [djnz $0C75]
 	jbsr	animate_pengo_39A4                	| [call animate_pengo_39A4]
 	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
 	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
@@ -1492,7 +1500,7 @@ handle_pengo_stumble_0CA0:
 0:
 * once out of 2, pengo stumbles/rests
 	move.b	#0xE0,(animation_frame,a2)      	| [ld   (ix+animation_frame),$E0]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	move.b	#0x40,d0                        	| [ld   a,$40]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	rts                                    	| [ret]
@@ -1510,7 +1518,7 @@ handle_pengo_stumble_0CB9:
 0:
 * once out of 2, pengo stumbles/rests
 	move.b	#0xE2,(animation_frame,a2)      	| [ld   (ix+animation_frame),$E2]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	move.b	#0x40,d0                        	| [ld   a,$40]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	rts                                    	| [ret]
@@ -2061,9 +2069,14 @@ pengo_intermission_or_title_1D29:
 	move.b	#0x40,d0                        	| [ld   a,$40]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jbsr	init_all_characters_states_1D60   	| [call init_all_characters_states_1D60]
+	* this loops 
 l_1d36:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 
+	* here we have to wait some time. Z80 code was performing
+	* a 256 djnz active cpu loop, obviously we can't do that.
+	clr.b		d1
+	jbsr		osd_small_wait
 
 * here we move 6 objects max: 6 pengos, using the ice block
 * sprite structure
@@ -2073,6 +2086,7 @@ l_1d36:
 	jbsr	move_snobee_4_title_1DB4          	| 4 [call move_snobee_4_title_1DB4]
 	jbsr	move_character_following_path_1DBA	| pengo [call move_character_following_path_1DBA]
 	jbsr	move_character_intermission_path_1DC0	| moving block [call move_character_intermission_path_1DC0]
+	* loop until this character reaches state 5
 	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 	move.b	#0x05,d0                        	| [ld   a,$05]
 	cmp.b	(char_state,a2),d0               	| [cp   (ix+char_state)]
@@ -2129,16 +2143,16 @@ move_character_intermission_path_1DC0:
 	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 
 l_1dc4:
-	lea	table_1DF9(pc),a1                  	| [ld   de,table_1DF9]
+	lea	table_title_1DF9(pc),a1                  	| [ld   de,table_title_1DF9]
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
 	tst.b	d0                               	| [and  a]
 	jeq	l_1dda                             	| not playing, skip [jr   z,$1DDA]
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
-	lea	table_1DE1(pc),a1                  	| [ld   de,table_1DE1]
+	lea	table_low_levels_1DE1(pc),a1                  	| [ld   de,table_low_levels_1DE1]
 	cmp.b	#0x0A,d0                         	| [cp   $0A]
 	jcs	l_1dda                             	| less than level 10 [jr   c,$1DDA]
 * >= level 10
-	lea	table_1DED(pc),a1                  	| table for level 10 and more [ld   de,table_1DED]
+	lea	table_high_levels_1DED(pc),a1                  	| table for level 10 and more [ld   de,table_high_levels_1DED]
 l_1dda:
 	move.b	(char_state,a2),d0              	| get char to know where to jump [ld   a,(ix+char_state)]
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
@@ -2146,22 +2160,22 @@ l_1dda:
 do_nothing_1DE0:
 	rts                                    	| [ret]
 
-table_1DE1:
+table_low_levels_1DE1:
 	.long	init_characters_for_intermission_1E05
 	.long	do_nothing_1DE0
 	.long	move_character_intermission_1EC4
 	.long	how_to_dance_20DC
 	.long	move_character_intermission_1EC4
 	.long	do_nothing_1DE0
-table_1DED:
-	.long	move_during_title_screen_1E54
+table_high_levels_1DED:
+	.long	init_characters_level_10_1E54
 	.long	do_nothing_1DE0
 	.long	move_character_intermission_1F52
 	.long	do_nothing_1DE0
 	.long	how_to_dance_20DC
 	.long	do_nothing_1DE0
-table_1DF9:
-	.long	change_character_intermission_phase_1E9C
+table_title_1DF9:
+	.long	change_character_title_phase_1E9C
 	.long	do_nothing_1DE0
 	.long	move_character_intermission_1F90
 	.long	move_character_intermission_204E
@@ -2178,7 +2192,7 @@ init_characters_for_intermission_1E05:
 	addq.b	#2,d0                           	| [inc  a]
 												| [inc  a]
 	move.b	d0,(char_color,a2)              	| [ld   (ix+char_color),a]
-	jbsr	init_characters_for_auto_mode_1E26	| [call init_characters_for_auto_mode_1E26]
+	jbsr	init_character_for_auto_mode_1E26	| [call init_character_for_auto_mode_1E26]
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
 	cmp.b	#0x01,d0                         	| [cp   $01]
 	beq.b	0f
@@ -2187,7 +2201,7 @@ init_characters_for_intermission_1E05:
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
 	rts                                
 	
-init_characters_for_auto_mode_1E26:
+init_character_for_auto_mode_1E26:
 	move.b	#0x03,(facing_direction,a2)     	| [ld   (ix+facing_direction),$03]
 	move.b	#0x0A,(instant_move_period,a2)  	| [ld   (ix+instant_move_period),$0A]
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
@@ -2199,12 +2213,12 @@ init_characters_for_auto_mode_1E26:
 	ror.b	#1,d0                            	| [rrca]
 	subq.b	#1,d0                           	| [dec  a]
 	move.b	d0,(ai_mode,a2)                 	| set mode as level number / 2:	level 16: hardest hunt mode [ld   (ix+ai_mode),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
 	rts                                    	| [ret]
 
-move_during_title_screen_1E54:
+init_characters_level_10_1E54:
 	lea	table_1E84(pc),a0                  	| [ld   hl,table_1E84]
 	jbsr	next_auto_move_1E64               	| [call next_auto_move_1E64]
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
@@ -2216,12 +2230,12 @@ move_during_title_screen_1E54:
 	rts                                    	| [ret]
 
 next_auto_move_1E64:
-	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
-	subq.b	#1,d0                           	| [dec  a]
-	rol.b	#2,d0                            	| [rlca]
+	clr.w	d3                               	| [ld   d,$00]
+	move.b	(char_id,a2),d3                 	| [ld   a,(ix+char_id)]
+	subq.b	#1,d3                           	| [dec  a]
+	rol.b	#2,d3                            	| [rlca]
 	                            	| [rlca]
-	clr.b	d3                               	| [ld   d,$00]
-	move.b	d0,d3                           	| [ld   e,a]
+										| [ld   e,a]
 	add.w	d3,a0						| [add hl,de]
 											| [ld   a,(hl)]
 											| [inc  hl]
@@ -2232,19 +2246,23 @@ next_auto_move_1E64:
 	                      	| [ld   a,(hl)]
 	                          	| [inc  hl]
 	move.b	(a0)+,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
-	move.b	(a0)+,d0                         	| [ld   a,(hl)]
+	move.b	(a0)+,(char_color,a2)                         	| [ld   a,(hl)]
 												| [inc  hl]
-	move.b	d0,(char_color,a2)              	| [ld   (ix+char_color),a]
-	jra	init_characters_for_auto_mode_1E26               	| [jr   $1E26]
+							| [ld   (ix+char_color),a]
+	jra	init_character_for_auto_mode_1E26               	| [jr   $1E26]
 
 
 table_1E84:
-	.byte	0x00,0x98,0x08,0x09,0x70,0x88,0x70,0x10,0x80,0x88,0x70
-	.byte	0x10,0x70,0x98,0x70,0x10,0x80,0x98,0x70,0x10,0x70,0x90,0xF0,0x0B
+	.byte	0x00,0x98,0x08,0x09
+	.byte	0x70,0x88,0x70,0x10
+	.byte	0x80,0x88,0x70,0x10
+	.byte	0x70,0x98,0x70,0x10
+	.byte	0x80,0x98,0x70,0x10
+	.byte	0x70,0x90,0xF0,0x0B
 	
 
 
-change_character_intermission_phase_1E9C:
+change_character_title_phase_1E9C:
 	lea	table_1EAC(pc),a0                  	| [ld   hl,table_1EAC]
 	jbsr	next_auto_move_1E64               	| [call next_auto_move_1E64]
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
@@ -2255,9 +2273,14 @@ change_character_intermission_phase_1E9C:
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
 	rts                                    	| [ret]
 
+* x,y,code<<2+attributes,color
 table_1EAC:
-	.byte	0x00,0x28,0x08,0x0A,0x00,0x50,0x08,0x0B,0x00,0x70,0x08,0x01,0x00,0x08,0x08,0x0B
-	.byte	0x00,0x18,0x08,0x0D,0x00,0x38,0x08,0x0C
+	.byte	0x00,0x28,0x08,0x0A
+	.byte	0x00,0x50,0x08,0x0B
+	.byte	0x00,0x70,0x08,0x01
+	.byte	0x00,0x08,0x08,0x0B
+	.byte	0x00,0x18,0x08,0x0D
+	.byte	0x00,0x38,0x08,0x0C
 
 move_character_intermission_1EC4:
 	jbsr	animate_intermission_penguins_1ef0	| [call animate_intermission_penguins_1ef0]
@@ -2286,7 +2309,7 @@ move_character_intermission_1EC4:
 	jra	move_character_according_to_direction_3DD7	| [jp   move_character_according_to_direction_3DD7]
 
 animate_intermission_penguins_1ef0:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -2309,14 +2332,14 @@ l_1f08:
 	rts                                    	| [ret  nz]
 0:
 	addq.b	#1,(alive_walk_counter,a2)      	| [inc  (ix+alive_walk_counter)]
-	jra	l_3985                             	| [jp   $3985]
+	jra	base_frame_selected_3985                             	| [jp   $3985]
 
 l_1f17:
-	move.l	a2,-(sp)                        	| [push ix]
-	move.w	#0x20,d3                      	| [ld   de,$0020]
-	add.w	d3,a2							| [add  ix,de]
-	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
-	move.l	(sp)+,a2                        	| [pop  ix]
+	                        	| [push ix]
+	                      	| [ld   de,$0020]
+							| [add  ix,de]
+	addq.b	#1,(char_state+0x20,a2)              	| [inc  (ix+char_state)]
+	                        	| [pop  ix]
 	rts                                    	| [ret]
 	
 change_chars_state_from_01_to_02_1f24:
@@ -2391,7 +2414,7 @@ move_character_intermission_1F90:
 	jbsr	l_1fc5                            	| [call $1FC5]
 	st.b	d0                                	| [ld   a,$FF]
 	cmp.b	(x_pos,a2),d0                    	| [cp   (ix+x_pos)]
-	bne	0f
+	bne.b	0f
 	jbsr	change_last_3_characters_char_states_200a                            	| [call z,$200A]
 0:
 	move.b	#0x48,d0                        	| [ld   a,$48]
@@ -2399,11 +2422,12 @@ move_character_intermission_1F90:
 	jne	0f
 	jbsr	l_2032                            	| [call z,$2032]
 0:
+	* check if X position is in the table (aligned on 8)
 	lea	table_1FF7(pc),a0                  	| [ld   hl,table_1FF7]
 	move.b	(x_pos,a2),d0                   	| [ld   a,(ix+x_pos)]
 	move.w	#0x13,d1	                      	| [ld   bc,$0013]
 	jbsr	cpir                              	| [cpir]
-	bne	0f
+	bne.b	0f
 	jbsr	l_203d                            	| [call z,$203D]
 0:
 	jra	move_character_according_to_direction_3DD7	| [jp   move_character_according_to_direction_3DD7]
@@ -2434,13 +2458,14 @@ l_1fe4:
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
 	cmp.b	#0x02,d0                         	| [cp   $02]
 	jeq	animate_intermission_penguins_1ef0 	| [jp   z,animate_intermission_penguins_1ef0]
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
+	move.b	#1,0x208
  * counter 1 out of 32 xxx
-	move.b	#0x12,d1                        	| [ld   b,$12]
+	move.b	#0x12,d1                        	| [ld   b,$12] set bouncing snobee up as base
 	jra	l_1f08                             	| [jp   $1F08]
 table_1FF7:
 	.byte	0x38,0x40,0x48,0x50,0x58,0x60,0x68,0x70,0x78,0x80,0x88,0x90,0x98,0xA0,0xA8,0xB0
@@ -2674,7 +2699,7 @@ l_2170:
 	move.b	#0x78,d1                        	| [ld   b,$78]
 l_2172:
 	move.b	d1,(animation_frame,a2)         	| [ld   (ix+animation_frame),b]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 l_217c:
@@ -2706,13 +2731,13 @@ l_2199:
 
 l_21a2:
 	move.b	#0x94,(animation_frame,a2)      	| [ld   (ix+animation_frame),$94]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
 l_21ad:
 	move.b	#0x12,(animation_frame,a2)      	| [ld   (ix+animation_frame),$12]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
@@ -2779,12 +2804,12 @@ l_221b:
 	rts                                    	| [ret]
 l_222a:
 	move.b	#0xF4,(animation_frame,a2)      	| [ld   (ix+animation_frame),$F4]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 l_2235:
 	move.b	#0xF0,(animation_frame,a2)      	| [ld   (ix+animation_frame),$F0]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
@@ -2855,12 +2880,12 @@ l_22a6:
 
 l_22b5:
 	move.b	#0xE8,(animation_frame,a2)      	| [ld   (ix+animation_frame),$E8]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 l_22c0:
 	move.b	#0xEC,(animation_frame,a2)      	| [ld   (ix+animation_frame),$EC]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
@@ -2873,17 +2898,14 @@ pack_ice_screen_22CB:
 l_22d4:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 * active wait
-	clr.b	d1                               	| [ld   b,$00]
-l_22d9:
-	subq.b	#1,d1                           	| [...]
-	jne	l_22d9                             	| [djnz $22D9]
-l_22db:
-	subq.b	#1,d1                           	| [...]
-	jne	l_22db                             	| [djnz $22DB]
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	clr.b	d1									| [ld   b,$00]
+	jbsr	osd_small_wait						| [djnz $22D9]
+	jbsr	osd_small_wait						| [djnz $22D9]
+							
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	jne	l_22e9                             	| [jr   nz,$22E9]
-	move.b	counter_msb_8825,d0             	| [ld   a,(counter_msb_8825)]
+	move.b	counter_msb_8824,d0             	| [ld   a,(counter_msb_8825)]
 	jbsr	set_sky_color_24FC                	| [call set_sky_color_24FC]
 * move 6 characters. For that, use the 6 sprites
 * (4 snobees, pengo, and ice block) to display 2 snobees
@@ -2937,7 +2959,6 @@ show_ice_pack_screen_2325:
 	jbsr	osd_w_videoram
 	addq.w	#1,d6
 	dbf		d1,1b
-	bsr		osd_break
 	rts                                    	| [ret]
 
 move_snobee_pack_ice_1_233E:
@@ -3043,7 +3064,7 @@ l_23e7:
 	rts                                    	| [ret]
 
 l_23ff:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x07,d0                         	| [and  $07]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -3066,10 +3087,10 @@ l_2423:
 	jeq	l_242d                             	| [jr   z,$242D]
 	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
 l_242d:
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	rts                                    	| [ret]
 
-	jbsr	l_3985                            	| [call $3985]
+	jbsr	base_frame_selected_3985                            	| [call $3985]
 	rts                                    	| [ret]
 
 * this is wrong 0x10,0x11 is a 16-bit pointer on smth
@@ -3510,11 +3531,11 @@ l_26f4:
 	rts                                    	| [ret]
 l_2712:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
-	move.b	counter_msb_8825,d0             	| [ld   a,(counter_msb_8825)]
+	move.b	counter_msb_8824,d0             	| [ld   a,(counter_msb_8825)]
 	and.b	#0x07,d0                         	| [and  $07]
 	jne	l_26f4                             	| [jr   nz,$26F4]
 	move.b	#0x10,d1                        	| [ld   b,$10]
-	move.b	counter_msb_8825,d0             	| [ld   a,(counter_msb_8825)]
+	move.b	counter_msb_8824,d0             	| [ld   a,(counter_msb_8825)]
 	btst.b	#3,d0                           	| [bit  3,a]
 	jne	l_2727                             	| [jr   nz,$2727]
 	move.b	#0x16,d1                        	| [ld   b,$16]
@@ -3872,7 +3893,7 @@ l_2997:
 	jra	l_29a7                             	| [jr   0x29A7]
 l_2999:
 	cmp.b	#0x24,d0                         	| [cp   0x24]
-	jcc	l_29b2                             	| [jr   nc,0x29B2]
+	jcc	l_29b2                             	| [jr   nc,0x29B2]: above 34: limit
 	move.w	#0x83C2,d6                      	| set screen address to 83C2 [ld   hl,0x83C2]
 	btst.b	#0,d0                           	| [bit  0,a]
 	jeq	l_29a7                             	| [jr   z,0x29A7]
@@ -4476,7 +4497,7 @@ l_2dbe:
 												| [inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2dbe                             	| [djnz $2DBE]
-
+	
  * initialize
 	lea	maze_data_8C20,a2              	| [ld   ix,maze_data_8C20]
 	clr.b	(0x3f,a2)                        	| [ld   (ix+$3f),$00]
@@ -4493,7 +4514,7 @@ l_2dbe:
 * loop to draw the paths of the maze maze here
 
 l_2dd7:
-	move.l	a4,-(sp)                        	| [push bc]
+	move.w	d1,-(sp)                        	| [push bc]
 	move.b	#0x07,d2                        	|  inside loop done 7 times [ld   c,$07]
 
 * draw one path
@@ -4504,7 +4525,7 @@ l_2dda:
 	move.b	d0,(0x01,a2)                    	| [ld   (ix+$01),a]
 	move.b	#0x08,d0                        	| [ld   a,$08]
 	sub.b	d2,d0                            	| [sub  c]
-	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
+	move.b	d0,(a2)                    	| [ld   (ix+$00),a]
 	bsr		load_maze_data
  * can something be drawn from this point?
 	jbsr	is_way_clear_30CA                 	| [call is_way_clear_30CA]
@@ -4533,7 +4554,7 @@ l_2e19:
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d2                           	| [dec  c]
 	jne	l_2dda                             	| [jr   nz,$2DDA]
-	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	move.w	(sp)+,d1                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2dd7                             	| [djnz $2DD7]
 
@@ -4582,45 +4603,45 @@ table_2E55:
 	
 draw_borders_2E5D:
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
 	jeq	draw_borders_2E6A                             	| [jr   z,$2E6A]
-	clr.b	d0                               	| [ld   a,$00]
-	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	                               	| [ld   a,$00]
+	clr.b	cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	jra	l_2e6f                             	| [jr   $2E6F]
 
 draw_borders_2E6A:
-	move.b	#0x09,d0                        	| [ld   a,$09]
-	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
+												| [ld   a,$09]
+	move.b	#0x09,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 l_2e6f:
-	move.b	#0x10,d4                        	| [ld   e,$10]
-	jbsr	draw_vertical_walls_2E81          	| [call draw_vertical_walls_2E81]
-	move.b	#0x11,d4                        	| [ld   e,$11]
-	jbsr	draw_horizontal_walls_2E92        	| [call draw_horizontal_walls_2E92]
+	move.b	#0x10,d4                        	| horizontal wall tile [ld   e,$10] 
+	jbsr	draw_horizontal_walls_2E81          	| [call draw_horizontal_walls_2E81]
+	move.b	#0x11,d4                        	| vertical wall tile [ld   e,$11]
+	jbsr	draw_vertical_walls_2E92        	| [call draw_vertical_walls_2E92]
 	rts                                    	| [ret]
 * used to replace walls by stars when diamonds are aligned
+* < D4: character code
 draw_borders_2E7A:
-	jbsr	draw_vertical_walls_2E81          	| [call draw_vertical_walls_2E81]
-	jbsr	draw_horizontal_walls_2E92        	| [call draw_horizontal_walls_2E92]
+	jbsr	draw_horizontal_walls_2E81          	| [call draw_horizontal_walls_2E81]
+	jbsr	draw_vertical_walls_2E92        	| [call draw_vertical_walls_2E92]
 	rts                                    	| [ret]
 
-draw_vertical_walls_2E81:
-	move.b	#0x0,d1                      	| [ld   bc,$0100]
-	move.b	#0x1,d2                      	| [ld   bc,$0100]
+draw_horizontal_walls_2E81:
+	move.b	#0x1,d1                      	| [ld   bc,$0100]
+	move.b	#0x0,d2                      	| [ld   bc,$0100]
 	move.b	#0x1C,d3                        	| [ld   d,$1C]
-	jbsr	write_character_and_code_at_xy_2EA3	| [call write_character_and_code_at_xy_2EA3]
-	move.b	#0x0,d1                      	| [ld   bc,$2000]
-	move.b	#0x20,d2                      	| [ld   bc,$2000]
+	jbsr	write_character_and_code_line_at_xy_2EA3	| [call write_character_and_code_line_at_xy_2EA3]
+	move.b	#0x20,d1                      	| [ld   bc,$2000]
+	move.b	#0x0,d2                      	| [ld   bc,$2000]
 	move.b	#0x1C,d3                        	| [ld   d,$1C]
-	jbsr	write_character_and_code_at_xy_2EA3	| [call write_character_and_code_at_xy_2EA3]
+	jbsr	write_character_and_code_line_at_xy_2EA3	| [call write_character_and_code_line_at_xy_2EA3]
 	rts                                    	| [ret]
 
 * BC: X,Y
 * D: number of repeats
 * E: character to set (with current cursor color)
 fill_line_with_character_current_color_2EB8:
-	move.w	d3,-(sp)                        	| [push de]
+	movem.w	d3/d4,-(sp)                        	| [push de]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
-	move.w	(sp)+,d3                        	| [pop  de]
+	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	move.b	d4,d0
 	jbsr		osd_w_videoram					| [ld   (hl),e]
 												| [push de]
@@ -4635,13 +4656,13 @@ fill_line_with_character_current_color_2EB8:
 	rts                                    	| [ret]
 
 
-draw_horizontal_walls_2E92:
-	move.b	#0x0,d1                      	| [ld   bc,$0100]
-	move.b	#0x1,d2                      	| [ld   bc,$0100]
+draw_vertical_walls_2E92:
+	move.b	#0x1,d1                      	| [ld   bc,$0100]
+	move.b	#0x0,d2                      	| [ld   bc,$0100]
 	move.b	#0x20,d3                        	| [ld   d,$20]
 	jbsr	fill_line_with_character_current_color_2EB8	| [call fill_line_with_character_current_color_2EB8]
-	move.b	#0x1B,d2                      	| [ld   bc,$2000]
-	move.b	#0x01,d3                        	| [ld   d,$1C]
+	move.b	#0x1B,d2                      	| [ld   bc,$011B]
+	move.b	#0x01,d1                        
 	move.b	#0x20,d3                        	| [ld   d,$20]
 	jbsr	fill_line_with_character_current_color_2EB8	| [call fill_line_with_character_current_color_2EB8]
 	rts                                    	| [ret]
@@ -4649,12 +4670,13 @@ draw_horizontal_walls_2E92:
 * < A: code
 * < B: X
 * < C: Y
+* < D: number of times to repeat
 * < E: character
 
-write_character_and_code_at_xy_2EA3:
-	move.w	d3,-(sp)                        	| [push de]
+write_character_and_code_line_at_xy_2EA3:
+	movem.w	d3/d4,-(sp)                        	| [push de]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
-	move.w	(sp)+,d3                        	| [pop  de]
+	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	move.b	d4,d0                         	| [ld   (hl),e]
 	jbsr	osd_w_videoram
 												| [ld   de,$0400]
@@ -4664,7 +4686,7 @@ write_character_and_code_at_xy_2EA3:
 												| [pop  de]
 	addq.b	#1,d2                           	| [inc  c]
 	subq.b	#1,d3                           	| [dec  d]
-	jne	write_character_and_code_at_xy_2EA3	| [jr   nz,write_character_and_code_at_xy_2EA3]
+	jne	write_character_and_code_line_at_xy_2EA3	| [jr   nz,write_character_and_code_line_at_xy_2EA3]
 	rts                                    	| [ret]
 	
 
@@ -4680,7 +4702,6 @@ l_2ed7:
 	move.b	#0x0F,d1                        	| [ld   b,$0F]
 l_2edd:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.l	a4,-(sp)                        	| [push bc]
 	move.b	#0x0D,d2                        	| [ld   c,$0D]
 l_2ee0:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
@@ -4699,7 +4720,6 @@ l_2ee0:
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d2                           	| [dec  c]
 	jne	l_2ee0                             	| [jr   nz,$2EE0]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2edd                             	| [djnz $2EDD]
@@ -4962,7 +4982,7 @@ _02_path_draw_left_305E:
 	rts                                    	| [ret  z]
 0:
 	jbsr	set_way_left_clear_30BC           	| [call set_way_left_clear_30BC]
-	subq.b	#1,(0x00,a2)                    	| xlen-- [dec  (ix+$00)]
+	subq.b	#1,(a2)                    	| xlen-- [dec  (ix+$00)]
 	jbsr	draw_2_holes_left_3103            	| [call draw_2_holes_left_3103]
 	jra	handle_path_end_307C               	| [jr   handle_path_end_307C]
 
@@ -4973,7 +4993,7 @@ _03_path_draw_right_306D:
 	rts                                    	| [ret  z]
 0:
 	jbsr	set_way_right_clear_30C3          	| [call set_way_right_clear_30C3]
-	addq.b	#1,(0x00,a2)                    	| xlen++ [inc  (ix+$00)]
+	addq.b	#1,(a2)                    	| xlen++ [inc  (ix+$00)]
 	jbsr	draw_2_holes_right_3110           	| [call draw_2_holes_right_3110]
 	jra	handle_path_end_307C               	| [jr   handle_path_end_307C]
 
@@ -5076,7 +5096,7 @@ l_30d4:
 	add.w	d3,a0								| [add  hl,de]
 	jmp		(a5)
 bit_set:
-	bset.b	d4,(a0)
+	btst.b	d4,(a0)
 	rts
 bit_clear:
 	bclr.b	d4,(a0)
@@ -5116,8 +5136,8 @@ draw_2_holes_right_3110:
 	rts                                    	| [ret]
 
 draw_one_hole_311D:
-	move.w	maze_data_8C20+2,d2           
-	move.w	maze_data_8C20+3,d1           	| | [ld   bc,(maze_data_8C20+2)]
+	move.b	maze_data_8C20+2,d2           
+	move.b	maze_data_8C20+3,d1           	| | [ld   bc,(maze_data_8C20+2)]
 	move.b	d2,d0                           	| [ld   a,c]
 	add.b	d0,d0                            	| [add  a,a]
 	addq.b	#1,d0                           	| [inc  a]
@@ -5150,18 +5170,17 @@ l_314e:
 
 * < A: sprite number to display (starting at 1)
 * < HL: points on X,Y
-display_sprite_3154:
+set_character_sprite_position_3154:
 	lea	sprite_ram_9022-2,a3             	| [ld   iy,sprite_ram_9022-2]
 	add.b	d0,d0                            	| [add  a,a]
-	clr.b	d3                               	| [ld   d,$00]
+	clr.w	d3                               	| [ld   d,$00]
 	move.b	d0,d3                           	| [ld   e,a]
 	add.w	d3,a3								| [add  iy,de]
 
-	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	(a0)+,d0                         	| [ld   a,(hl)]
 	not.b	d0                               	| [cpl]
-l_316a:
 	move.b	d0,(0x00,a3)                    	| [ld   (iy+$00),a]
-	addq.w	#1,a0                           	| [inc  hl]
+												| [inc  hl]
 
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	not.b	d0                               	| 255-Y [cpl]
@@ -5172,18 +5191,19 @@ l_317b:
 
 * < HL: pengo/snobee struct 8Dxx
 * < A: sprite index
-display_character_sprite_318A:
+set_character_sprite_code_and_color_318A:
 	lea	sprite_ram_8FF2-2,a3          	| [ld   iy,stack_pointer_8FF0]
 	addq.w	#2,a0                           	| [inc  hl]
 											  | skip coordinates [inc  hl]
-	add.b	d0,d0                            	| we only read sprite index & color [add  a,a]
-	clr.b	d3                               	| [ld   d,$00]
+	* we only read sprite index & color 									  
+	add.b	d0,d0                            	| [add  a,a]
+	clr.w	d3                               	| [ld   d,$00]
 	move.b	d0,d3                           	| [ld   e,a]
-	add.w	d3,a3								| [add  iy,de]
-	move.b	(a0),d3                         	| [ld   d,(hl)]
+	add.w	d3,a3								| [add  iy,de] 	set to proper character sprite address
+	move.b	(a0)+,d3                         	| [ld   d,(hl)]
 
 	move.b	d3,(0x00,a3)                    	| [ld   (iy+$00),d]
-	addq.w	#1,a0                           	| [inc  hl]
+												| [inc  hl]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	move.b	d0,(0x01,a3)                    	| [ld   (iy+$01),a]
 	rts                                    	| [ret]
@@ -5302,7 +5322,7 @@ init_moving_block_3283:
 	clr.b	(0x16,a2)                        	| [ld   (ix+$16),$00]
 	clr.b	(0x17,a2)                        	| [ld   (ix+$17),$00]
 	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	rts 		| [ret]
 * 5 slots of 5-byte states for breaking blocks
 * only 5 blocks can be broken at the same time by 4 snobees
@@ -5328,7 +5348,7 @@ l_32bc:
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
-	move.b	timer_16bit_8822,d0             	| [ld   a,(timer_16bit_8822)]
+	move.b	timer_16bit_8823_lsb,d0             	| [ld   a,(timer_16bit_8822)]
 	and.b	#0x1F,d0                         	| [and  0x1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -5341,7 +5361,7 @@ l_32bc:
 	move.b	#0x13,d1                      	| [ld   bc,0x2213]
 	move.b	#0x22,d2                      	| [ld   bc,0x2213]
 l_32d4:
-	move.b	timer_16bit_8822,d0             	| [ld   a,(timer_16bit_8822)]
+	move.b	timer_16bit_8823_lsb,d0             	| [ld   a,(timer_16bit_8822)]
 	btst.b	#5,d0                           	| [bit  5,a]
 	jeq	l_32ea                             	| [jr   z,0x32EA]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
@@ -5418,11 +5438,12 @@ snobee_jump_table_332D:
 _00_snobee_do_nothing_3353:
  * active loop to keep roughly the same game speed
  * regardless of the number of currently active monsters
+	jbsr	osd_break
 	move.b	#0x05,d1                        	| [ld b,$05]
 	subq.b	#1,d1                           	| [dec  b]
-l_3355:
-	subq.b	#1,d1                           	| [...]
-	jne	l_3355                             	| [djnz $3355]
+	jbsr	osd_small_wait
+												| [...]
+											| [djnz $3355]
 	rts                                           	| [ret]
 
 do_nothing_3358:
@@ -5448,9 +5469,9 @@ chicken_mode_3372:
 	rts                                    	| [ret]
 
 _01_snobee_not_moving_3377:
-	jbsr	l_3957                            	| [call $3957]
+	jbsr	animate_snobee_3957                            	| [call $3957]
 	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
-	bne	0f
+	bne.b	0f
 	jbsr	l_3385                            	| [call z,$3385]
 0:
 	jbsr	l_338e                            	| [call $338E]
@@ -5461,7 +5482,7 @@ l_3385:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_338e:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -5478,7 +5499,7 @@ l_339d:
 
 _02_snobee_moving_33A5:
  * is period time reached?
-	jbsr	l_3957                            	| [call $3957]
+	jbsr	animate_snobee_3957                            	| [call $3957]
 	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
 	move.b	(current_period_counter,a2),d0  	| [ld   a,(ix+current_period_counter)]
 	cmp.b	(instant_move_period,a2),d0      	|  snobee period (copied from ix+move_period) [cp   (ix+instant_move_period)]
@@ -5506,7 +5527,7 @@ display_snobee_sprite_33CE:
 	move.b	(char_id,a2),d0                 	| load sprite index [ld   a,(ix+char_id)]
 	move.l	a2,a0                        	| [push ix]
 											| [pop  hl]
-	jbsr	display_sprite_3154               	| [call display_sprite_3154]
+	jbsr	set_character_sprite_position_3154               	| [call set_character_sprite_position_3154]
 	rts
 
 
@@ -5539,9 +5560,9 @@ handle_snobee_direction_change_33D8:
  * only 2 snobees remaining
  * reset counter
 	clr.b	d0                               	| [xor  a]
-	move.b	d0,five_second_counter_8823     	| [ld   (five_second_counter_8823),a]
+	move.b	d0,timer_16bit_8822_msb     	| [ld   (five_second_counter_8823),a]
 l_33fc:
-	move.b	five_second_counter_8823,d0     	| [ld   a,(five_second_counter_8823)]
+	move.b	timer_16bit_8822_msb,d0     	| [ld   a,(five_second_counter_8823)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
 	jcs	l_342e                             	| [jr   c,$342E]
  * after 15 seconds, the last snobee runs and disappears
@@ -5600,7 +5621,6 @@ l_344b:
  * after 1 minute, accelerate snobees & set A.I. mode to breaking block mode
 	jbsr	compute_snobee_speed_324E         	| [call compute_snobee_speed_324E]
 	subq.b	#0x01,d0                        	| [sub  $01]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	sub.b	d1,d0                            	| [sub  b]
 	move.b	d0,(move_period,a2)             	| change/adjust speed [ld   (ix+move_period),a]
@@ -5980,7 +6000,7 @@ l_36d3:
 
 l_36e0:
 	jbsr	l_3706                            	| [call $3706]
-	jbsr	l_36f6                            	| [call $36F6]
+	jbsr	get_opposite_direction_36f6                            	| [call $36F6]
 
 	move.l	a2,a0                        	| [push ix] [pop  hl]
 	                      	| [ld   de,$0011]
@@ -5993,13 +6013,14 @@ l_36f1:
 	move.b	d0,(facing_direction,a2)        	| [ld   (ix+facing_direction),a]
 	rts                                    	| [ret]
 
-l_36f6:
-	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
-	clr.w	d3                               	| [ld   d,$00]
-	move.b	d0,d3                           	| [ld   e,a]
+get_opposite_direction_36f6:
+	moveq	#0,d3
+	move.b	(facing_direction,a2),d3        	| [ld   a,(ix+facing_direction)]
+											| [ld   d,$00]
+											| [ld   e,a]
 	lea	table_3702(pc),a0                  	| [ld   hl,table_3702]
-	add.w	d3,a0							| [add  hl,de]
-	move.b	(a0),d0                         	| [ld   a,(hl)]
+											| [add  hl,de]
+	move.b	(a0,d3.w),d0                         	| [ld   a,(hl)]
 	rts                                    	| [ret]
 
 table_3702:
@@ -6038,10 +6059,11 @@ l_3720:
 	move.w	#0x11,d3                        	| [ld   e,$11]
 	add.b	d0,d3                            	| [add  a,e]
 												| [ld   e,a]
+												| [ld   d,$00]
 	add.w	d3,a0								| [add  hl,de]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	move.w	d0,-(sp)                        	| [push af]
-	jbsr	l_36f6                            	| [call $36F6]
+	jbsr	get_opposite_direction_36f6                            	| [call $36F6]
 	move.b	d0,d1                           	| [ld   b,a]
 	move.w	(sp)+,d0                        	| [pop  af]
 	cmp.b	d1,d0                            	| [cp   b]
@@ -6391,7 +6413,7 @@ animate_pengo_39A4:
 	bne.b	0f
 	rts                                    	| returns if a == 0 [ret  z]
 0:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| returns if counter_lsb_8824 isn't dividable by 32? [ret  nz]
@@ -6399,12 +6421,12 @@ animate_pengo_39A4:
  * counter 1 out of 32 pengo animation moves
 	jra	l_396b                             	| [jr   $396B]
 
-l_3957:
+animate_snobee_3957:
 	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -6420,16 +6442,16 @@ l_396b:
 	clr.b	d1                               	| [ld   b,$00]
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
 	cmp.b	#0x05,d0                         	| [cp   $05]
-	jeq	l_3985                             	| [jr   z,$3985]
+	jeq	base_frame_selected_3985                             	| [jr   z,$3985]
 	move.b	#0x26,d1                        	| [ld   b,$26]
 	move.b	(ai_mode,a2),d0                 	| [ld   a,(ix+ai_mode)]
 	cmp.b	#0x02,d0                         	| [cp   $02]
-	jeq	l_3985                             	| [jr   z,$3985]
+	jeq	base_frame_selected_3985                             	| [jr   z,$3985]
 	move.b	#0x2C,d1                        	| [ld   b,$2C]
 	cmp.b	#0x09,d0                         	| [cp   $09]
-	jcc	l_3985                             	| [jr   nc,$3985]
+	jcc	base_frame_selected_3985                             	| [jr   nc,$3985]
 	move.b	#0x12,d1                        	| [ld   b,$12]
-l_3985:
+base_frame_selected_3985:
 	addq.b	#1,(alive_walk_counter,a2)      	| [inc  (ix+alive_walk_counter)]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
@@ -6447,13 +6469,13 @@ l_3998:
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
-	jne	display_character_sprite_39AB      	| [jr   nz,display_character_sprite_39AB]
+	jne	set_character_sprite_code_and_color_39AB      	| [jr   nz,set_character_sprite_code_and_color_39AB]
 	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
-display_character_sprite_39AB:
+set_character_sprite_code_and_color_39AB:
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
 
 	move.l	a2,a0                        	| [push ix]+[pop  hl]
-	jbsr	display_character_sprite_318A     	| [call display_character_sprite_318A]
+	jbsr	set_character_sprite_code_and_color_318A     	| [call set_character_sprite_code_and_color_318A]
 	rts                                    	| [ret]
 
 
@@ -6474,7 +6496,7 @@ l_39c3:
 	rts                                    	| [ret]
 
 l_39d1:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x7F,d0                         	| [and  $7F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -6491,7 +6513,7 @@ l_39e4:
 	bset.b	#1,d0                           	| [set  1,a]
 l_39ec:
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	rts                                    	| [ret]
 
 _05_snobee_blinking_stunned_39F3:
@@ -6509,7 +6531,7 @@ l_3a01:
 	rts                                    	| [ret]
 
 l_3a0a:
-	move.b	counter_lsb_8824,d0             	| count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| count mask [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -6528,7 +6550,7 @@ l_3a0a:
 	move.b	d0,d1                           	| [ld   b,a]
 l_3a27:
 	move.b	d1,(char_color,a2)              	| [ld   (ix+char_color),b]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	rts                                    	| [ret]
  * no longer stunned
 l_3a2e:
@@ -6556,7 +6578,7 @@ l_3a52:
 	and.b	#0x07,d0                         	| [and  $07]
 	addq.b	#0x01,d0                        	| [add  a,$01]
 	move.b	d0,(char_color,a2)              	| [ld   (ix+char_color),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	move.b	#0x02,(ai_mode,a2)              	| wake up from "stunned" -> A.I. mode set to breaking block mode [ld   (ix+ai_mode),$02]
 	move.b	#0x02,(char_state,a2)           	| set state to "alive" [ld   (ix+char_state),$02]
 	rts                                    	| [ret]
@@ -6573,7 +6595,7 @@ l_3a77:
 	move.b	#0x08,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$08]
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	move.b	#0x80,(animation_frame,a2)      	| [ld   (ix+animation_frame),$80]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	move.w	#10,d3                      	| [ld   de,$000A]  100 points
 	jbsr	add_to_current_player_score_28AF                            	| [call $28AF]
 	move.b	#0x02,d1                        	| [ld   b,$02]
@@ -6581,7 +6603,7 @@ l_3a77:
 	rts                                    	| [ret]
 
 l_3a92:
-	move.b	counter_lsb_8824,d0             	|  count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	|  count mask [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -6655,7 +6677,7 @@ l_3b12:
 	move.b	moving_block_struct_8DA0+7,d0   	| [ld   a,(moving_block_struct_8DA0+7)]
 	move.b	d0,(current_period_counter,a2)  	| [ld   (ix+current_period_counter),a]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
 	rts                                    	| [ret]
@@ -6720,7 +6742,7 @@ l_3b66:
 	jne	l_3b79                             	| [jr   nz,$3B79]
 	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
 l_3b79:
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	rts                                    	| [ret]
 l_3b7d:
 	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
@@ -6748,7 +6770,7 @@ l_3b98:
 	jne	l_3bac                             	| [jr   nz,$3BAC]
 	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
 l_3bac:
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
 	rts                                    	| [ret]
 l_3bb4:
@@ -6783,16 +6805,18 @@ l_3bee:
 	add.b	d0,d0                            	| [add  a,a]
 	clr.w	d3                               	| [ld   d,$00]
 	move.b	d0,d3                           	| [ld   e,a]
-	lea	table_3C01(pc),a0                  	| [ld   hl,table_3C01]
-	add.w	d3,a0							| [add  hl,de]
-	move.b	(a0),d4                         	| [ld   e,(hl)]
-	addq.w	#1,a0                           	| [inc  hl]
-	move.b	(a0),d3                         	| [ld   d,(hl)]
+	lea	snobee_squash_score_table_3C01(pc),a0                  	| [ld   hl,snobee_squash_score_table_3C01]
+											| [add  hl,de]
+	                         	| [ld   e,(hl)]
+												| [inc  hl]
+	move.w	(a0,d3.w),d3                         	| [ld   d,(hl)]
 	jbsr	add_to_current_player_score_28AF                            	| [call $28AF]
 	rts                                    	| [ret]
 
-table_3C01:
-	.byte	0x28,0x00,0xA0,0x00,0x40,0x01,0x80,0x02
+* 400,1600,3200,6400
+snobee_squash_score_table_3C01:
+	*.byte	0x28,0x00,0xA0,0x00,0x40,0x01,0x80,0x02
+	.byte	0X00,0x28,0x00,0xA0,0x01,0x40,0x02,0x80	  | big endian
 
 l_3c09:
 	move.b	(0x1a,a2),d0                    	| [ld   a,(ix+$1a)]
@@ -6804,7 +6828,7 @@ l_3c09:
 	add.w	d3,a0							| [add  hl,de]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	rts                                    	| [ret]
 
 table_3C1E:
@@ -6812,7 +6836,7 @@ table_3C1E:
 
 
 l_3c22:
-	move.b	counter_lsb_8824,d0             	|  count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	|  count mask [ld   a,(counter_lsb_8824)]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
@@ -6879,7 +6903,7 @@ l_3c70:
 	and.b	#0x07,d0                         	| [and  $07]
 	addq.b	#1,d0                           	| [inc  a]
 	move.b	d0,(char_color,a2)              	|  sets color [ld   (ix+char_color),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	move.b	(move_period,a2),d0             	| [ld   a,(ix+move_period)]
 	move.b	d0,(instant_move_period,a2)     	| [ld   (ix+instant_move_period),a]
 	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
@@ -6947,7 +6971,7 @@ l_3cf6:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_3cff:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x3F,d0                         	| [and  $3F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -6967,7 +6991,7 @@ l_3d0f:
 	move.b	(animation_frame,a2),d0         	| [ld   a,(ix+animation_frame)]
 	subq.b	#0x04,d0                        	| [sub  $04]
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	rts                                    	| [ret]
 l_3d28:
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
@@ -6980,7 +7004,7 @@ l_3d2c:
 	jbsr	l_3d37                            	| [call $3D37]
 	rts                                    	| [ret]
 l_3d37:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x3F,d0                         	| [and  $3F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -7000,7 +7024,7 @@ l_3d47:
 	move.b	(animation_frame,a2),d0         	| [ld   a,(ix+animation_frame)]
 	addq.b	#0x04,d0                        	| [add  a,$04]
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	rts                                    	| [ret]
 l_3d60:
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
@@ -7041,7 +7065,7 @@ l_3d9e:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_3da7:
-	move.b	counter_lsb_8824,d0             	|  count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	|  count mask [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -7069,17 +7093,17 @@ pengo_nominal_move_3DBF:
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
 	jbsr	l_3e06            	
 move_character_according_to_direction_3DD7:
-	pea	l_3de4(pc)                      	| [ld   hl,$3DE4]
-											| [push hl]
+												| [ld   hl,$3DE4]
+	pea		l_3de4(pc)							| [push hl]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	lea	jump_table_3DEE(pc),a1             	| [ld   de,jump_table_3DEE]
-	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
+	jbsr	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
 
 l_3de4:
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
 	move.l	a2,a0                        	| [push ix]
 											| [pop  hl]
-	jbsr	display_sprite_3154               	| [call display_sprite_3154]
+	jbsr	set_character_sprite_position_3154               	| [call set_character_sprite_position_3154]
 	rts                                    	| [ret]
 
 jump_table_3DEE:
@@ -7126,9 +7150,12 @@ l_3e1a:
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	lea	table_3E36(pc),a1                  	| [ld   de,table_3E36]
 	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
-l_3E33: 
-	.byte	0x40,0xE1,0x41,0x00		| unused?
-
+	bne.b	0f		
+	rts			| [ret  z]  back to 3DE4 
+0:
+	move.l	(sp)+,a0	| pop  hl    exit from move_character_according_to_direction_3DD7 normally
+	rts				| [ret]
+        
 table_3E36:
 	.long	pengo_moves_up_3E3E
 	.long	pengo_moves_down_3E5E
@@ -7166,7 +7193,7 @@ l_3e5a:
 	cmp.b	d0,d0                            	| [cp   a]
 	rts                                    	| [ret]
 l_3e5c:
-	move.l	(sp)+,a0                        	| [pop  hl]
+	move.l	(sp)+,a0                        	| [pop  hl] exit from move_character_according_to_direction_3DD7 normally
 	rts                                    	| [ret]
 
 pengo_moves_down_3E5E:
@@ -7409,7 +7436,7 @@ l_3fc5:
 	rol.b	#2,d0                            	| [rlca]
 												| [rlca]
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	move.b	#0x08,d0                        	| [ld   a,$08]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
@@ -7464,7 +7491,7 @@ l_4004:
 	jne	l_4018                             	| [jr   nz,$4018]
 	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
 l_4018:
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
@@ -7484,7 +7511,7 @@ l_402e:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_4037:
-	move.b	counter_lsb_8824,d0             	| count mask [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| count mask [ld   a,(counter_lsb_8824)]
 	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -7529,7 +7556,7 @@ l_4079:
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
 	rts                                    	| [ret]
 l_4082:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -7792,7 +7819,7 @@ l_420f:
 	move.b	#0x74,d0                        	| [ld   a,$74]
 l_424f:
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(char_state,a2)              	| [inc  (ix+char_state)]
 	move.b	#0x05,d1                        	| [ld   b,$05]
 	jbsr	sound_18AF                            	| [call $18AF]
@@ -8079,7 +8106,7 @@ l_43db:
 
 	move.l	a2,-(sp)                        	| [push ix]
 	move.l	(sp)+,a0                        	| [pop  hl]
-	jbsr	display_sprite_3154               	| [call display_sprite_3154]
+	jbsr	set_character_sprite_position_3154               	| [call set_character_sprite_position_3154]
 	rts                                    	| [ret]
 
 l_43e5:
@@ -8473,31 +8500,25 @@ l_4658:
 	move.b	#0x40,d1                        	| [ld   b,$40]
 l_4668:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.l	a4,-(sp)                        	| [push bc]
 	move.b	d1,d0                           	| [ld   a,b]
 	and.b	#0x03,d0                         	| [and  $03]
 	lea	table_479E(pc),a1                  	| [ld   de,table_479E]
 	jbsr	indirect_jump_2D8F                	| [call indirect_jump_2D8F]
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.l	a4,-(sp)                        	| [push bc]
 	move.b	d1,d0                           	| [ld   a,b]
 	subq.b	#1,d0                           	| [dec  a]
 	and.b	#0x07,d0                         	| [and  $07]
 	addq.b	#1,d0                           	| [inc  a]
 	jbsr	l_47fe                            	| [call $47FE]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.l	a4,-(sp)                        	| [push bc]
 	move.b	d1,d2                           	| [ld   c,b]
 	jbsr	l_4817                            	| [call $4817]
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	move.l	(sp)+,a4                        	| [pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_4668                             	| [djnz $4668]
@@ -8961,7 +8982,7 @@ l_4967:
 	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
 	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
 l_4972:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -9054,7 +9075,7 @@ l_4a17:
 	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
 	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
 l_4a22:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -9100,7 +9121,7 @@ l_4a77:
 	move.b	d0,(0x00,a2)                    	| [ld   (ix+$00),a]
 	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
 l_4a82:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x1F,d0                         	| [and  $1F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -9152,7 +9173,7 @@ l_4ac6:
 	move.b	#0x98,d0                        	| [ld   a,$98]
 	jbsr	set_2x2_tile_2F00                 	| [call set_2x2_tile_2F00]
 l_4ae5:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x3F,d0                         	| [and  $3F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -9179,7 +9200,7 @@ l_4b0c:
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	move.b	d0,d1                           	| [ld   b,a]
 	and.b	#0x3F,d0                         	| [and  $3F]
 	beq.b	0f
@@ -9230,7 +9251,7 @@ l_4b5c:
 	rts                                    	| [ret]
 
 l_4b69:
-	move.b	counter_lsb_8824,d0             	| [ld   a,(counter_lsb_8824)]
+	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	beq.b	0f
 	rts                                    	| [ret  nz]
@@ -9288,8 +9309,8 @@ l_4ba1:
 l_4bbb:
 	move.l	(sp)+,a0                        	| [pop  hl]
 	move.w	(sp)+,d1                        	| [pop  bc]
-	addq.w	#1,a0                           	| [inc  hl]
-	addq.w	#1,a0                           	| [inc  hl]
+	addq.w	#2,a0                           	| [inc  hl]
+												| [inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_4ba1                             	| [djnz $4BA1]
 	rts                                    	| [ret]
@@ -9299,16 +9320,16 @@ set_2x2_tile_color_0C_4BC2:
 	move.b	#0x0C,d0                        	| [ld   a,$0C]
 set_2x2_tile_color_4BC4:
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
+	jbsr	osd_w_colorram                     	| [ld   (hl),a]
 	addq.b	#1,d2                           	| [inc  c]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
+	jbsr	osd_w_colorram                     	| [ld   (hl),a]
 	addq.b	#1,d1                           	| [inc  b]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
+	jbsr	osd_w_colorram                     	| [ld   (hl),a]
 	subq.b	#1,d2                           	| [dec  c]
 	jbsr	convert_coords_to_screen_attributes_address_4BDC	| [call convert_coords_to_screen_attributes_address_4BDC]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
+	jbsr	osd_w_colorram                     	| [ld   (hl),a]
 	rts                                    	| [ret]
 
 set_2x2_tile_color_09_4BD8:
@@ -9374,7 +9395,7 @@ snobee_collides_pengo_4C2E:
 	rol.b	#2,d0                            	| [rlca]
 												| [rlca]
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
-	jbsr	display_character_sprite_39AB     	| [call display_character_sprite_39AB]
+	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	jbsr	get_nb_lives_289E                 	| [call get_nb_lives_289E]
 	subq.b	#1,d0                           	| [dec  a]
 	bne.b	0f
@@ -9699,7 +9720,6 @@ misc_table_6800:
      .byte	0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01
      .byte	0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x66,0x01,0xA6,0x01,0xEB,0x01,0xEA,0xC0
 
-	.include "pengo.inc"
 	.ifdef	__amiga__
 	.include "pengo_ram.68k"
 	.align	2
