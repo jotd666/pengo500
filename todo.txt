@@ -1,8 +1,10 @@
 General:
 
 - dip switches (see ** code)
-- merge with copy of pengo.asm (potential bugfixes)
+- highscores (today's best 5) wrongly displayed
+- joystick/insert coin
 - add speed regulation in mainloop: game is too fast
+- sounds
 
 Amiga:
 
