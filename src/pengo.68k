@@ -332,7 +332,7 @@ get_diamond_block_3_xy_8DB4_to_bc:
 	move.b	diamond_block_3_xy_8DB4+1,d1
 	rts
 get_diamond_block_1_xy_8DB0_to_de:
-	move.b	diamond_block_1_xy_8DB0,d4
+	move.b	diamond_block_1_xy_8DB0,d4		| [ld   de,(diamond_block_1_xy_8DB0)]
 	move.b	diamond_block_1_xy_8DB0+1,d3
 	rts
 get_diamond_block_2_xy_8DB2_to_de:
@@ -342,6 +342,18 @@ get_diamond_block_2_xy_8DB2_to_de:
 get_diamond_block_3_xy_8DB4_to_de:
 	move.b	diamond_block_3_xy_8DB4,d4
 	move.b	diamond_block_3_xy_8DB4+1,d3
+	rts
+get_diamond_block_1_xy_8DB0_to_hl:
+	move.b	diamond_block_1_xy_8DB0,d6
+	move.b	diamond_block_1_xy_8DB0+1,d5
+	rts
+get_diamond_block_2_xy_8DB2_to_hl:
+	move.b	diamond_block_2_xy_8DB2,d6
+	move.b	diamond_block_2_xy_8DB2+1,d5
+	rts
+get_diamond_block_3_xy_8DB4_to_hl:
+	move.b	diamond_block_3_xy_8DB4,d6
+	move.b	diamond_block_3_xy_8DB4+1,d5
 	rts
 	
 load_maze_data:
@@ -1659,17 +1671,16 @@ table_0D9D:
 
 does_bc_match_a_diamond_block_xy_0daf:
 	move.w	d1,-(sp)                        	| [push bc]
-	move.b	d2,d3
-	lsl.w	#8,d3
+	
 	move.b	d1,d3                           	| [ld   d,b]
-												| [ld   e,c]
-	move.w	diamond_block_1_xy_8DB0,d6  	| [ld   hl,(diamond_block_1_xy_8DB0)]
+	move.b	d2,d4										| [ld   e,c]
+	bsr		get_diamond_block_1_xy_8DB0_to_hl  	| [ld   hl,(diamond_block_1_xy_8DB0)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_0dcd                             	| [jr   z,$0DCD]
-	move.w	diamond_block_2_xy_8DB2,d6  	| [ld   hl,(diamond_block_2_xy_8DB2)]
+	bsr	get_diamond_block_2_xy_8DB2_to_hl  	| [ld   hl,(diamond_block_2_xy_8DB2)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_0dcd                             	| [jr   z,$0DCD]
-	move.w	diamond_block_3_xy_8DB4,d6  	| [ld   hl,(diamond_block_3_xy_8DB4)]
+	bsr	get_diamond_block_3_xy_8DB4_to_hl  	| [ld   hl,(diamond_block_3_xy_8DB4)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_0dcd                             	| [jr   z,$0DCD]
 	move.w	(sp)+,d1                        	| [pop  bc]
@@ -3415,35 +3426,40 @@ compute_score_insertion_position_2648:
 	move.b	#0x06,d0                        	| [ld   a,$06]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
 	jbsr	get_current_player_score_ptr_in_de_268D	| [call get_current_player_score_ptr_in_de_268D]
-	move.w	hiscore_pos_5_8840,a0       	| [ld   hl,(hiscore_pos_5_8840)]
+	move.b	hiscore_pos_5_8840,d6       	| [ld   hl,(hiscore_pos_5_8840)]
+	move.b	hiscore_pos_5_8840+1,d5       	| [ld   hl,(hiscore_pos_5_8840)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0x05,d0                        	| [ld   a,$05]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
-	move.w	hiscore_pos_5_8840+6,a0     	| [ld   hl,(hiscore_pos_5_8840+6)]
+	move.b	hiscore_pos_5_8840+6,d6     	| [ld   hl,(hiscore_pos_5_8840+6)]
+	move.b	hiscore_pos_5_8840+7,d5     	| [ld   hl,(hiscore_pos_5_8840+6)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0x04,d0                        	| [ld   a,$04]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
-	move.w	hiscore_pos_5_8840+12,a0    	| [ld   hl,(hiscore_pos_5_8840+12)]
+	move.b	hiscore_pos_5_8840+12,d6    	| [ld   hl,(hiscore_pos_5_8840+12)]
+	move.b	hiscore_pos_5_8840+13,d5    	| [ld   hl,(hiscore_pos_5_8840+12)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0x03,d0                        	| [ld   a,$03]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
-	move.w	hiscore_pos_5_8840+0x12,a0  	| pos 2 [ld   hl,(hiscore_pos_5_8840+$12)]
+	move.b	hiscore_pos_5_8840+0x12,d6  	| pos 2 [ld   hl,(hiscore_pos_5_8840+$12)]
+	move.b	hiscore_pos_5_8840+0x13,d5  	| pos 2 [ld   hl,(hiscore_pos_5_8840+$12)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
-	move.w	hiscore_pos_5_8840+0x18,a0  	| pos 1 [ld   hl,(hiscore_pos_5_8840+$18)]
+	move.b	hiscore_pos_5_8840+0x18,d6  	| pos 1 [ld   hl,(hiscore_pos_5_8840+$18)]
+	move.b	hiscore_pos_5_8840+0x19,d5  	| pos 1 [ld   hl,(hiscore_pos_5_8840+$18)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
@@ -3456,10 +3472,12 @@ get_current_player_score_ptr_in_de_268D:
 	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
 	btst.b	#0,d0                           	| is this player 1 or 2? [bit  0,a]
 	jeq	l_2699                             	| [jr   z,$2699]
-	move.w	player_2_score_8810,a1      	| [ld   de,(player_2_score_8810)]
+	move.b	player_2_score_8810,d4      	| [ld   de,(player_2_score_8810)]
+	move.b	player_2_score_8810+1,d3      	| [ld   de,(player_2_score_8810)]
 	rts                                    	| [ret]
 l_2699:
-	move.w	player_1_score_880E,a1      	| [ld   de,(player_1_score_880E)]
+	move.b	player_1_score_880E,d4      	| [ld   de,(player_1_score_880E)]
+	move.b	player_1_score_880E+1,d3      	| [ld   de,(player_1_score_880E)]
 	rts                                    	| [ret]
 
 create_highscore_entry_269E:
@@ -4123,8 +4141,10 @@ update_and_display_p1_score_2BAE:
 	move.b	#0x30,d0                        	| write the fixed '0' for score [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p1_score_for_extra_life_2BAE	| [call check_p1_score_for_extra_life_2BAE]
-	move.w	high_score_880C,d6    		      	| [ld   hl,(high_score_880C)]
-	move.w	player_1_score_880E,d3    		  	| [ld   de,(player_1_score_880E)]
+	move.b	high_score_880C,d6    		      	| [ld   hl,(high_score_880C)]
+	move.b	high_score_880C+1,d5    		      	| [ld   hl,(high_score_880C)]
+	move.b	player_1_score_880E,d4    		  	| [ld   de,(player_1_score_880E)]
+	move.b	player_1_score_880E+1,d3    		  	| [ld   de,(player_1_score_880E)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
@@ -4140,8 +4160,10 @@ check_p1_score_for_extra_life_2BAE:
 	rts                                    	| [ret  nz]
 0:
 	move.w	d6,-(sp)                        	| [push hl]
-	move.w	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
-	move.w	#0x0BB8,d3                      	| [ld   de,$0BB8]
+	move.b	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
+	move.b	player_1_score_880E+1,d5      	| [ld   hl,(player_1_score_880E)]
+	move.b	#0x0B,d3                      	| [ld   de,$0BB8]
+	move.b	#0xB8,d4                      	| [ld   de,$0BB8]
 *	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
 *	btst.b	#0,d0                           	| [bit  0,a]
 *	jeq	l_2bf5                             	| [jr   z,$2BF5]
@@ -4193,7 +4215,7 @@ update_and_display_p2_score_2C24:
 	move.b	#0x30,d0                        	| [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p2_score_for_extra_life_2C06	| [call check_p2_score_for_extra_life_2C06]
-	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)]
+	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)] endian bug
 	move.w	player_2_score_8810,d3      	| [ld   de,(player_2_score_8810)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
@@ -4215,7 +4237,7 @@ update_and_display_p1_score_2C24:
 	move.b	#0x30,d0                        	| [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p2_score_for_extra_life_2C06	| [call check_p2_score_for_extra_life_2C06]
-	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)]
+	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)] endian bug
 	move.w	player_2_score_8810,d3      	| [ld   de,(player_2_score_8810)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	0f
@@ -4472,11 +4494,15 @@ indirect_jump_2D8F:
 
 
 * computes D-H, then E-L if D-H != 0
-* < HL (d6)
-* < DE (d3)
-* < Z if equal, NZ otherwise, C flag set for first different value
+* < HL (d5/d6)
+* < DE (d3/d4)
+* < Z if equal, NZ otherwise
 compare_hl_to_de_2D99:
-	cmp.w	d3,d6
+	cmp.b	d3,d5
+	beq.b	0f
+	rts
+0:
+	cmp.b	d4,d6
 	rts                                    	| [ret]
 
 draw_maze_2DA1:
@@ -4572,7 +4598,7 @@ l_2e19:
 	jbsr	compute_eggs_locations_2FB2       	| [call compute_eggs_locations_2FB2]
 	move.b	#0x09,d0                        	| [ld   a,$09]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
-	jbsr	draw_diamonds_2F3A                	| [call draw_diamonds_2F3A]
+	jbsr	compute_diamond_positions_and_draw_2F3A                	| [call compute_diamond_positions_and_draw_2F3A]
 	rts                                    	| [ret]
 
 * copied from RAM after code has been changed
@@ -4778,20 +4804,23 @@ l_2f32:
 	jne	l_2f32                             	| [djnz $2F32]
 	rts                                    	| [ret]
 
-draw_diamonds_2F3A:
+compute_diamond_positions_and_draw_2F3A:
 	jbsr	get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
+	
+	* D1,D2 holds coords for a xy grid
 	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
-	jne	draw_diamonds_2F3A                 	| [jr   c,draw_diamonds_2F3A]
+	* if on egg, re-cast random
+	jne	compute_diamond_positions_and_draw_2F3A                 	| [jr   c,compute_diamond_positions_and_draw_2F3A]
 	move.b	d1,diamond_block_1_xy_8DB0      	| [ld   (diamond_block_1_xy_8DB0),bc]
 	move.b	d2,diamond_block_1_xy_8DB0+1      	| [ld   (diamond_block_1_xy_8DB0),bc]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
 
 l_2f49:
 	bsr		get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
-	move.w	diamond_block_1_xy_8DB0,d6  	| [ld   hl,(diamond_block_1_xy_8DB0)]
+	move.b	diamond_block_1_xy_8DB0,d5  	| [ld   hl,(diamond_block_1_xy_8DB0)]
+	move.b	diamond_block_1_xy_8DB0+1,d6  	| [ld   hl,(diamond_block_1_xy_8DB0)]
 	move.b	d1,d3                           	| [ld   d,b]
-	lsr.w	#8,d3
-	move.b	d2,d3                           	| [ld   e,c]
+	move.b	d2,d4                           	| [ld   e,c]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2f49                             	| [jr   z,$2F49]
 	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
@@ -4803,13 +4832,14 @@ l_2f49:
 
 l_2f62:
 	jbsr	get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
-	move.w	diamond_block_1_xy_8DB0,d6  	| [ld   hl,(diamond_block_1_xy_8DB0)]
+	move.b	diamond_block_1_xy_8DB0,d5  	| [ld   hl,(diamond_block_1_xy_8DB0)]
+	move.b	diamond_block_1_xy_8DB0+1,d6  	| [ld   hl,(diamond_block_1_xy_8DB0)]
 	move.b	d1,d3                           	| [ld   d,b]
-	lsr.w	#8,d3
-	move.b	d2,d3                           	| [ld   e,c]
+	move.b	d2,d4                           	| [ld   e,c]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2f62                             	| [jr   z,$2F62]
-	move.w	diamond_block_2_xy_8DB2,d6  	| [ld   hl,(diamond_block_2_xy_8DB2)]
+	move.b	diamond_block_2_xy_8DB2,d5  	| [ld   hl,(diamond_block_2_xy_8DB2)]
+	move.b	diamond_block_2_xy_8DB2+1,d6  	| [ld   hl,(diamond_block_2_xy_8DB2)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2f62                             	| [jr   z,$2F62]
 	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
@@ -4876,8 +4906,8 @@ l_2fc5:
 	move.b	#0x19,d1                        	| [ld   b,$19]
 	clr.b	d0                               	| [xor  a]
 l_2fd0:
-	move.b	d0,(a0)                         	| [ld   (hl),a]
-	addq.w	#1,a0                           	| [inc  hl]
+	move.b	d0,(a0)+                         	| [ld   (hl),a]
+												| [inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2fd0                             	| [djnz $2FD0]
 	move.b	total_eggs_to_hatch_8DC0,d0     	| [ld   a,(total_eggs_to_hatch_8DC0)]
@@ -4889,20 +4919,24 @@ l_2fd9:
 	move.b	d1,d5                           	| [ld   h,b]
 	move.b	d2,d6                           	| [ld   l,c]
 * avoid pengo starting position (4 blocks)
-	move.w	#0x0B0C,d3                      	| [ld   de,$0C0B]
+	move.w	#0x0C,d3                      	| [ld   de,$0C0B]
+	move.w	#0x0B,d4                      	| [ld   de,$0C0B]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
-	move.w	#0x0F0C,d3                      	| [ld   de,$0C0F]
+	move.b	#0x0C,d3                      	| [ld   de,$0C0F]
+	move.b	#0x0F,d4                      	| [ld   de,$0C0F]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
-	move.w	#0x0B10,d3                      	| [ld   de,$100B]
+	move.w	#0x10,d3                      	| [ld   de,$100B]
+	move.w	#0x0B,d4                      	| [ld   de,$100B]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
-	move.w	#0x0F10,d3                      	| [ld   de,$100F]
+	move.w	#0x10,d3                      	| [ld   de,$100F]
+	move.w	#0x0F,d4                      	| [ld   de,$100F]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
 	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
-	jcs	l_2fd9                             	| [jr   c,$2FD9]
+	jne	l_2fd9                             	| [jr   c,$2FD9]
 	jbsr	insert_egg_302D                   	| [call insert_egg_302D]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
@@ -4910,8 +4944,9 @@ l_2fd9:
 	rts                                    	| [ret]
 
 
-* < BC: coords to look for hidden egg
+* < BC: (D1/D2)coords to look for hidden egg
 * > carry set (changed by Z not set) if matches hidden egg
+* > if carry (Z) not set, returns the coordinates of the egg
 look_for_hidden_egg_300A:
 	move.b	d1,d3                           	| [ld   d,b]
 	move.b	d2,d4                           	| [ld   e,c]
@@ -4935,11 +4970,12 @@ l_3013:
 											| [inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_3013                             	| [djnz $3013]
-	move.b	d3,d1                           	| [ld   b,d]
-	move.b	d4,d2                           	| [ld   c,e]
+	move.b	d4,d2                           	| [ld   b,d]
+	move.b	d3,d1                           	| [ld   c,e]
 	clr.b	d7                               	| [xor  a]
 	rts                                    	| [ret]
 l_3029:
+	bsr		osd_break
 	move.l	(sp)+,a0                        	| [pop  hl]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	st.b	d7								| scf		; set carry flag
@@ -5973,10 +6009,9 @@ l_36a0:
 l_36aa:
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	move.b	d2,d6                           	| [ld   l,c]
-	lsl.w	#8,d6
-	move.b	d1,d6                           	| [ld   h,b]
-	move.w	(0x16,a2),d3                    	| [ld   e,(ix+$16)]
-												| [ld   d,(ix+$17)]
+	move.b	d1,d5                           	| [ld   h,b]
+	move.b	(0x16,a2),d4                    	| [ld   e,(ix+$16)]
+	move.b	(0x17,a2),d3											| [ld   d,(ix+$17)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bne.b	0f
 	rts                                    	| [ret  z]
@@ -5987,10 +6022,9 @@ l_36aa:
 l_36be:
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	move.b	d2,d6                           	| [ld   l,c]
-	lsl.w	#8,d6
-	move.b	d1,d6                           	| [ld   h,b]
-	move.w	(0x18,a2),d3                    	| [ld   e,(ix+$18)]
-												| [ld   d,(ix+$19)]
+	move.b	d1,d5                           	| [ld   h,b]
+	move.b	(0x18,a2),d4                    	| [ld   e,(ix+$18)]
+	move.b	(0x19,a2),d3						| [ld   d,(ix+$19)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_36d3                             	| [jr   z,$36D3]
 	move.b	#0xFF,(0x15,a2)                 	| [ld   (ix+$15),$FF]
@@ -9386,8 +9420,7 @@ snobee_pengo_collision_test_4C1C:
 0:
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	move.b	d1,d3                           	| [ld   d,b]
-	lsl.w	#8,d3
-	move.b	d2,d3                           	| [ld   e,c]
+	move.b	d2,d4                           	| [ld   e,c]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	rts                                    	| [ret]
 	
@@ -9448,8 +9481,7 @@ l_4c83:
 l_4c8d:
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	move.b	d1,d3                           	| [ld   d,b]
-	lsl.w	#8,d3
-	move.b	d2,d3                           	| [ld   e,c]
+	move.b	d2,d4                           	| [ld   e,c]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	beq.b	0f
 	rts                                    	| [ret  nz]

@@ -5719,7 +5719,7 @@ draw_it_2E04:
 2E2D: CD 12 07      call compute_eggs_locations_2FB2
 2E30: 3E A1         ld   a,$09
 2E32: 32 22 88      ld   (cursor_color_8802),a
-2E35: CD 3A 87      call draw_diamonds_2F3A
+2E35: CD 3A 87      call compute_diamond_positions_and_draw_2F3A
 2E38: C9            ret
 	
 ; copied from RAM after code has been changed
@@ -5904,10 +5904,10 @@ draw_attribute_line_2F30:
 2F37: 10 F9         djnz $2F32
 2F39: C9            ret
 	
-draw_diamonds_2F3A:	
+compute_diamond_positions_and_draw_2F3A:	
 2F3A: CD AC 2F      call get_random_xy_grid_in_bc_2F84
 2F3D: CD 0A 30      call look_for_hidden_egg_300A
-2F40: 38 78         jr   c,draw_diamonds_2F3A
+2F40: 38 78         jr   c,compute_diamond_positions_and_draw_2F3A
 2F42: ED 43 30 25   ld   (diamond_block_1_xy_8DB0),bc
 2F46: CD 29 0F      call set_diamond_position_2FA9
 	
@@ -6011,6 +6011,7 @@ compute_eggs_locations_2FB2:
 2FF6: 11 87 10      ld   de,$100F
 2FF9: CD 99 05      call compare_hl_to_de_2D99
 2FFC: 28 DB         jr   z,$2FD9
+; avoid positions of eggs already present
 2FFE: CD 82 18      call look_for_hidden_egg_300A
 3001: 38 D6         jr   c,$2FD9
 3003: CD 2D 18      call insert_egg_302D
@@ -8677,6 +8678,7 @@ find_breaking_block_free_slot_42c6:
 42EB: D0            ret  nc
 42EC: 36 E8         ld   (hl),$C0
 42EE: C9            ret
+
 42EF: CD 0A 10      call look_for_hidden_egg_300A
 42F2: D0            ret  nc
 42F3: AF            xor  a

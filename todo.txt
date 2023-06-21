@@ -3,9 +3,9 @@ General:
 - dip switches (see ** code)
 - highscores (today's best 5) wrongly displayed
 - joystick/insert coin
-- add speed regulation in mainloop: game is too fast
 - sounds
-
+- "endian bug" in scores
+- monsters hatch wrong position (X/Y swap? due to endian fix)
 Amiga:
 
 - sprites
