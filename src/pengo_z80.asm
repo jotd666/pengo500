@@ -1710,7 +1710,7 @@ player_dies_0CD2:
 0D6F: 46            ld   b,(hl)
 0D70: 23            inc  hl
 0D71: E5            push hl
-0D72: CD 82 30      call look_for_hidden_egg_300A
+0D72: CD 82 30      call look_for_hidden_egg_at_XY_300A
 0D75: 38 23         jr   c,$0D9A
 0D77: CD AF 85      call does_bc_match_a_diamond_block_xy_0daf
 0D7A: 38 96         jr   c,$0D9A
@@ -5908,7 +5908,7 @@ draw_attribute_line_2F30:
 	
 compute_diamond_positions_and_draw_2F3A:	
 2F3A: CD AC 2F      call get_random_xy_grid_in_bc_2F84
-2F3D: CD 0A 30      call look_for_hidden_egg_300A
+2F3D: CD 0A 30      call look_for_hidden_egg_at_XY_300A
 2F40: 38 78         jr   c,compute_diamond_positions_and_draw_2F3A
 2F42: ED 43 30 25   ld   (diamond_block_1_xy_8DB0),bc
 2F46: CD 29 0F      call set_diamond_position_2FA9
@@ -5919,7 +5919,7 @@ compute_diamond_positions_and_draw_2F3A:
 2F50: 59            ld   e,c
 2F51: CD 99 05      call compare_hl_to_de_2D99
 2F54: 28 7B         jr   z,$2F49
-2F56: CD 82 30      call look_for_hidden_egg_300A
+2F56: CD 82 30      call look_for_hidden_egg_at_XY_300A
 2F59: 38 EE         jr   c,$2F49
 2F5B: ED 43 3A 8D   ld   (diamond_block_2_xy_8DB2),bc
 2F5F: CD 01 AF      call set_diamond_position_2FA9
@@ -5933,7 +5933,7 @@ compute_diamond_positions_and_draw_2F3A:
 2F6F: 2A B2 8D      ld   hl,(diamond_block_2_xy_8DB2)
 2F72: CD 99 2D      call compare_hl_to_de_2D99
 2F75: 28 EB         jr   z,$2F62
-2F77: CD 0A 30      call look_for_hidden_egg_300A
+2F77: CD 0A 30      call look_for_hidden_egg_at_XY_300A
 2F7A: 38 6E         jr   c,$2F62
 2F7C: ED 43 B4 8D   ld   (diamond_block_3_xy_8DB4),bc
 2F80: CD 29 0F      call set_diamond_position_2FA9
@@ -6014,7 +6014,7 @@ compute_eggs_locations_2FB2:
 2FF9: CD 99 05      call compare_hl_to_de_2D99
 2FFC: 28 DB         jr   z,$2FD9
 ; avoid positions of eggs already present
-2FFE: CD 82 18      call look_for_hidden_egg_300A
+2FFE: CD 82 18      call look_for_hidden_egg_at_XY_300A
 3001: 38 D6         jr   c,$2FD9
 3003: CD 2D 18      call insert_egg_302D
 3006: C1            pop  bc
@@ -6023,7 +6023,7 @@ compute_eggs_locations_2FB2:
 	
 ; < BC: coords to look for hidden egg
 ; > carry set if matches hidden egg
-look_for_hidden_egg_300A:
+look_for_hidden_egg_at_XY_300A:
 300A: 50            ld   d,b
 300B: 59            ld   e,c
 300C: 3A E8 A5      ld   a,(total_eggs_to_hatch_8DC0)
@@ -7328,7 +7328,7 @@ _05_snobee_mode_pengo_hunt_3_37FA:
 38FE: 3E 1C         ld   a,$1C
 3900: BE            cp   (hl)
 3901: 28 4B         jr   z,$38CE
-3903: CD 8A B8      call look_for_hidden_egg_300A
+3903: CD 8A B8      call look_for_hidden_egg_at_XY_300A
 3906: 38 4E         jr   c,$38CE
 3908: DD CB 9B D6   set  7,(ix+$1b)
 390C: C3 4E C2      jp   find_breaking_block_free_slot_42c6
@@ -8684,7 +8684,7 @@ find_breaking_block_free_slot_42c6:
 42EC: 36 E8         ld   (hl),$C0
 42EE: C9            ret
 
-42EF: CD 0A 10      call look_for_hidden_egg_300A
+42EF: CD 0A 10      call look_for_hidden_egg_at_XY_300A
 42F2: D0            ret  nc
 42F3: AF            xor  a
 42F4: 77            ld   (hl),a
@@ -9101,10 +9101,12 @@ diamond_hits_obstacle_45bc:
 45FE: ED 4B 14 8D   ld   bc,(diamond_block_3_xy_8DB4)
 4602: CD D8 EB      call set_2x2_tile_color_09_4BD8
 4605: DD 36 B7 28   ld   (ix+$17),$00
-4609: CD 3A E6      call $4612
+4609: CD 3A E6      call check_if_diamonds_are_aligned_4612
 460C: C0            ret  nz
 460D: DD 36 B7 FF   ld   (ix+$17),$FF
 4611: C9            ret
+
+check_if_diamonds_are_aligned_4612:
 4612: ED 4B B0 AD   ld   bc,(diamond_block_1_xy_8DB0)
 4616: ED 5B B2 AD   ld   de,(diamond_block_2_xy_8DB2)
 461A: CD 82 46      call $462A

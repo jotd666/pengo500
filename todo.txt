@@ -5,7 +5,7 @@ General:
 - joystick/insert coin
 - sounds
 - "endian bug" in scores
-- monsters hatch wrong position (X/Y swap? due to endian fix)
+- monsters hatch wrong position: check for st.b d7 doesn't clear Z flag! clr.b ???
 Amiga:
 
 - sprites

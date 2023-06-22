@@ -1634,7 +1634,7 @@ l_0d6d:
 	move.b	(a0)+,d1                         	| [ld   b,(hl)]
 											| [inc  hl]
 	move.l	a0,-(sp)                        	| [push hl]
-	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
+	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	jne	l_0d9a                             	| [jr   c,$0D9A]
 	jbsr	does_bc_match_a_diamond_block_xy_0daf                            	| [call $0DAF]
 	jne	l_0d9a                             	| [jr   c,$0D9A]
@@ -4801,7 +4801,7 @@ compute_diamond_positions_and_draw_2F3A:
 	jbsr	get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
 	
 	* D2,D1 holds coords for a xy grid
-	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
+	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	* if on egg, re-cast random
 	jne	compute_diamond_positions_and_draw_2F3A                 	| [jr   c,compute_diamond_positions_and_draw_2F3A]
 	move.b	d1,diamond_block_1_xy_8DB0+1      	| [ld   (diamond_block_1_xy_8DB0),bc]
@@ -4810,13 +4810,12 @@ compute_diamond_positions_and_draw_2F3A:
 
 l_2f49:
 	bsr		get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
-	move.b	diamond_block_1_xy_8DB0+1,d5  	| [ld   hl,(diamond_block_1_xy_8DB0)]
-	move.b	diamond_block_1_xy_8DB0,d6  	| [ld   hl,(diamond_block_1_xy_8DB0)]
-	move.b	d1,d4                           	| [ld   d,b]
-	move.b	d2,d3                           	| [ld   e,c]
+	bsr		get_diamond_block_1_xy_8DB0_to_hl  	| [ld   hl,(diamond_block_1_xy_8DB0)]
+	move.b	d1,d3                           	| [ld   d,b]
+	move.b	d2,d4                           	| [ld   e,c]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2f49                             	| [jr   z,$2F49]
-	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
+	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	jne	l_2f49                             	| [jr   c,$2F49]
 	* no egg: ok
 	move.b	d1,diamond_block_2_xy_8DB2+1      	| [ld   (diamond_block_2_xy_8DB2),bc]
@@ -4825,17 +4824,15 @@ l_2f49:
 
 l_2f62:
 	jbsr	get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
-	move.b	diamond_block_1_xy_8DB0+1,d5  	| [ld   hl,(diamond_block_1_xy_8DB0)]
-	move.b	diamond_block_1_xy_8DB0,d6  	| [ld   hl,(diamond_block_1_xy_8DB0)]
+	bsr		get_diamond_block_1_xy_8DB0_to_hl  	| [ld   hl,(diamond_block_1_xy_8DB0)]
 	move.b	d1,d3                           	| [ld   d,b]
 	move.b	d2,d4                           	| [ld   e,c]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2f62                             	| [jr   z,$2F62]
-	move.b	diamond_block_2_xy_8DB2+1,d5  	| [ld   hl,(diamond_block_2_xy_8DB2)]
-	move.b	diamond_block_2_xy_8DB2,d6  	| [ld   hl,(diamond_block_2_xy_8DB2)]
+	bsr		get_diamond_block_2_xy_8DB2_to_hl  	| [ld   hl,(diamond_block_2_xy_8DB2)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2f62                             	| [jr   z,$2F62]
-	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
+	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	jne	l_2f62                             	| [jr   c,$2F62]
 	move.b	d1,diamond_block_3_xy_8DB4+1      	| [ld   (diamond_block_3_xy_8DB4),bc]
 	move.b	d2,diamond_block_3_xy_8DB4      	| [ld   (diamond_block_3_xy_8DB4),bc]
@@ -4928,7 +4925,7 @@ l_2fd9:
 	move.b	#0x0F,d4                      	| [ld   de,$100F]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
-	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
+	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	jne	l_2fd9                             	| [jr   c,$2FD9]
 	jbsr	insert_egg_302D                   	| [call insert_egg_302D]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
@@ -4940,38 +4937,38 @@ l_2fd9:
 * < BC: (D1=Y/D2=X)coords to look for hidden egg
 * > carry set (changed by Z not set) if matches hidden egg
 * > if carry (Z) not set, returns the coordinates of the egg
-look_for_hidden_egg_300A:
+look_for_hidden_egg_at_XY_300A:
 	move.b	d1,d3                           	| [ld   d,b]
 	move.b	d2,d4                           	| [ld   e,c]
 	move.b	total_eggs_to_hatch_8DC0,d0     	| [ld   a,(total_eggs_to_hatch_8DC0)]
 	move.b	d0,d1                           	| loop nb eggs times [ld   b,a]
 	lea	egg_location_table_8DC2,a0     	| [ld   hl,egg_location_table_8DC2]
 l_3013:
-	movem.w	d1/d2,-(sp)                    	| [push bc]
+	movem.w	d1/d2/d5/d6,-(sp)                    	| [push bc]
 
-	move.l	a0,-(sp)                        	| [push hl]
 	move.b	(a0)+,d2                         	| get egg X [ld   c,(hl)]
 												| [inc  hl]
 	move.b	(a0),d1                         	| get egg Y [ld   b,(hl)]
 	move.b	d1,d5                           	| [ld   h,b]
 	move.b	d2,d6                           	| [ld   l,c]
+	* are the egg coords the ones that were passed as parameter?
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_3029                             	| [jr   z,$3029]
-	move.l	(sp)+,a0                        	| [pop  hl]
-	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	movem.w	(sp)+,d1/d2/d5/d6                    	| [pop  bc]
 	addq.w	#2,a0                           	| advance to next egg in table [inc  hl]
 											| [inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_3013                             	| [djnz $3013]
-	move.b	d4,d2                           	| [ld   b,d]
-	move.b	d3,d1                           	| [ld   c,e]
+	move.b	d3,d1                           	| [ld   b,d]
+	move.b	d4,d2                           	| [ld   c,e]
 	clr.b	d7                               	| [xor  a]
+	tst.b	d7
 	rts                                    	| [ret]
 l_3029:
-	bsr		osd_break
-	move.l	(sp)+,a0                        	| [pop  hl]
-	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	* if break/wait here diamond properly located!!! else WRONG!! WTF
+	movem.w	(sp)+,d1/d2/d5/d6                    	| [pop  bc]
 	st.b	d7								| scf		; set carry flag
+	tst.b	d7
 	rts                                    	| [ret]
 
 * < BC X,Y of egg to insert
@@ -6378,7 +6375,7 @@ l_38f0:
 	move.b	#0x1C,d0                        	| [ld   a,$1C]
 	cmp.b	(a0),d0                          	| [cp   (hl)]
 	jeq	l_38ce                             	| [jr   z,$38CE]
-	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
+	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	jne	l_38ce                             	| [jr   c,$38CE]
 	bset.b	#7,(0x1b,a2)                    	| [set  7,(ix+$1b)]
 	jra	find_breaking_block_free_slot_42c6                             	| [jp   $42C6]
@@ -7961,7 +7958,7 @@ l_42d9:
 	move.b	#0xC0,(a0)                      	| [ld   (hl),$C0]
 	rts                                    	| [ret]
 l_42ef:
-	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
+	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	bne.b	0f
 	clr.b	d7
 	rts                                    	| [ret  nc]
@@ -8432,6 +8429,7 @@ diamond_hits_obstacle_45bc:
 	add.w	d0,d0                            	| [add  a,a]
 												| [ld   d,$00]
 												| [ld   e,a]
+	* store new coordinates of diamond block
 	lea	diamond_block_1_xy_8DB0,a0     	| [ld   hl,diamond_block_1_xy_8DB0]
 	add.w	d0,a0								| [add  hl,de]
 	move.b	d2,(a0)+                         	| [ld   (hl),c]
@@ -8459,7 +8457,7 @@ l_45eb:
 	bsr		get_diamond_block_3_xy_8DB4_to_bc  	| [ld   bc,(diamond_block_3_xy_8DB4)]
 	jbsr	set_2x2_tile_color_09_4BD8        	| [call set_2x2_tile_color_09_4BD8]
 	clr.b	(0x17,a2)                        	| [ld   (ix+$17),$00]
-	jbsr	l_4612                            	| [call $4612]
+	jbsr	check_if_diamonds_are_aligned_4612                            	| [call $4612]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
@@ -8468,7 +8466,7 @@ l_45eb:
 	
 
 	
-l_4612:
+check_if_diamonds_are_aligned_4612:
 	bsr		get_diamond_block_1_xy_8DB0_to_bc  	| [ld   bc,(diamond_block_1_xy_8DB0)]
 	bsr		get_diamond_block_2_xy_8DB2_to_de  	| [ld   de,(diamond_block_2_xy_8DB2)]
 	jbsr	l_462a                            	| [call $462A]
