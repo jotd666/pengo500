@@ -1495,9 +1495,9 @@ text_start_0B20:
 0BDD: CD EC 83      call $0BEC
 0BE0: CD 79 8B      call $0BF9
 0BE3: D8            ret  c
-0BE4: CD B6 8C      call $0C1E
+0BE4: CD B6 8C      call is_block_moving_0c1e
 0BE7: D8            ret  c
-0BE8: CD 8E 8C      call $0C26
+0BE8: CD 8E 8C      call are_there_free_breaking_block_slots_0c26
 0BEB: C9            ret
 
 0BEC: 21 37 85      ld   hl,pengo_struct_8D80+char_state
@@ -1528,6 +1528,7 @@ text_start_0B20:
 0C1A: 10 5E         djnz $0C12
 0C1C: A7            and  a
 0C1D: C9            ret
+is_block_moving_0c1e:
 0C1E: 21 9F 8D      ld   hl,block_moving_flag_8DBF
 0C21: 7E            ld   a,(hl)
 0C22: A7            and  a
@@ -1536,6 +1537,7 @@ text_start_0B20:
 0C25: C9            ret
 
 ; start from second slot
+are_there_free_breaking_block_slots_0c26:
 0C26: 21 ED 8C      ld   hl,breaking_block_slots_8CC0+5
 0C29: 11 2E A0      ld   de,$0006
 0C2C: 06 A4         ld   b,$04
@@ -7767,7 +7769,7 @@ table_3C1E:
 3C4B: 21 F5 A5      ld   hl,current_nb_eggs_to_hatch_8DDD
 3C4E: 7E            ld   a,(hl)
 3C4F: A7            and  a
-3C50: 20 1A         jr   nz,$3C6C
+3C50: 20 1A         jr   nz,hatch_one_egg_3c6c
 3C52: DD 36 1F 88   ld   (ix+char_state),$00
 3C56: CD 07 28      call get_level_number_288F
 3C59: 3D            dec  a
@@ -7782,20 +7784,21 @@ table_3C1E:
 3C66: 3E 8C         ld   a,$04
 3C68: 32 33 A4      ld   (game_phase_8CBB),a
 3C6B: C9            ret
-	
-3C6C: 35            dec  (hl)
+
+hatch_one_egg_3c6c:
+3C6C: 35            dec  (hl)		; one less egg
 3C6D: 21 C2 A5      ld   hl,egg_location_table_8DC2
-3C70: 4E            ld   c,(hl)
+3C70: 4E            ld   c,(hl)	; get X
 3C71: 23            inc  hl
-3C72: 46            ld   b,(hl)
+3C72: 46            ld   b,(hl)	; get Y
 3C73: 23            inc  hl
 3C74: 78            ld   a,b
 3C75: 81            add  a,c
-3C76: 28 70         jr   z,$3C70
+3C76: 28 70         jr   z,$3C70	; 0: empty slot: find another slot
 3C78: C5            push bc
 3C79: CD C6 CA      call find_breaking_block_free_slot_42c6
 3C7C: C1            pop  bc
-3C7D: CD DE 3C      call $3CDE
+3C7D: CD DE 3C      call convert_grid_coords_to_sprite_coords_3cde
 3C80: DD 71 00      ld   (ix+x_pos),c
 3C83: DD 70 89      ld   (ix+y_pos),b
 3C86: CD E6 1B      call display_snobee_sprite_33CE
@@ -7841,9 +7844,11 @@ table_3C1E:
 	;; when a new egg has hatched
 3CDB: 36 02         ld   (hl),$02 ;  changes A.I. mode to block breaking mode
 3CDD: C9            ret
+
+convert_grid_coords_to_sprite_coords_3cde:
 3CDE: 78            ld   a,b
 3CDF: 07            rlca
-3CE0: 07            rlca
+3CE0: 07            rlca		; multiply by 8
 3CE1: 07            rlca
 3CE2: 47            ld   b,a
 3CE3: 79            ld   a,c

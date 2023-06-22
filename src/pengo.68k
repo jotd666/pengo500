@@ -452,12 +452,10 @@ l_013f:
 
 l_015b:
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
 	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
-	tst.b	d0                               	| [and  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
@@ -1371,11 +1369,11 @@ l_0be0:
 	beq.b	0f
 	rts                                    	| [ret  c]
 0:
-	jbsr	l_0c1e                            	| [call $0C1E]
+	jbsr	is_block_moving_0c1e                            	| [call $0C1E]
 	beq.b	0f
 	rts                                    	| [ret  c]
 0:
-	jbsr	l_0c26                            	| [call $0C26]
+	jbsr	are_there_free_breaking_block_slots_0c26                            	| [call $0C26]
 	rts                                    	| [ret]
 
 l_0bec:
@@ -1418,10 +1416,9 @@ l_0c19:
 										| [and  a]
 	clr.b	d7							| clears carry
 	rts                                    	| [ret]
-l_0c1e:
+is_block_moving_0c1e:
 	lea	block_moving_flag_8DBF,a0      	| [ld   hl,block_moving_flag_8DBF]
-	move.b	(a0),d0                         	| [ld   a,(hl)]
-	tst.b	d0                               	| [and  a]
+	tst.b	(a0)                         	| [ld   a,(hl)]
 	bne.b	0f
 	clr.b	d7
 	rts                                    	| [ret  z]
@@ -1430,7 +1427,7 @@ l_0c1e:
 	rts                                    	| [ret]
 
 * start from second slot
-l_0c26:
+are_there_free_breaking_block_slots_0c26:
 	lea	breaking_block_slots_8CC0+5,a0 	| [ld   hl,breaking_block_slots_8CC0+5]
 										| [ld   de,$0006]
 	move.b	#0x04,d1                        	| [ld   b,$04]
@@ -1441,7 +1438,6 @@ l_0c2e:
 	add.w	#6,a0							| [add  hl,de]
 	subq.b	#1,d1                           	| [...]
 	jne	l_0c2e                             	| [djnz $0C2E]
-	tst.b	d0                               	| [and  a]
 	clr.b	d7
 	rts                                    	| [ret]
 l_0c37:
