@@ -6895,7 +6895,7 @@ l_3c4b:
 	lea	current_nb_eggs_to_hatch_8DDD,a0	| [ld   hl,current_nb_eggs_to_hatch_8DDD]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	tst.b	d0                               	| [and  a]
-	jne	l_3c6c                             	| [jr   nz,$3C6C]
+	jne	hatch_one_egg_3c6c                             	| [jr   nz,$3C6C]
 	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
 	subq.b	#1,d0                           	| [dec  a]
@@ -6913,8 +6913,8 @@ l_3c4b:
 	move.b	d0,game_phase_8CBB              	| [ld   (game_phase_8CBB),a]
 	rts                                    	| [ret]
 
-l_3c6c:
-	subq.b	#1,(a0)                         	| [dec  (hl)]
+hatch_one_egg_3c6c:
+	subq.b	#1,(a0)                         	| [dec  (hl)] one less egg
 	lea	egg_location_table_8DC2,a0     	| [ld   hl,egg_location_table_8DC2]
 l_3c70:
 	move.b	(a0)+,d2                         	| [ld   c,(hl)]
@@ -6927,7 +6927,7 @@ l_3c70:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
 	jbsr	find_breaking_block_free_slot_42c6                            	| [call $42C6]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
-	jbsr	l_3cde                            	| [call $3CDE]
+	jbsr	convert_grid_coords_to_sprite_coords_3cde                 	| [call $3CDE]
 	move.b	d2,(x_pos,a2)                   	| [ld   (ix+x_pos),c]
 	move.b	d1,(y_pos,a2)                   	| [ld   (ix+y_pos),b]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
@@ -6980,18 +6980,21 @@ l_3cda:
  * when a new egg has hatched
 	move.b	#0x02,-(a0)                      	|  changes A.I. mode to block breaking mode [ld   (hl),$02]
 	rts                                    	| [ret]
-l_3cde:
-	move.b	d1,d0                           	| [ld   a,b]
-	rol.b	#3,d0                            	| [rlca]
+	
+* < d2: x grid coord
+* < d1: y grid coord
+convert_grid_coords_to_sprite_coords_3cde:
+	                           	| [ld   a,b]
+	rol.b	#3,d1                            	| [rlca]
 												| [rlca]
 												| [rlca]
-	move.b	d0,d1                           	| [ld   b,a]
-	move.b	d2,d0                           	| [ld   a,c]
-	addq.b	#0x02,d0                        	| [add  a,$02]
-	rol.b	#3,d0                            	| [rlca]
+												| [ld   b,a]
+	                           	| [ld   a,c]
+	addq.b	#0x02,d2                        	| [add  a,$02]
+	rol.b	#3,d2                            	| [rlca]
 												| [rlca]
 												| [rlca]
-	move.b	d0,d2                           	| [ld   c,a]
+												| [ld   c,a]
 	rts                                    	| [ret]
 l_3ceb:
 	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
@@ -7938,7 +7941,7 @@ l_42cb:
 	subq.b	#1,d3                           	| [dec  d]
 	jne	l_42cb                             	| [jr   nz,$42CB]
 	rts                                    	| [ret]
-	
+	* free slot found: store grid coords
 l_42d9:
 	move.b	#0x80,(a0)                      	| [ld   (hl),$80]
 
