@@ -1073,14 +1073,14 @@ l_08f0:
 	jbsr	l_0e77                            	| [call $0E77]
 	move.b	#0x09,d0                        	| [ld   a,$09]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
-	move.w	diamond_block_1_xy_8DB0,d2  	| [ld   bc,(diamond_block_1_xy_8DB0)]
-	move.w	diamond_block_1_xy_8DB0+1,d1  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	move.b	diamond_block_1_xy_8DB0,d2  	| [ld   bc,(diamond_block_1_xy_8DB0)]
+	move.b	diamond_block_1_xy_8DB0+1,d1  	| [ld   bc,(diamond_block_1_xy_8DB0)]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
-	move.w	diamond_block_2_xy_8DB2,d2  	| [ld   bc,(diamond_block_2_xy_8DB2)]
-	move.w	diamond_block_2_xy_8DB2+1,d1  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+	move.b	diamond_block_2_xy_8DB2,d2  	| [ld   bc,(diamond_block_2_xy_8DB2)]
+	move.b	diamond_block_2_xy_8DB2+1,d1  	| [ld   bc,(diamond_block_2_xy_8DB2)]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
-	move.w	diamond_block_3_xy_8DB4,d2  	| [ld   bc,(diamond_block_3_xy_8DB4)]
-	move.w	diamond_block_3_xy_8DB4+1,d1  	| [ld   bc,(diamond_block_3_xy_8DB4)]
+	move.b	diamond_block_3_xy_8DB4,d2  	| [ld   bc,(diamond_block_3_xy_8DB4)]
+	move.b	diamond_block_3_xy_8DB4+1,d1  	| [ld   bc,(diamond_block_3_xy_8DB4)]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
 	jbsr	l_0d66                            	| [call $0D66]
 	jbsr	l_0dd0                            	| [call $0DD0]
@@ -3048,7 +3048,7 @@ l_2373:
 	move.b	d0,(instant_move_period,a2)     	| [ld   (ix+instant_move_period),a]
 	                           	| [inc  hl]
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
-	move.w	(a0)+,d0                         	| [ld   a,(hl)]
+	move.w	(a0)+,d0                         	| [ld   a,(hl)] this is a 16-bit offset allright
 	sub.w	#0x6800,d0			| sub base address, now this is an offset
 	move.w	d0,(path_address_pointer_or_misc_flags,a2)                    	| [ld   (ix+$10),a]
 												| [inc  hl]
@@ -4803,7 +4803,7 @@ l_2f32:
 compute_diamond_positions_and_draw_2F3A:
 	jbsr	get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
 	
-	* D1,D2 holds coords for a xy grid
+	* D2,D1 holds coords for a xy grid
 	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
 	* if on egg, re-cast random
 	jne	compute_diamond_positions_and_draw_2F3A                 	| [jr   c,compute_diamond_positions_and_draw_2F3A]
@@ -4845,7 +4845,7 @@ l_2f62:
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
 	rts                                    	| [ret]
 
- * return x,y random in b,c
+ * return x,y random in D2,D1
 get_random_xy_grid_in_bc_2F84:
 	jbsr	get_random_x_06_2F95              	| [call get_random_x_06_2F95]
 	add.b	d0,d0                            	| [add  a,a]
@@ -4915,20 +4915,20 @@ l_2fd9:
 	move.b	d1,d5                           	| [ld   h,b]
 	move.b	d2,d6                           	| [ld   l,c]
 * avoid pengo starting position (4 blocks)
-	move.w	#0x0C,d3                      	| [ld   de,$0C0B]
-	move.w	#0x0B,d4                      	| [ld   de,$0C0B]
+	move.b	#0x0C,d3                      	| [ld   de,$0C0B]
+	move.b	#0x0B,d4                      	| [ld   de,$0C0B]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
 	move.b	#0x0C,d3                      	| [ld   de,$0C0F]
 	move.b	#0x0F,d4                      	| [ld   de,$0C0F]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
-	move.w	#0x10,d3                      	| [ld   de,$100B]
-	move.w	#0x0B,d4                      	| [ld   de,$100B]
+	move.b	#0x10,d3                      	| [ld   de,$100B]
+	move.b	#0x0B,d4                      	| [ld   de,$100B]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
-	move.w	#0x10,d3                      	| [ld   de,$100F]
-	move.w	#0x0F,d4                      	| [ld   de,$100F]
+	move.b	#0x10,d3                      	| [ld   de,$100F]
+	move.b	#0x0F,d4                      	| [ld   de,$100F]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
 	jbsr	look_for_hidden_egg_300A          	| [call look_for_hidden_egg_300A]
@@ -4940,7 +4940,7 @@ l_2fd9:
 	rts                                    	| [ret]
 
 
-* < BC: (D1/D2)coords to look for hidden egg
+* < BC: (D1=Y/D2=X)coords to look for hidden egg
 * > carry set (changed by Z not set) if matches hidden egg
 * > if carry (Z) not set, returns the coordinates of the egg
 look_for_hidden_egg_300A:
