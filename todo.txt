@@ -5,8 +5,7 @@ General:
 - joystick/insert coin
 - sounds
 - "endian bug" in scores
-- monsters hatch wrong position:
-- blinking hidden eggs: regression: check for st.b d7 doesn't clear Z flag! clr.b ??? debug this
+- monsters hatch wrong position: debug hatch_one_egg_3c6c
 
 Amiga:
 

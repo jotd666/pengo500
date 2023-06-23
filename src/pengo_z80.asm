@@ -6516,7 +6516,7 @@ snobee_jump_table_332D:
 	dc.w	$3B7D
 	dc.w	$3BB4
 	dc.w	disable_snobee_3359
-	dc.w	$3C4B
+	dc.w	spawn_snobee_if_remaining_eggs_3c4b
 	dc.w	$3CEB
 	dc.w	$336D
 	dc.w	$3D2C
@@ -7766,6 +7766,8 @@ table_3C1E:
 3C47: 2B            dec  hl
 3C48: 36 80         ld   (hl),$08
 3C4A: C9            ret
+
+spawn_snobee_if_remaining_eggs_3c4b:
 3C4B: 21 F5 A5      ld   hl,current_nb_eggs_to_hatch_8DDD
 3C4E: 7E            ld   a,(hl)
 3C4F: A7            and  a
@@ -8603,7 +8605,7 @@ table_41CB:
 425A: CD 8F 18      call sound_18AF
 425D: C9            ret
 
-425E: CD CF 6A      call $42EF
+425E: CD CF 6A      call check_if_broke_hidden_egg_42ef
 4261: D0            ret  nc
 4262: 3A E8 8D      ld   a,(total_eggs_to_hatch_8DC0)
 4265: 90            sub  b
@@ -8678,12 +8680,13 @@ find_breaking_block_free_slot_42c6:
 42E3: 23            inc  hl
 42E4: 23            inc  hl
 42E5: 36 29         ld   (hl),$01
-42E7: CD C7 E2      call $42EF
+42E7: CD C7 E2      call check_if_broke_hidden_egg_42ef
 42EA: E1            pop  hl
 42EB: D0            ret  nc
 42EC: 36 E8         ld   (hl),$C0
 42EE: C9            ret
 
+check_if_broke_hidden_egg_42ef:
 42EF: CD 0A 10      call look_for_hidden_egg_at_XY_300A
 42F2: D0            ret  nc
 42F3: AF            xor  a
@@ -8692,6 +8695,9 @@ find_breaking_block_free_slot_42c6:
 42F6: 77            ld   (hl),a
 42F7: 37            scf		; set carry flag
 42F8: C9            ret
+
+; given XY coords, increment iy+0x18 when not matching
+; diamond position
 42F9: 60            ld   h,b
 42FA: 69            ld   l,c
 42FB: ED 5B 18 8D   ld   de,(diamond_block_1_xy_8DB0)
@@ -8704,6 +8710,8 @@ find_breaking_block_free_slot_42c6:
 430E: FD 34 18      inc  (iy+$18)
 4311: ED 5B 3C 8D   ld   de,(diamond_block_3_xy_8DB4)
 4315: CD 99 05      call compare_hl_to_de_2D99
+; last comparison is useless... nothing is done
+; Z flag is never tested in the caller
 4318: C8            ret  z
 4319: C9            ret
 

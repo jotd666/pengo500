@@ -4946,8 +4946,9 @@ l_2fd9:
 
 
 * < BC: (D1=Y/D2=X)coords to look for hidden egg
-* > carry set (changed by Z not set) if matches hidden egg
+* > carry set (changed by Z not set) if matches hidden egg, A0 points of unhatched egg slot
 * > if carry (C) not set, returns the coordinates of the egg else it trashes D1/D2
+
 look_for_hidden_egg_at_XY_300A:
 	move.b	d1,d3                           	| [ld   d,b]
 	move.b	d2,d4                           	| [ld   e,c]
@@ -5470,7 +5471,7 @@ snobee_jump_table_332D:
 	.long	l_3b7d
 	.long	l_3bb4
 	.long	disable_snobee_3359
-	.long	l_3c4b
+	.long	spawn_snobee_if_remaining_eggs_3c4b
 	.long	l_3ceb
 	.long	l_336d
 	.long	l_3d2c
@@ -6893,13 +6894,13 @@ l_3c31:
 	subq.b	#1,(a0)                         	| [dec  (hl)]
 	lea	timer_16_bit_8DDE+1,a0         	| [ld   hl,timer_16_bit_8DDE+1]
 	move.b	#0x80,(a0)                      	| [ld   (hl),$80]
-	subq.b	#1,a0                           	| [dec  hl]
-	move.b	#0x08,(a0)                      	| [ld   (hl),$08]
+												| [dec  hl]
+	move.b	#0x08,-(a0)                      	| [ld   (hl),$08]
 	rts                                    	| [ret]
-l_3c4b:
+spawn_snobee_if_remaining_eggs_3c4b:
 	lea	current_nb_eggs_to_hatch_8DDD,a0	| [ld   hl,current_nb_eggs_to_hatch_8DDD]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
-	tst.b	d0                               	| [and  a]
+												| [and  a]
 	jne	hatch_one_egg_3c6c                             	| [jr   nz,$3C6C]
 	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
@@ -6914,6 +6915,7 @@ l_3c4b:
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
+	* change game phase. Maybe music accelerates?
 	move.b	#0x04,d0                        	| [ld   a,$04]
 	move.b	d0,game_phase_8CBB              	| [ld   (game_phase_8CBB),a]
 	rts                                    	| [ret]
@@ -7830,7 +7832,7 @@ l_420f:
 	jbsr	move_snobee_current_direction_4378	| [call move_snobee_current_direction_4378]
 	jbsr	clear_2x2_tiles_at_current_pos_43A9	| [call clear_2x2_tiles_at_current_pos_43A9]
 	btst.b	#4,(0x18,a3)                    	| [bit  4,(iy+$18)]
-	beq	0f
+	beq.b	0f
 	jbsr	l_42f9                            	| [call nz,$42F9]
 0:
 	jbsr	l_425e                            	| [call $425E]
@@ -7868,7 +7870,7 @@ l_424f:
 	rts                                    	| [ret]
 
 l_425e:
-	jbsr	l_42ef                            	| [call $42EF]
+	jbsr	check_if_broke_hidden_egg_42ef                            	| [call $42EF]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
@@ -7960,19 +7962,19 @@ l_42d9:
 	addq.w	#2,a0                           	| [inc  hl]
 	                           	| [inc  hl]
 	move.b	#0x01,(a0)                      	| [ld   (hl),$01]
-	jbsr	l_42ef                            	| [call $42EF]
-	movem.l	(sp)+,a0                        	| [pop  hl]
+	jbsr	check_if_broke_hidden_egg_42ef                            	| [call $42EF]
+	movem.l	(sp)+,a0                        	| [pop  hl] (movem preserves flags, C probably OK!)
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0xC0,(a0)                      	| [ld   (hl),$C0]
 	rts                                    	| [ret]
-l_42ef:
+check_if_broke_hidden_egg_42ef:
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
-	* egg hatched: clear slot
+	* breaking block because egg hatched: clear unhatched egg slot
 											| [xor  a]
 	clr.b	(a0)+                         	| [ld   (hl),a]
 											| [inc  hl]
@@ -7980,7 +7982,9 @@ l_42ef:
 	clr.b	d7
 	cmp.b	#1,d7                            	| set carry flag [scf] (handled)
 	rts                                    	| [ret]
+	
 l_42f9:
+	* check if d1,d2 position matches diamond, count in (0x18,a3)
 	move.b	d1,d5                           	| [ld   h,b]
 	move.b	d2,d6                           	| [ld   l,c]
 	bsr		get_diamond_block_1_xy_8DB0_to_de  	| [ld   de,(diamond_block_1_xy_8DB0)]
@@ -7997,6 +8001,8 @@ l_42f9:
 	addq.b	#1,(0x18,a3)                    	| [inc  (iy+$18)]
 	bsr		get_diamond_block_3_xy_8DB4_to_de  	| [ld   de,(diamond_block_3_xy_8DB4)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
+* last comparison is useless... nothing is done
+* Z flag is never tested in the caller
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
