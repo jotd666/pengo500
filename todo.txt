@@ -5,9 +5,13 @@ General:
 - joystick/insert coin
 - sounds
 - "endian bug" in scores
-- monsters hatch wrong position: check for st.b d7 doesn't clear Z flag! clr.b ???
+- monsters hatch wrong position:
+- blinking hidden eggs: regression: check for st.b d7 doesn't clear Z flag! clr.b ??? debug this
+
 Amiga:
 
+- life lost/current life: pengo life icon wrong
+- if clut 0 is chosen for sprites, just hide them instead of all black!
 - sprites
 - sound
 - log used cluts to filter out unused clut/char combination

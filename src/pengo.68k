@@ -1228,8 +1228,7 @@ l_09f4:
 	tst.b	d0                               	| [and  a]
 	jne	main_game_loop_09E7                	| [jr   nz,main_game_loop_09E7]
 	jbsr	l_0bdd                            	|  ??? [call $0BDD]
-	tst.b	d7
-	jne	main_game_loop_09E7                	| [jr   c,main_game_loop_09E7]
+	jcs	main_game_loop_09E7                	| [jr   c,main_game_loop_09E7]
 
 level_completed_0A2B:
 	move.b	#0x04,d1                        	| level completed sound [ld   b,$04]
@@ -1363,14 +1362,14 @@ l_0bdd:
 	jbsr	l_0bec                            	| [call $0BEC]
 l_0be0:
 	jbsr	l_0bf9                            	| [call $0BF9]
-	beq.b	0f
+	bcc.b	0f
 	rts                                    	| [ret  c]
 0:
 	jbsr	is_block_moving_0c1e                            	| [call $0C1E]
-	beq.b	0f
+	bcc.b	0f
 	rts                                    	| [ret  c]
 0:
-	jbsr	are_there_free_breaking_block_slots_0c26                            	| [call $0C26]
+	jbra	are_there_free_breaking_block_slots_0c26                            	| [call $0C26]
 	rts                                    	| [ret]
 
 l_0bec:
@@ -1403,24 +1402,28 @@ l_0c12:
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
 	jcs	l_0c19                             	| [jr   c,$0C19]
-	st		d7								| [scf]		 set carry flag
+	clr.b	d7
+	cmp.b	#1,d7                            	| set carry flag [scf] (handled)
 	rts                                    	| [ret]
 	
 l_0c19:
 	add.w	d3,a0							| [add  hl,de]
 	subq.b	#1,d1                           	| [...]
 	jne	l_0c12                             	| [djnz $0C12]
-										| [and  a]
-	clr.b	d7							| clears carry
+										| 
+	st.b	d7
+	cmp.b	#1,d7                            	| [ccf] (was [and  a])
 	rts                                    	| [ret]
 is_block_moving_0c1e:
 	lea	block_moving_flag_8DBF,a0      	| [ld   hl,block_moving_flag_8DBF]
 	tst.b	(a0)                         	| [ld   a,(hl)]
 	bne.b	0f
-	clr.b	d7
+	st.b	d7
+	cmp.b	#1,d7                            	| [ccf]
 	rts                                    	| [ret  z]
 0:
-	st.b	d7	| scf		; set carry flag
+	clr.b	d7
+	cmp.b	#1,d7                            	| set carry flag [scf] (handled)
 	rts                                    	| [ret]
 
 * start from second slot
@@ -1435,10 +1438,12 @@ l_0c2e:
 	add.w	#6,a0							| [add  hl,de]
 	subq.b	#1,d1                           	| [...]
 	jne	l_0c2e                             	| [djnz $0C2E]
-	clr.b	d7
+	st.b	d7
+	cmp.b	#1,d7                            	| [ccf]
 	rts                                    	| [ret]
 l_0c37:
-	st.b	d7   | [scf]
+	clr.b	d7
+	cmp.b	#1,d7                            	| set carry flag [scf] (handled)
 	rts                                    	| [ret]
 
 clear_maze_and_borders_0C39:
@@ -1544,8 +1549,7 @@ handle_pengo_stumble_0CB9:
 
 player_dies_0CD2:
 	jbsr	l_0be0                            	| [call $0BE0]
-	tst.b	d7
-	jne	main_game_loop_09E7                	| [jp   c,main_game_loop_09E7]
+	jcs		main_game_loop_09E7                	| [jp   c,main_game_loop_09E7]
 	move.b	#0x05,d1                        	| [ld   b,$05]
 	jbsr	play_sfx_1889                     	| player dies music [call play_sfx_1889]
 	move.b	#0x06,d0                        	| [ld   a,$06]
@@ -1635,7 +1639,7 @@ l_0d6d:
 											| [inc  hl]
 	move.l	a0,-(sp)                        	| [push hl]
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
-	jne	l_0d9a                             	| [jr   c,$0D9A]
+	jcs	l_0d9a                             	| [jr   c,$0D9A]
 	jbsr	does_bc_match_a_diamond_block_xy_0daf                            	| [call $0DAF]
 	jne	l_0d9a                             	| [jr   c,$0D9A]
 	move.l	(sp)+,a0                        	| [pop  hl]
@@ -4803,7 +4807,7 @@ compute_diamond_positions_and_draw_2F3A:
 	* D2,D1 holds coords for a xy grid
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	* if on egg, re-cast random
-	jne	compute_diamond_positions_and_draw_2F3A                 	| [jr   c,compute_diamond_positions_and_draw_2F3A]
+	jcs	compute_diamond_positions_and_draw_2F3A                 	| [jr   c,compute_diamond_positions_and_draw_2F3A]
 	move.b	d1,diamond_block_1_xy_8DB0+1      	| [ld   (diamond_block_1_xy_8DB0),bc]
 	move.b	d2,diamond_block_1_xy_8DB0      	| [ld   (diamond_block_1_xy_8DB0),bc]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
@@ -4816,7 +4820,7 @@ l_2f49:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2f49                             	| [jr   z,$2F49]
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
-	jne	l_2f49                             	| [jr   c,$2F49]
+	jcs	l_2f49                             	| [jr   c,$2F49]
 	* no egg: ok
 	move.b	d1,diamond_block_2_xy_8DB2+1      	| [ld   (diamond_block_2_xy_8DB2),bc]
 	move.b	d2,diamond_block_2_xy_8DB2      	| [ld   (diamond_block_2_xy_8DB2),bc]
@@ -4833,7 +4837,7 @@ l_2f62:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2f62                             	| [jr   z,$2F62]
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
-	jne	l_2f62                             	| [jr   c,$2F62]
+	jcs	l_2f62                             	| [jr   c,$2F62]
 	move.b	d1,diamond_block_3_xy_8DB4+1      	| [ld   (diamond_block_3_xy_8DB4),bc]
 	move.b	d2,diamond_block_3_xy_8DB4      	| [ld   (diamond_block_3_xy_8DB4),bc]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
@@ -4873,6 +4877,11 @@ set_diamond_position_2FA9:
 	move.b	#0x1C,d0                        	| [ld   a,$1C]
 	jra	set_2x2_tile_2F00                  	| [jp   set_2x2_tile_2F00]
 	
+* in demo mode (level 5), when booting game, random produces those 8 positions:
+*     8DC0  08 08  <- total + current
+*     8DC2  03 0C 13 0C 07 08 17 1C 13 14 17 0C 13 04 07 1C
+* (same in MAME and in the transcode fortunately!)
+
 compute_eggs_locations_2FB2:
 	move.b	total_eggs_to_hatch_8DC0,d0     	| how many eggs in that level [ld   a,(total_eggs_to_hatch_8DC0)]
 * draw remaining eggs in status panel
@@ -4926,17 +4935,19 @@ l_2fd9:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_2fd9                             	| [jr   z,$2FD9]
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
-	jne	l_2fd9                             	| [jr   c,$2FD9]
+	jcs	l_2fd9                             	| [jr   c,$2FD9]
 	jbsr	insert_egg_302D                   	| [call insert_egg_302D]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2fd8                             	| [djnz $2FD8]
+
+	lea	remaining_eggs_to_hatch_8DC1,a0	| [ld   hl,remaining_eggs_to_hatch_8DC1]
 	rts                                    	| [ret]
 
 
 * < BC: (D1=Y/D2=X)coords to look for hidden egg
 * > carry set (changed by Z not set) if matches hidden egg
-* > if carry (Z) not set, returns the coordinates of the egg
+* > if carry (C) not set, returns the coordinates of the egg else it trashes D1/D2
 look_for_hidden_egg_at_XY_300A:
 	move.b	d1,d3                           	| [ld   d,b]
 	move.b	d2,d4                           	| [ld   e,c]
@@ -4948,27 +4959,27 @@ l_3013:
 
 	move.b	(a0)+,d2                         	| get egg X [ld   c,(hl)]
 												| [inc  hl]
-	move.b	(a0),d1                         	| get egg Y [ld   b,(hl)]
+	move.b	(a0)+,d1                         	| get egg Y [ld   b,(hl)]
 	move.b	d1,d5                           	| [ld   h,b]
 	move.b	d2,d6                           	| [ld   l,c]
 	* are the egg coords the ones that were passed as parameter?
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_3029                             	| [jr   z,$3029]
 	movem.w	(sp)+,d1/d2/d5/d6                    	| [pop  bc]
-	addq.w	#2,a0                           	| advance to next egg in table [inc  hl]
+	                           	| advance to next egg in table [inc  hl] done above (a0)+
 											| [inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_3013                             	| [djnz $3013]
 	move.b	d3,d1                           	| [ld   b,d]
 	move.b	d4,d2                           	| [ld   c,e]
-	clr.b	d7                               	| [xor  a]
-	tst.b	d7
+
+	st.b	d7
+	cmp.b	#1,d7                            	| [ccf] (xor a doesn't cut it)
 	rts                                    	| [ret]
 l_3029:
-	* if break/wait here diamond properly located!!! else WRONG!! WTF
 	movem.w	(sp)+,d1/d2/d5/d6                    	| [pop  bc]
-	st.b	d7								| scf		; set carry flag
-	tst.b	d7
+	clr.b	d7
+	cmp.b	#1,d7                            	| set carry flag [scf] (handled)
 	rts                                    	| [ret]
 
 * < BC X,Y of egg to insert
@@ -4982,8 +4993,8 @@ insert_egg_302D:
 	move.b	d2,(a0)+                         	| store coordinates [ld   (hl),c]
 												| [inc  hl]
 	move.b	d1,(a0)                         	| [ld   (hl),b]
-	lea	remaining_eggs_to_hatch_8DC1,a0	| [ld   hl,remaining_eggs_to_hatch_8DC1]
-	addq.b	#1,(a0)                         	| add 1 egg [inc  (hl)]
+	addq.b	#1,remaining_eggs_to_hatch_8DC1	| [ld   hl,remaining_eggs_to_hatch_8DC1]
+											| add 1 egg [inc  (hl)]
 	rts                                    	| [ret]
 
 _00_path_draw_up_3040:
@@ -6376,7 +6387,7 @@ l_38f0:
 	cmp.b	(a0),d0                          	| [cp   (hl)]
 	jeq	l_38ce                             	| [jr   z,$38CE]
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
-	jne	l_38ce                             	| [jr   c,$38CE]
+	jcs	l_38ce                             	| [jr   c,$38CE]
 	bset.b	#7,(0x1b,a2)                    	| [set  7,(ix+$1b)]
 	jra	find_breaking_block_free_slot_42c6                             	| [jp   $42C6]
 
@@ -7950,23 +7961,24 @@ l_42d9:
 	                           	| [inc  hl]
 	move.b	#0x01,(a0)                      	| [ld   (hl),$01]
 	jbsr	l_42ef                            	| [call $42EF]
-	move.l	(sp)+,a0                        	| [pop  hl]
-	tst.b	d7
-	bne.b	0f
+	movem.l	(sp)+,a0                        	| [pop  hl]
+	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
 	move.b	#0xC0,(a0)                      	| [ld   (hl),$C0]
 	rts                                    	| [ret]
 l_42ef:
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
-	bne.b	0f
-	clr.b	d7
+	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
+	* egg hatched: clear slot
+											| [xor  a]
 	clr.b	(a0)+                         	| [ld   (hl),a]
 											| [inc  hl]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
-	st.b	d7	| scf		; set carry flag
+	clr.b	(a0)                         	| [ld   (hl),a]
+	clr.b	d7
+	cmp.b	#1,d7                            	| set carry flag [scf] (handled)
 	rts                                    	| [ret]
 l_42f9:
 	move.b	d1,d5                           	| [ld   h,b]
@@ -9269,7 +9281,7 @@ blink_on_egg_locations_4B48:
 0:
 
 	btst.b	#4,(0x1f,a2)                    	| [bit  4,(ix+$1f)]
-	bne	0f
+	bne.b	0f
 	jbsr	l_4b5c                            	| [call z,$4B5C]
 0:
 	jbsr	l_4b69                            	| [call $4B69]
@@ -9307,7 +9319,6 @@ l_4b75:
 l_4b89:
 	clr.b	(0x1f,a2)                        	| [ld   (ix+$1f),$00]
 	move.b	moving_block_struct_8DA0+0x16,d0	| [ld   a,(moving_block_struct_8DA0+$16)]
-	tst.b	d0                               	| [and  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
@@ -9315,32 +9326,33 @@ l_4b89:
 	move.b	#0x08,(ai_mode,a2)              	| [ld   (ix+ai_mode),$08]
 	rts                                    	| [ret]
 
- * blink loop routine (snobee color)
+ * unhatched egg blink loop routine (snobee color)
 l_4b9b:
 	move.b	(0x00,a2),d1                    	| total number [ld   b,(ix+$00)]
 	lea	egg_location_table_8DC2,a0     	| egg location table [ld   hl,egg_location_table_8DC2]
 l_4ba1:
-	move.w	d1,-(sp)                        	| [push bc]
+	movem.w	d1/d2,-(sp)                        	| [push bc]
 	move.l	a0,-(sp)                        	| [push hl]
 	move.b	(a0)+,d2                         	| get x [ld   c,(hl)]
 												| [inc  hl]
 	move.b	(a0),d1                         	| get y [ld   b,(hl)]
 	move.b	d1,d0                           	| [ld   a,b]
 	add.b	d2,d0                            	| [add  a,c]
-	jeq	l_4bbb                             	| 0 -> not active anymore [jr   z,$4BBB]
- * active
+	jeq	l_4bbb                             	| 0 -> not active: next slot [jr   z,$4BBB]
+ * active, pick snobee color
 	move.b	snobee_1_struct_8D00+0x03,d0    	| [ld   a,(snobee_1_struct_8D00+$03)]
 	btst.b	#0,(0x1e,a2)                    	| [bit  0,(ix+$1e)]
-	bne	0f
+	bne.b	0f
 	jbsr	set_2x2_tile_color_4BC4           	| [call z,set_2x2_tile_color_4BC4]
 0:
 	btst.b	#0,(0x1e,a2)                    	| [bit  0,(ix+$1e)]
-	beq	0f
+	beq.b	0f
+	* blue color
 	jbsr	set_2x2_tile_color_09_4BD8        	| [call nz,set_2x2_tile_color_09_4BD8]
 0:
 l_4bbb:
 	move.l	(sp)+,a0                        	| [pop  hl]
-	move.w	(sp)+,d1                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                        	| [pop  bc]
 	addq.w	#2,a0                           	| [inc  hl]
 												| [inc  hl]
 	subq.b	#1,d1                           	| [...]
