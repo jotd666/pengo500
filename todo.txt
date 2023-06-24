@@ -6,12 +6,13 @@ General:
 - sounds
 - probable "endian bug" in scores
 - pengo dead: life icon wrongly located
-
+- demo: pengo doesn't seem to be able to push blocks
+- demo: snobees are in slow "ice break" mode all the time, ice break anim
+  is shown even if not ice
+  
 Amiga:
 
 - life lost/current life: pengo life icon wrong
-- if clut 0 is chosen for sprites, just hide them instead of all black!
-- sprites
 - sound
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization

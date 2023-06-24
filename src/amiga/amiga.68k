@@ -657,16 +657,28 @@ osd_update_sprites:
 	add.w	#16*8,d3		| not sure!
 23:
 	add.w	d3,a6
-	
+	* check if CLUT doesn't contain only color zero
+	* (we may as well cache the values in spare registers)
+	move.l	(a6)+,d3
+	move.w	(a6)+,d7
+	bne.b	24f
+	tst.l	d3
+	bne.b	24f
+	* all black: snobees would hide pengo sprites & tiles
+	* we want to hide them instead (no need to change palette)
+	move.l	#blank_sprite,d4
+	bra.b	25f
+24:
 	* d6 is the sprite index: compute/set proper color
 	move.w	d6,d5
 	bclr	#0,d5
 	lsl.w	#2,d5	| times 4*2
 	lea		_custom+color+34,a5	| sprite palette + 2 (first color skipped)
 	add.w	d5,a5
-	* copy 3 colors
-	move.l	(a6)+,(a5)+
-	move.w	(a6)+,(a5)+
+	* copy 3 colors from cached registers
+	move.l	d3,(a5)+
+	move.w	d7,(a5)+
+25:
 	* set sprite in copperlist
 	move.w	d4,(6,a3)
 	swap	d4
