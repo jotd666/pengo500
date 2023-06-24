@@ -194,13 +194,14 @@ w\@:
 		.global osd_r_colorram
 		.global osd_set_bank_selectors
 		.global osd_update_sprites
+		.global osd_set_vblank_return_address
 		.global osd_read_dsw1_9000
 		.global osd_small_wait
 		.global osd_read_inputs
 		.global osd_read_high_scores
 		.global osd_write_high_scores
-
-		.global	osd_update_controls
+		.global	osd_get_start_stack
+		
 		.global osd_sound_start
 		.global osd_sound_stop
 		.global osd_sound_enable
@@ -372,6 +373,18 @@ eye_catcher:
 * we're not doing things the NeoGeo way
 		rts
 
+* return start stack in D0
+* useful as game redirects from vblank
+* to another location
+osd_get_start_stack:
+	move.l	old_stack,D0
+	rts
+
+* change return address from vblank
+* D0: return address (0: no change)
+osd_set_vblank_return_address:
+	move.l	d0,return_address
+	
 get_hiscore_name:
     lea normal_hiscorename,a0
 	rts
@@ -459,8 +472,10 @@ _vblank:
 	btst	#5,d0
 	beq.b		1f
 
-	bsr		osd_update_controls
-
+	move.l	_joypad_state(pc),d1
+	moveq	#1,d0
+	jsr	_read_joystick
+	move.l	d0,_joypad_state
 	
 	* CD32 "play" is disabled but it's free to read
 	* 3rd button on a Sega 3-button so 3rd button is pause
@@ -502,7 +517,6 @@ _vblank:
 	subq.w	#1,d0
 	move.w	d0,intro_sound_lock
 222:
-	**bsr		update_rows
 	jbsr		pengo_irq
 	.ifne  OPT_ENABLE_DOUBLE_BUFFERING_BG
 	bsr		switch_screen_buffers
@@ -519,24 +533,18 @@ _vblank:
 	move.w	#0x10,_custom+intreq
 3:
     movem.l (a7)+,d0-d7/a0-a6
-	
+	tst.l	return_address
+	beq.b	4f
+	move.l	return_address,(2,a7)		| change return address
+	clr.l	return_address				| just for this time
+4:
     rte
 	
 osd_break:
 	blitz
 	rts
 
-* trash D0 and D1
-* (actually from the amiga side it doesn't trash but returns
-* D0: current state
-* D1: previous state
-osd_update_controls:
-	move.l	_joypad_state(pc),d1
-	moveq	#1,d0
-	jsr	_read_joystick
-	move.l	d0,_joypad_state
-	rts
-	
+
 * this needs tuning. waits roughly 400 micro seconds
 * this emulates Z80 active loop found in the intro and in other
 * places too
@@ -1232,83 +1240,6 @@ osd_w_colorram:
 	rts
 
 	
-	
-update_rows:
-    movem.l d0-d7/a0-a6,-(a7)
-    lea _custom,A5
-	
-	clr.w	d6
-	lea		dirty_rows_values(pc),a4
-	lea		bg_screen_backbuffer,a3
-	move.l	bg_drawed_screen_ptr(pc),a6
-0:
-	move.b	(a4,d6.w),d0
-	jeq		5f
-	subq.b	#1,d0
-	move.b	d0,(a4,d6.w)	| dec counter, eventually ack as clean
-	* now blit the dirty row
-	* we should first clear the left or right part depending on scroll value
-	* but that's only necessary at player ship level, and only when player is killed
-	* so ship position "jumps" from left/right to center. When jumping from left
-	* the ship is not properly cleared. Cornercase, so a little hack is preferred, that
-	* will also save blitter time
-	
-	* now blit the dirty row
-	moveq	#0,d0
-	move.l	a3,a0		| source (current row)
-	move.l	a6,a1		| dest (current row)
-	
-	* issue only on player ship because when player is killed,
-	* game clears and resets scroll immediately, not leaving enough
-	* time for character clear to be applied on other buffer
-
-	move.w	#NB_BYTES_PER_ROW,d2
-
-	moveq	#8,d4		| height
-
-    move.l  #0x09f00000,d3    | A->D copy, ascending mode
-
-
-    lsl.w   #6,d4
-    lsr.w   #1,d2		| blit width
-    add.w   d2,d4       | blit height
-
-	
-    * always the same settings
-	clr		d1
-
-    * now just wait for blitter ready to write all registers
-	WAIT_BLIT
-    
-    * blitter registers set
-
-	move.l d3,bltcon0(a5)	| sets con0 and con1
-    move.w  d1,bltamod(a5)	|A modulo
-    move.w  d1,bltdmod(a5)	|D modulo
-							
-	move.l a0,bltapt(a5)	|source graphic top left corner
-	move.l a1,bltdpt(a5)	|destination top (bottom) left corner
-	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	
-	lea	(BG_SCREEN_PLANE_SIZE,a0),a0
-	lea	(BG_SCREEN_PLANE_SIZE,a1),a1
-
-	WAIT_BLIT
-	* second bitplane
-	move.l a0,bltapt(a5)	|source graphic top left corner
-	move.l a1,bltdpt(a5)	|destination top (bottom) left corner
-	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-
-5:
-	add.w	#NB_BYTES_PER_ROW*8,a3	| 2 planes
-	add.w	#NB_BYTES_PER_ROW*8,a6	| 2 planes
-	addq.w	#1,d6
-	cmp.w	#NB_LINES/8,d6
-	jne		0b
-	
-
-	movem.l	(a7)+,d0-d7/a0-a6
-	rts
 
 * < D0: previous ship row scroll
 * < D1: current ship row scroll
@@ -1399,9 +1330,9 @@ update_bg_tile:
 	*lea		dirty_rows_values(pc),a1
 	*move.b	#2,(a1,d3.w)	| 2 refreshes needed (double buffering)
 	* multiply by 240
+	
 	lea		mulNB_BYTES_PER_ROW_table(pc),a0
 
-	*lea		bg_screen_backbuffer,a1
 	move.l	bg_drawed_screen_ptr(pc),a1
 	add.w	d3,d3
 	move.w	(a0,d3.w),d3
@@ -1538,10 +1469,15 @@ osd_read_dsw1_9000:
 	move.b	#1,0x201
 	rts
 	
+* reads most inputs in one call
+* bits 0-8     coins
+* bits 16-24   start buttons
+* bits 24-     joystick
 osd_read_inputs:
 	bsr		handle_keyboard
 	moveq	#-1,d0
-	movem.l	a0,-(a7)
+	movem.l	a0/d1,-(a7)
+	* misc control keys
 	lea		keyboard_table(pc),a0
 	tst.b	(5,a0)		| "5" key like in MAME
 	beq.b	0f
@@ -1559,11 +1495,27 @@ osd_read_inputs:
 	beq.b	0f
 	bclr	#6+16,d0
 0:	
-	movem.l	(a7)+,a0
+	* directions + fire
+	move.l	_joypad_state(pc),d1
+	btst	#JPB_BTN_UP,d1
+	beq.b	0f
+	bclr	#24,d0
+0:
+	btst	#JPB_BTN_DOWN,d1
+	beq.b	0f
+	bclr	#25,d0
+0:
+	btst	#JPB_BTN_LEFT,d1
+	beq.b	0f
+	bclr	#26,d0
+0:
+	btst	#JPB_BTN_RIGHT,d1
+	beq.b	0f
+	bclr	#27,d0
+0:
+	movem.l	(a7)+,a0/d1
 	rts
 	
-	moveq	#-1,d0
-	rts
 
 
 	
@@ -2054,7 +2006,8 @@ old_actiview:
 	.long	0
 old_stack:
 	.long	0
-
+return_address:
+	.long	0
 	
 _tag:
 		.long	WHDLTAG_CUSTOM1_GET
@@ -2193,12 +2146,7 @@ palette_cluts:
 	.endif
 
 		.section .bsschip
-	* some space to write tiles slightly outside screen
-	* (scrolling requires it so it's seamless)
-	ds.b	NB_BYTES_PER_ROW*12
-bg_screen_backbuffer:
-	ds.b	BG_SCREEN_SIZE
-	ds.b	NB_BYTES_PER_ROW*12*3
+
 bg_screen_data_1:
 	ds.b	BG_SCREEN_SIZE
 	ds.b	NB_BYTES_PER_ROW*12*3

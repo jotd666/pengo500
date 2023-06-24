@@ -2,17 +2,18 @@ General:
 
 - dip switches (see ** code)
 - highscores (today's best 5) wrongly displayed
-- joystick/insert coin
+- joystick
 - sounds
 - probable "endian bug" in scores
-- pengo dead: life icon wrongly located
-- demo: pengo doesn't seem to be able to push blocks
-- demo: snobees are in slow "ice break" mode all the time, ice break anim
+- pengo doesn't seem to be able to push blocks
+- snobees are in slow "ice break" mode all the time, ice break anim
   is shown even if not ice
-- lives should not be displayed in demo mode
+- lives should not be displayed in demo mode/intro screens
+- play: die: maze is destroyed, unhatched eggs drawn at wrong location
 
 Amiga:
 
+- whdload cheat keys: complete level
 - sound
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization
@@ -20,6 +21,7 @@ Amiga:
 - also set all 3 colors at the copperlist Y (would fix title screen 4 snobees)
 - redundant bg_cluts / clut asm file
 - alternate tileset: all symmetric? plus slow and wrong chars (ok in the end)
+- ACT 1 + flags: draw vertically on the side?
 
 	int code = m_videoram[tile_index] | (m_charbank << 8);
 	int attr = (m_colorram[tile_index] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6);

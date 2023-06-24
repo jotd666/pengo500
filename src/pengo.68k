@@ -494,13 +494,12 @@ l_015b:
  * start game (credits inserted)
 	move.b	#0x01,currently_playing_8819                        	| [ld   a,$01]
 															| [ld   (currently_playing_8819),a]
-														
-* TODO reset stack pointer, remove all calls
-*ld   sp,stack_pointer_8FF0
-	jra	coin_has_been_inserted_0490                      	| [ld   hl,$0490]
-	                        	| [push hl]
-	**move.b	#0x01,d0                        	| [ld   a,$01]
-	**move.b	d0,dip_switches_9040            	| [ld   (dip_switches_9040),a]
+* this has to be heavily adapted, as the original game jumps from interrupt to non-interrupt code
+* resetting the stack too. We can't do that in a portable way on a 68000, we have to ack interrupts
+* and return from interrupt, restore SR, ... and it depends on the system
+																					
+	move.l	#coin_has_been_inserted_0490,d0
+	jbsr	osd_set_vblank_return_address
 	rts
 	
 	
@@ -727,9 +726,15 @@ loop_0480:
 	jbsr	display_demo_and_top_scores_6E1   	| [call display_demo_and_top_scores_6E1]
 	move.b	#0x80,d0                        	| [ld   a,0x80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	jeq	loop_0480                          	| [jr   z,loop_0480]
+	* I think that jeq is a bug, code should never go to "coin_has_been_inserted_0490"
+	jra	loop_0480                          	| [jr   z,loop_0480]
 	
 coin_has_been_inserted_0490:
+	* originally called from interrupt, stack is reset to avoid to run out of stack after
+	* several games
+	jbsr	osd_get_start_stack
+	move.l	d0,a7
+	
 		| [ld   a,$00]
 		| [ld   (character_sprite_bank_selector_9047),a]
 		| [ld   (palette_bank_selector_9042),a]
@@ -1021,59 +1026,24 @@ wait_for_start_0774:
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 l_079d:
-	move	SR,0X204
-
-	* we have to force sprite update from time to time because
-	* we're running in vblank...
-	* NOT thank you Akira for that!!
-	* no joystick update, no keyboard update...
-
+	* we have to regulate the speed
 	move.w	vbl_sync_counter_start_screen,d0
 	addq.w	#1,d0
 	cmp.w	#400,d0		| roughly...
 	bne.b	1f
 	* wait for vbl sync
-	jbsr	osd_ack_vblank_interrupt
+	st.b	vbl_sync_flag
 0:
-	jbsr	osd_test_vblank_interrupt
-	beq.b	0b
+	tst.b	vbl_sync_flag
+	bne.b	0b
 	moveq	#0,d0
 1:
 	move.w	d0,vbl_sync_counter_start_screen
 
-	jbsr	osd_test_vblank_interrupt
-	beq.b	0f
-	lea		sprite_ram_8FF2,a0		| type & color
-	lea		sprite_ram_9022,a1		| X,Y
-	move.l	a2,-(a7)
-	jbsr	osd_update_controls	
-	jbsr	osd_update_sprites
-	move.l	(a7)+,a2
-	jbsr	osd_ack_vblank_interrupt
-0:
+
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 	jbsr	choose_start_screen_action_0819                            	| [call $0819]
-	* wait for start button pressed
 	jbsr	osd_read_inputs              	| [ld   a,($9080)]
-	
-	* coinage loop doesn't run here
-	* we have to simulate it
-
-	not.b	d0                               	| [cpl]
-	and.b	#0x40,d0                         	| [and  $40]
-	beq.b	1f
-0:
-	jbsr	osd_read_inputs              	| [ld   a,($9080)]
-	not.b	d0                               	| [cpl]
-	and.b	#0x40,d0                         	| [and  $40]
-	bne.b	0b
-
-	movem.l	d0-a6,-(a7)
-	add.b	#1,number_of_credits_8808      	| [ld   hl,number_of_credits_8808]
-	                         	| [inc  (hl)]
-	bsr	register_coin_inserted_038B        	| [jp   register_coin_inserted_038B]
-	movem.l	(a7)+,d0-a6
-1:
 	
 	swap	d0		| get other port
 	not.b	d0                               	| [cpl]
@@ -4273,9 +4243,9 @@ for_50000_pts_2AF3:
 read_player_inputs_2AFB:
 * cocktail mode is ignored
 * so just read player 1 joystick
-l_2b0c:
-	jra	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
-	                                    	| [ret]
+	jbsr	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
+	rol.l	#8,d0							| bits 24.. => bits 0..
+	rts                                    	| [ret]
 
 
 update_all_scores_2B10:
@@ -5711,7 +5681,7 @@ snobee_jump_table_332D:
 _00_snobee_do_nothing_3353:
  * active loop to keep roughly the same game speed
  * regardless of the number of currently active monsters
-	jbsr	osd_break
+ * speed regulation takes care of that part more efficiently!
 *	move.b	#0x05,d1                        	| [ld b,$05]
 *	subq.b	#1,d1                           	| [dec  b]
 *	jbsr	osd_small_wait
