@@ -9,10 +9,10 @@ General:
 - demo: pengo doesn't seem to be able to push blocks
 - demo: snobees are in slow "ice break" mode all the time, ice break anim
   is shown even if not ice
-  
+- lives should not be displayed in demo mode
+
 Amiga:
 
-- life lost/current life: pengo life icon wrong
 - sound
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization

@@ -1370,8 +1370,8 @@ update_bg_tile:
 0:
 	move.w	d6,d3
 	lsr.w	#5,d3		| this is Y
-	neg.w	d3
-	add.w	#30,d3		| minus 2
+	
+	sub.w	#30,d3		| minus 2
 	and.w	#0x1F,d6	| this is X
 	neg.w	d6
 	add.w	#32,d6
@@ -2164,24 +2164,20 @@ floppy_file:
 	.byte	0
 _end_of_ng_code:
 		
-		.text
 	.align 2
 palette:
 	.include "palette.68k"
 	* sprites "individual" 4-color palettes
 palette_cluts:
 	.include "palette_cluts.68k"
-
-		.bss
-
-		.align 4
 	
-
-.align 2
-irq_cnt:											ds.w		1
-		.data
-
-
+	* on amiga, this file is included in pengo.68k file
+	* so the assembler can optimize by using PC-relative addressing
+	* whenever possible (and it does)
+	.ifndef	RELEASE
+	* easier to debug game to have memory aligned on 0x10000
+	.align	0x10000
+	.endif
 
 		.section .bsschip
 	* some space to write tiles slightly outside screen

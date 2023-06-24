@@ -287,6 +287,10 @@ char_state = 0x1F
     .global pengo_irq
     .global pengo_reset
 
+	.ifdef	__amiga__
+	.include "pengo_ram.68k"
+	.align	2
+	.endif
 	
 	
 * < A0: source (HL)
@@ -794,8 +798,7 @@ l_071e:
 
 
 wait_for_start_and_play_072D:
-	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
-	tst.b	d0                               	| [and  a]
+	tst.b	number_of_credits_8808	       	| [ld   a,(number_of_credits_8808)]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
@@ -1130,8 +1133,7 @@ l_094b:
 	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
 	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
-	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
+	tst.b	currently_playing_8819		       	| [ld   a,(currently_playing_8819)]
 	jeq	l_0985                             	| [jr   z,$0985]
 	jbsr	draw_status_bar_2C76              	| [call draw_status_bar_2C76]
 	jbsr	draw_lives_2D0C                   	| [call draw_lives_2D0C]
@@ -1584,8 +1586,7 @@ l_0d05:
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	and.b	#0x7F,d0                         	| [and  $7F]
 	jeq	l_0ed7                             	| [jp   z,$0ED7]
-	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
+	tst.b	currently_playing_8819       	| [ld   a,(currently_playing_8819)]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
@@ -1604,8 +1605,8 @@ l_0d05:
 0:
 	rts                                    	| [ret]
 l_0d41:
-	addq.b	#1,(a0)                         	| [inc  (hl)]
-	addq.b	#1,(a0)                         	| [inc  (hl)]
+	addq.b	#2,(a0)                         	| [inc  (hl)]
+												| [inc  (hl)]
 	rts                                    	| [ret]
 
 l_0d44:
@@ -4156,21 +4157,21 @@ check_p1_score_for_extra_life_2BAE:
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	move.w	d6,-(sp)                        	| [push hl]
+	**move.w	d6,-(sp)                        	| [push hl]
 	move.b	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
 	move.b	player_1_score_880E+1,d5      	| [ld   hl,(player_1_score_880E)]
-	move.b	#0x0B,d3                      	| [ld   de,$0BB8]
+	move.b	#0x0B,d3                      	| [ld   de,$0BB8] 3000 points
 	move.b	#0xB8,d4                      	| [ld   de,$0BB8]
 *	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
 *	btst.b	#0,d0                           	| [bit  0,a]
 *	jeq	l_2bf5                             	| [jr   z,$2BF5]
-*	move.w	#0x1388,d3                      	| 5000 [ld   de,$1388]
+*	move.b	#0x13,d3                      	| [ld   de,$1388] 5000 points 
+*	move.w	#0x88,d4                      	| [ld   de,$1388] 5000 points 
 *l_2bf5:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
-	movem.w	(sp)+,d6                        	| [pop  hl]
-	bcc.b	0f
+	**movem.w	(sp)+,d6                        	| [pop  hl]
+	bcc.b	l_2bfa
 	rts                                    	| [ret  c]
-0:
 l_2bfa:
 	addq.b	#1,(a0)                         	| [inc  (hl)]
 	bset.b	#7,(a0)                         	| [set  7,(hl)]
@@ -4374,8 +4375,9 @@ draw_lives_2D13:
 draw_nonzero_lives_2d18:
 	cmp.b	#0x05,d0                         	| [cp   $05]
 	jcs	l_2d1e                             	| [jr   c,$2D1E]
-* clamp to 4 lives drawn (who gets more than 4 lives in that game, that's
-* impossible without cheating)
+* clamp to 4 lives drawn (to get more than 4 lives in that game you need to set DSW
+* to 4 or 5 start lives + extra life: up to 6 lives, not more) else that could conflict
+* with unhatched eggs
 	move.b	#0x04,d0                        	| [ld   a,$04]
 l_2d1e:
 	move.b	d0,d1                           	| [ld   b,a]
@@ -4493,13 +4495,15 @@ indirect_jump_2D8F:
 * computes D-H, then E-L if D-H != 0
 * < HL (d5/d6)
 * < DE (d3/d4)
-* < Z if equal, NZ otherwise
+* < Z if equal, NZ otherwise, C flag set for first different value
 compare_hl_to_de_2D99:
-	cmp.b	d3,d5
+	move.b	d5,d0                           	| [ld   a,h]
+	sub.b	d3,d0                            	| [sub  d]
 	beq.b	0f
-	rts
+	rts                                    	| [ret  nz]
 0:
-	cmp.b	d4,d6
+	move.b	d6,d0                           	| [ld   a,l]
+	sub.b	d4,d0                            	| [sub  e]
 	rts                                    	| [ret]
 
 draw_maze_2DA1:
@@ -9780,7 +9784,3 @@ misc_table_6800:
      .byte	0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01
      .byte	0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x66,0x01,0xA6,0x01,0xEB,0x01,0xEA,0xC0
 
-	.ifdef	__amiga__
-	.include "pengo_ram.68k"
-	.align	2
-	.endif
