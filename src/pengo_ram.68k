@@ -10,6 +10,7 @@
 	.global	sprite_ram_9020
 	.global	vbl_sync_flag
 	.global	vbl_sync_counter
+	.global	vbl_sync_counter_start_screen
 	.global	unknown_87FF
 	
 	.ifdef	__amiga__
@@ -58,7 +59,8 @@ sprite_ram_8FF2:
 	ds.b	2
 sprite_ram_9022:
 	ds.b	6*2
-	
+vbl_sync_counter_start_screen:
+	.word	0
 high_score_beaten:
 	.word	0
 invincible_flag:

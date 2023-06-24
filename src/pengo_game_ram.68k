@@ -4,6 +4,7 @@
 	.global	number_buffer_8803
 	.global	number_of_credits_8808
 	.global	unknown_8809
+	.global	unknown_880a
 	.global	unknown_880B
 	.global	high_score_880C
 	.global	player_1_score_880E
@@ -105,7 +106,9 @@ number_buffer_8803:
 number_of_credits_8808:
 	ds.b	0x01
 unknown_8809:
-	ds.b	0x02
+	ds.b	0x01
+unknown_880a:
+	ds.b	0x01
 unknown_880B:
 	ds.b	0x01
 high_score_880C:

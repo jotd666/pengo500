@@ -184,6 +184,7 @@ w\@:
 * osd layer		
 		.global osd_enable_vblank_interrupt
 		.global osd_ack_vblank_interrupt
+		.global osd_test_vblank_interrupt
 		.global osd_disable_vblank_interrupt
 		.global osd_break		| for debug	
 		.global osd_calibrate_display		| for debug
@@ -193,14 +194,13 @@ w\@:
 		.global osd_r_colorram
 		.global osd_set_bank_selectors
 		.global osd_update_sprites
-		.global osd_read_dipswitches
+		.global osd_read_dsw1_9000
 		.global osd_small_wait
-		.global osd_read_p1_inputs
-		.global osd_read_p2_inputs
+		.global osd_read_inputs
 		.global osd_read_high_scores
 		.global osd_write_high_scores
-		.global osd_read_coin
-		.global osd_read_start
+
+		.global	osd_update_controls
 		.global osd_sound_start
 		.global osd_sound_stop
 		.global osd_sound_enable
@@ -459,10 +459,8 @@ _vblank:
 	btst	#5,d0
 	beq.b		1f
 
-	move.l	_joypad_state(pc),d1
-	moveq	#1,d0
-	jsr	_read_joystick
-	move.l	d0,_joypad_state
+	bsr		osd_update_controls
+
 	
 	* CD32 "play" is disabled but it's free to read
 	* 3rd button on a Sega 3-button so 3rd button is pause
@@ -528,6 +526,17 @@ osd_break:
 	blitz
 	rts
 
+* trash D0 and D1
+* (actually from the amiga side it doesn't trash but returns
+* D0: current state
+* D1: previous state
+osd_update_controls:
+	move.l	_joypad_state(pc),d1
+	moveq	#1,d0
+	jsr	_read_joystick
+	move.l	d0,_joypad_state
+	rts
+	
 * this needs tuning. waits roughly 400 micro seconds
 * this emulates Z80 active loop found in the intro and in other
 * places too
@@ -646,10 +655,6 @@ osd_update_sprites:
 	* set colors
 	moveq	#0,d3
 	move.b	(SPRITE_CLUT,a2),d3
-	cmp.b	#0x0B,d3
-	bne		33f
-	move.b	#1,0x200
-33:
 	lea		bg_cluts+2,a6
 	lsl.w	#3,d3		| times 8
 	tst.b	alternate_bank_selectors
@@ -1112,6 +1117,11 @@ osd_ack_vblank_interrupt:
 	move.w	#0x30,_custom+intreq
  	rts
 		
+osd_test_vblank_interrupt:
+	move.w	_custom+intreqr,d0
+	btst	#5,d0
+	rts
+	
 osd_disable_vblank_interrupt:
 	move.w	#0x0030,_custom+intena
 	rts
@@ -1523,56 +1533,53 @@ set_bg_bitplanes:
 osd_debug_hook:
 	rts
 	
-
-* 6000: in D0
-*    bits 0-1: coin1 & coin2
-*    bit  2: joy move left
-*    bit  3: joy move right
-* 6800: in D1
-*    bits 7-6: if both set, means FREE PLAY
-* 1 COIN = 1 PLAY               OFF           OFF
-* 2 COINS = 1 PLAY              ON            OFF
-* 1 COIN = 2 PLAYS              OFF           ON
-* FREE PLAY                     ON            ON 
-
-* 7000: in D2
-*    bits 0-1: Values for BONUS GALIXIP. 7 = 7000, 10 = 10000, 12 =12000, 20 = 20000
-*    bits 2: lives (0=2/1=3).
-osd_read_dipswitches:
-	move.b	#0x03,d0
-	move.w	free_play_dsw(pc),d1
-	move.w	start_lives_and_free_ship_dsw(pc),d2
-
-	movem.l	d3/a0,-(a7)
-	lea keyboard_table(pc),a0
+osd_read_dsw1_9000:
+	moveq	#0,d0
+	move.b	#1,0x201
+	rts
+	
+osd_read_inputs:
+	bsr		handle_keyboard
+	moveq	#-1,d0
+	movem.l	a0,-(a7)
+	lea		keyboard_table(pc),a0
 	tst.b	(5,a0)		| "5" key like in MAME
 	beq.b	0f
-	bclr	#0,d0
+	bclr	#6,d0
 0:
 	tst.b	(6,a0)		| "6" key like in MAME
 	beq.b	0f
-	bclr	#1,d0
-0:
+	bclr	#6,d0
+0:	
 	tst.b	(1,a0)		| "1" key like in MAME
 	beq.b	0f
-	bset	#0,d1
+	bclr	#5+16,d0
 0:
 	tst.b	(2,a0)		| "2" key like in MAME
 	beq.b	0f
-	bset	#1,d1
-0:
-	tst.b	(0x4F,a0)		| "<-" key
+	bclr	#6+16,d0
+0:	
+	movem.l	(a7)+,a0
+	rts
+	
+	moveq	#-1,d0
+	rts
+
+
+	
+osd_read_dipswitches:
+	moveq	#-1,d0
+	illegal
+	movem.l	d3/d1,-(a7)
 	beq.b	0f
-	bset	#2,d0
+	bclr	#0,d0
+	
 0:
-	tst.b	(0x4E,a0)		| "->" key
+	cmp.b	#6,d1		| "6" key like in MAME
 	beq.b	0f
-	bset	#3,d0
+	bclr	#1,d0
 0:
-	tst.b	(0x63,a0)		| "ctrl" key
-	beq.b	0f
-	bset	#4,d0
-0:
+
 	move.l	_joypad_state(pc),d3
 	btst	#JPB_BTN_LEFT,d3
 	beq.b	0f
@@ -1603,7 +1610,7 @@ osd_read_dipswitches:
 	* game not in play, accept insert coin with fire
 	bclr	#0,d0
 2:
-	movem.l	(a7)+,d3/a0
+	movem.l	(a7)+,d3/d1
 	rts
 
 		
@@ -1665,6 +1672,11 @@ osd_write_high_scores:
 
 
 level2_interrupt:
+	bsr		handle_keyboard
+	move.w	#8,_custom+intreq
+	rte
+	
+handle_keyboard:
 	movem.l	D0/A0/A5,-(a7)
 	LEA	0x00BFD000,A5
 	MOVEQ	#0x08,D0
@@ -1673,7 +1685,9 @@ level2_interrupt:
 	MOVE.B	0x1C01(A5),D0
 	NOT.B	D0
 	ROR.B	#1,D0		| raw key code here
-    
+  
+	CLR.B	0x1C01(A5)
+  
     lea keyboard_table(pc),a0
 	
     bclr    #7,d0
@@ -1702,8 +1716,7 @@ level2_interrupt:
 
 1:
 	movem.l	(a7)+,d0/a0/a5
-	move.w	#8,_custom+intreq
-	rte
+	rts
 	
 toggle_pause:
 	* pause only within game

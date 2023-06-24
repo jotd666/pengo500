@@ -390,6 +390,32 @@ INITIALISE_SYSTEM:
 	clr.w	unknown_8830     | [ld   (unknown_8830),hl]
 	jra	l_03d4             
 	
+coin_input_90C0:
+	.word	0	| temp
+check_coin_inserted_0010:
+	jbsr	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
+	not.b	d0                               	| [cpl]
+	and.b	d1,d0                            	| [and  b]
+	jeq	l_001e                             	| [jr   z,$001E]
+* coin inserted
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	tst.b	d0                               	| [and  a]
+	jeq	l_0023                             	| [jr   z,$0023]
+l_001b:
+	clr.b	d0                               	| [xor  a]
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	rts                                    	| [ret]
+l_001e:
+	jbsr	l_001b                            	| [call $001B]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	rts                                    	| [ret]
+
+l_0023:
+	st.b	d0                                	| [ld   a,$FF]
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	rts                                    	| [ret]
+
 
 pengo_irq:
 	clr.b	vbl_sync_flag
@@ -413,10 +439,12 @@ l_0061:
 	jne	l_013f                             	| [jp   nz,0x013F]
 	addq.w	#1,timer_16bit_8822_msb         	| [ld   hl,(timer_16bit_8822)]
 	jbsr	l_32bc                            	| [call 0x32BC]
-	* temp coin shit disabled
-	*jbsr	l_02a2   coin                         	| [call 0x02A2]
-	*jbsr	l_02cd 	 coin                           	| [call 0x02CD]
-	*jbsr	l_027f   coin                         	| [call 0x027F]
+	* a lot of coin stuff
+	*jbsr	coin_routine_02A2                         	| [call 0x02A2]
+	*jbsr	coin_routine_02cd                           	| [call 0x02CD]
+	* this aux coin routine seems to be the simplest to implement/pass
+	* the other ones are probably super-protected from external tampering
+	jbsr	coin_test_aux_027f                         	| [call 0x027F]
 	*jbsr	l_03b2                            	| [call 0x03B2]
 	*jbsr	l_03aa                            	| [call 0x03AA]
 	
@@ -455,23 +483,139 @@ l_013f:
 	
 
 l_015b:
-	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
+	tst.b	currently_playing_8819       	| [ld   a,(currently_playing_8819)]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
+	tst.b	number_of_credits_8808       	| [ld   a,(number_of_credits_8808)]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
  * start game (credits inserted)
-	move.b	#0x01,d0                        	| [ld   a,$01]
-	move.b	d0,currently_playing_8819       	| [ld   (currently_playing_8819),a]
+	move.b	#0x01,currently_playing_8819                        	| [ld   a,$01]
+															| [ld   (currently_playing_8819),a]
+														
+* TODO reset stack pointer, remove all calls
 *ld   sp,stack_pointer_8FF0
-	lea	coin_has_been_inserted_0490(pc),a0                      	| [ld   hl,$0490]
-	move.l	a0,-(sp)                        	| [push hl]
+	jra	coin_has_been_inserted_0490                      	| [ld   hl,$0490]
+	                        	| [push hl]
 	**move.b	#0x01,d0                        	| [ld   a,$01]
 	**move.b	d0,dip_switches_9040            	| [ld   (dip_switches_9040),a]
 	rts
+	
+	
+
+coin_test_aux_027f:
+	move.b	#1,0x201
+	jbsr	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x40,d0                         	| [and  $40]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+** small cpu active delay loop that we're skipping
+** wait for release
+*	jbsr	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
+*	not.b	d0                               	| [cpl]
+*	and.b	#0x40,d0                         	| [and  $40]
+*	bne.b	0f
+*	rts                                    	| [ret  z]
+*0:
+* wait for release
+l_0293:
+	jbsr	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x40,d0                         	| [and  $40]
+	jne	l_0293                             	| [jr   nz,$0293]
+	lea	number_of_credits_8808(pc),a0      	| [ld   hl,number_of_credits_8808]
+	addq.b	#1,(a0)                         	| [inc  (hl)]
+	jra	register_coin_inserted_038B        	| [jp   register_coin_inserted_038B]
+	
+	* those coin routines are pretty hard to make work
+	* I disabled them
+coin_routine_02A2:
+	lea	unknown_8830(pc),a0                	| [ld   hl,unknown_8830]
+	move.b	#0x10,d1                        	| [ld   b,$10| coin slot 1]
+	jbsr	check_coin_inserted_0010          	| [call check_coin_inserted_0010]
+	* check for coin release
+l_02b6:
+	jbsr	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x10,d0                         	| [and  $10]
+	jne	l_02b6                             	| [jr   nz,$02B6]
+	lea	unknown_881C(pc),a0                	| [ld   hl,unknown_881C]
+	addq.b	#1,(a0)                         	| [inc  (hl)]
+	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
+	jbsr	osd_read_dsw1_9000           	| [ld   a,(dsw_1_9000_coinage)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	jra	l_0307                             	| [jr   $0307]
+coin_routine_02cd:
+	lea	unknown_8830+1(pc),a0              	| [ld   hl,unknown_8830+1]
+	move.b	#0x20,d1                        	| [ld   b,$20| coin slot 2]
+	jbsr	check_coin_inserted_0010          	| [call check_coin_inserted_0010]
+
+	* check for coin release
+l_02e1:
+	jbsr	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x20,d0                         	| [and  $20]
+	jne	l_02e1                             	| [jr   nz,$02E1]
+	lea	unknown_881E(pc),a0                	| [ld   hl,unknown_881E]
+	addq.b	#1,(a0)                         	| [inc  (hl)]
+	lea	unknown_880a(pc),a0                	| [ld   hl,unknown_880a]
+	jbsr	osd_read_dsw1_9000           	| [ld   a,(dsw_1_9000_coinage)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	move.b	d0,d1                           	| [ld   b,a]
+	jbsr	osd_read_dsw1_9000           	| [ld   a,(dsw_1_9000_coinage)]
+	not.b	d0                               	| [cpl]
+	ror.b	#4,d0                            	| [rrca]
+												| [rrca]
+												| [rrca]
+												| [rrca]
+	and.b	#0x0F,d0                         	| [and  $0F]
+	cmp.b	d1,d0                            	| [cp   b]
+	jne	l_0307                             	| [jr   nz,$0307]
+	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
+l_0307:
+	pea	register_coin_inserted_038B(pc) 	| [ld   bc,register_coin_inserted_038B]
+											| [push bc]
+											| [push bc]
+
+	move.l	a0,-(sp)                        	| [push hl]
+	move.b	(a0),d2                         	| [ld   c,(hl)]
+	addq.b	#1,d2                           	| [inc  c]
+	move.b	d2,(a0)                         	| [ld   (hl),c]
+	add.b	d0,d0                            	| [add  a,a]
+	* trying to emulate Z80 table code again
+	lea	table_032D(pc),a0                  	| [ld   hl,table_032D]
+	clr.w	d3                               	| [ld   d,$00]
+	move.b	d0,d3                           	| [ld   e,a]
+	add.w	d3,a0								| [add  hl,de]
+	move.w	(a0),a0                         	| [ld   e,(hl)]
+	add.l	#l_034D,a0
+												| [inc  hl]
+												| [ld   d,(hl)]
+	and.w	#0xff,d2                          	| [ld   l,c]
+	                           	| [ld   h,$00]
+	add.w	d2,a0											| [add  hl,de]
+
+	move.l	a0,-(sp)                        	| [push hl]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	lea	number_of_credits_8808(pc),a0      	| [ld   hl,number_of_credits_8808]
+	add.b	(a0),d0                          	| [add  a,(hl)]
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	addq.w	#1,a0                           	| [inc  hl]
+	move.b	(a0),d0                         	| [ld   a,(hl)]
+	addq.b	#1,d0                           	| [inc  a]
+	move.l	(sp)+,a0                        	| [pop  hl]
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+	move.b	d0,(a0)                         	| [ld   (hl),a]
+	rts                                    	| [ret]
 	
 	* used a relative pointers table (why not ?)
 table_032D:
@@ -497,6 +641,26 @@ l_034D:
 	.byte	0xFF,0x03,0xFF,0x04,0xFF,0x05,0xFF,0x06,0xFF,0x00,0x01,0x00,0x01,0x01,0x01,0xFF
 	.byte	0x00,0x01,0x00,0x02,0xFF,0x01,0x01,0x01,0x01,0x02,0xFF,0x01,0x01,0x01,0x02,0xFF
 	.byte	0x01,0x02,0xFF,0x02,0x02,0x02,0x02,0x03,0xFF,0x02,0x02,0x02,0x03,0xFF
+
+
+register_coin_inserted_038B:
+	clr.b	d1                               	| credit inserted sound [ld   b,$00]
+	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
+	lea	unknown_880B(pc),a0                	| [ld   hl,unknown_880B]
+	btst.b	#7,(a0)                         	| [bit  7,(hl)]
+	bne.b	0f
+	rts                                    	| [ret  z]
+0:
+	jbsr	display_number_of_credits_2B7A    	| [call display_number_of_credits_2B7A]
+	lea	push_string_2A7D+0x97-0x7D(pc),a0	| [ld   hl,one_or_two_player_string_2A97]
+	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
+	cmp.b	#0x01,d0                         	| [cp   $01]
+	jne	l_03a6                             	| [jr   nz,$03A6]
+	lea	push_string_2A7D+0xA8-0x7D(pc),a0 	| [ld   hl,one_player_only_string_2AA8]
+l_03a6:
+	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
+	rts                                    	| [ret]
+
 
 l_03d4:
 * zero a lot of hardware stuff
@@ -566,8 +730,14 @@ loop_0480:
 	jeq	loop_0480                          	| [jr   z,loop_0480]
 	
 coin_has_been_inserted_0490:
-	
-	bsr		osd_break
+		| [ld   a,$00]
+		| [ld   (character_sprite_bank_selector_9047),a]
+		| [ld   (palette_bank_selector_9042),a]
+		| [ld   (color_lookup_table_bank_selector_9046),a]
+	jbsr	clr_bank_selectors_230E		| we reuse a routine that does that
+	jbsr	wait_for_start_and_play_072D      	| [call wait_for_start_and_play_072D]
+* after game is over, loop back to "thanks for playing ..."
+	jra	loop_0478                          	| [jr   loop_0478]
 
 display_thanks_for_playing_04A0:
 	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
@@ -806,7 +976,7 @@ wait_for_start_and_play_072D:
 	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]
 	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
 	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
-	jbsr	l_2a2c                            	| [call $2A2C]
+	jbsr	display_push_start_button_2A2C                            	| [call $2A2C]
 	lea	unknown_880B,a0                	| [ld   hl,unknown_880B]
 	bset.b	#7,(a0)                         	| [set  7,(hl)]
 
@@ -851,43 +1021,97 @@ wait_for_start_0774:
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 l_079d:
+	move	SR,0X204
+
+	* we have to force sprite update from time to time because
+	* we're running in vblank...
+	* NOT thank you Akira for that!!
+	* no joystick update, no keyboard update...
+
+	move.w	vbl_sync_counter_start_screen,d0
+	addq.w	#1,d0
+	cmp.w	#400,d0		| roughly...
+	bne.b	1f
+	* wait for vbl sync
+	jbsr	osd_ack_vblank_interrupt
+0:
+	jbsr	osd_test_vblank_interrupt
+	beq.b	0b
+	moveq	#0,d0
+1:
+	move.w	d0,vbl_sync_counter_start_screen
+
+	jbsr	osd_test_vblank_interrupt
+	beq.b	0f
+	lea		sprite_ram_8FF2,a0		| type & color
+	lea		sprite_ram_9022,a1		| X,Y
+	move.l	a2,-(a7)
+	jbsr	osd_update_controls	
+	jbsr	osd_update_sprites
+	move.l	(a7)+,a2
+	jbsr	osd_ack_vblank_interrupt
+0:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
-	jbsr	l_0819                            	| [call $0819]
-	**move.b	dip_switches_9080,d0                       	| [ld   a,($9080)]
+	jbsr	choose_start_screen_action_0819                            	| [call $0819]
+	* wait for start button pressed
+	jbsr	osd_read_inputs              	| [ld   a,($9080)]
+	
+	* coinage loop doesn't run here
+	* we have to simulate it
+
+	not.b	d0                               	| [cpl]
+	and.b	#0x40,d0                         	| [and  $40]
+	beq.b	1f
+0:
+	jbsr	osd_read_inputs              	| [ld   a,($9080)]
+	not.b	d0                               	| [cpl]
+	and.b	#0x40,d0                         	| [and  $40]
+	bne.b	0b
+
+	movem.l	d0-a6,-(a7)
+	add.b	#1,number_of_credits_8808      	| [ld   hl,number_of_credits_8808]
+	                         	| [inc  (hl)]
+	bsr	register_coin_inserted_038B        	| [jp   register_coin_inserted_038B]
+	movem.l	(a7)+,d0-a6
+1:
+	
+	swap	d0		| get other port
 	not.b	d0                               	| [cpl]
 	and.b	#0x60,d0                         	| [and  $60]
 	jeq	l_079d                             	| [jr   z,$079D]
 	btst.b	#6,d0                           	| [bit  6,a]
 	jne	l_07bc                             	| [jr   nz,$07BC]
+	* one player only
 	lea	number_of_credits_8808,a0      	| [ld   hl,number_of_credits_8808]
 	subq.b	#1,(a0)                         	| [dec  (hl)]
-	clr.b	d0                               	| [ld   a,$00]
-	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]
-	jbsr	l_07d1                            	| [call $07D1]
+											| [ld   a,$00]
+	clr.b	player_number_8816           	| [ld   (player_number_8816),a]
+	**jbsr	l_07d1                            	| [call $07D1]
 	rts                                    	| [ret]
 l_07bc:
 	move.b	number_of_credits_8808,d0       	| [ld   a,(number_of_credits_8808)]
 	cmp.b	#0x01,d0                         	| [cp   $01]
 	jeq	l_079d                             	| [jr   z,$079D]
+	* 2 players
 	lea	number_of_credits_8808,a0      	| [ld   hl,number_of_credits_8808]
 	subq.b	#2,(a0)                         	| [dec  (hl)]
 	                         	| [dec  (hl)]
 	move.b	#0x80,d0                        	| [ld   a,$80]
 	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]
-	jbsr	l_07d1                            	| [call $07D1]
+	**jbsr	l_07d1                            	| [call $07D1]
 	rts                                    	| [ret]
 l_07d1:
-	**move.b	dsw_1_9000_coinage,d0                   	| [ld   a,(dsw_1_9000_coinage)]
+	jbsr	osd_read_dsw1_9000                   	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	lea	unknown_8809,a0                	| [ld   hl,unknown_8809]
 	jbsr	l_07fb                            	| [call $07FB]
-	lea	unknown_8809+1,a0                	| [ld   hl,unknown_880a]
-	**move.b	dsw_1_9000_coinage,d0                   	| [ld   a,(dsw_1_9000_coinage)]
+	lea	unknown_880a,a0                	| [ld   hl,unknown_880a]
+	jbsr	osd_read_dsw1_9000                   	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	move.b	d0,d1                           	| [ld   b,a]
-	**move.b	dsw_1_9000_coinage,d0                   	| [ld   a,(dsw_1_9000_coinage)]
+	jbsr	osd_read_dsw1_9000                   	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	ror.b	#4,d0                            	| [rrca]
 												| [rrca]
@@ -930,21 +1154,21 @@ l_0816:
 	move.b	d2,(a0)                         	| [ld   (hl),c]
 	rts                                    	| [ret]
 
-l_0819:
+choose_start_screen_action_0819:
 	move.b	(intermission_dance_push_anim_counter,a2),d0	| [ld   a,(ix+intermission_dance_push_anim_counter)]
 	lea	table_0822(pc),a1                  	| [ld   de,table_0822]
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
 
 table_0822:
 	.long	block_pushed_3FFA
-	.long	l_0830
+	.long	write_n_low_0830
 	.long	l_085c
 	.long	block_pushed_401F
-	.long	l_0846
+	.long	write_n_high_0846
 	.long	l_085c
 	.long	l_0870
 
-l_0830:
+write_n_low_0830:
 										| [ld   h,$0C]
 										| [ld   l,$13]
 	move.w	#0x130C,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
@@ -955,7 +1179,7 @@ l_0830:
 	addq.b	#1,(intermission_dance_push_anim_counter,a2)	| [inc  (ix+intermission_dance_push_anim_counter)]
 	rts                                    	| [ret]
 
-l_0846:
+write_n_high_0846:
 										| [ld   h,$0C]
 										| [ld   l,$13]
 	move.w	#0x130C,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
@@ -968,7 +1192,7 @@ l_0846:
 
 l_085c:
 	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
-	bne	0f
+	bne.b	0f
 	jbsr	l_0867                            	| [call z,$0867]
 0:
 	jbsr	l_4082                            	| [call $4082]
@@ -3954,14 +4178,14 @@ screen_line_address_table_29B6:
 * making a typewriter effect
  
 print_line_typewriter_style_29F4:
-	move.b	(a0)+,d0                         	| load text X [ld   a,(hl)]
-	move.b	d0,cursor_x_8800                	| store in current X [ld   (cursor_x_8800),a]
+	move.b	(a0)+,cursor_x_8800                        	| load text X [ld   a,(hl)]
+	                	| store in current X [ld   (cursor_x_8800),a]
 	                           	| [inc  hl]
-	move.b	(a0)+,d0                         	| load text Y [ld   a,(hl)]
-	move.b	d0,cursor_y_8801                	| store in current Y [ld   (cursor_y_8801),a]
+	move.b	(a0)+,cursor_y_8801                         	| load text Y [ld   a,(hl)]
+	                	| store in current Y [ld   (cursor_y_8801),a]
 	                           	| [inc  hl]
-	move.b	(a0)+,d0                         	| load text color [ld   a,(hl)]
-	move.b	d0,cursor_color_8802            	| store in current color [ld   (cursor_color_8802),a]
+	move.b	(a0)+,cursor_color_8802                         	| load text color [ld   a,(hl)]
+	            	| store in current color [ld   (cursor_color_8802),a]
 	                           	| [inc  hl]
 l_2a03:
 	move.b	(a0)+,d0                         	| get character [ld   a,(hl)]
@@ -3988,7 +4212,7 @@ l_2a1a:
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	rts                                    	| [ret]
 	
-l_2a2c:
+display_push_start_button_2A2C:
 	lea	push_string_2A7D(pc),a0            	| [ld   hl,push_string_2A7D]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
 	lea	push_string_2A7D+0x87-0x7D(pc),a0    	| [ld   hl,start_button_string_2A87]
@@ -4050,8 +4274,8 @@ read_player_inputs_2AFB:
 * cocktail mode is ignored
 * so just read player 1 joystick
 l_2b0c:
-	**move.b	coin_input_90C0,d0              	| [ld   a,(coin_input_90C0)]
-	rts                                    	| [ret]
+	jra	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
+	                                    	| [ret]
 
 
 update_all_scores_2B10:

@@ -417,7 +417,8 @@ useless_call_0194:
 01C4: FB            ei
 01C5: ED 4D         reti
 
-; looks like easter egg
+; looks like easter egg: displays game creator team credits
+
 display_team_names_01C7:
 01C7: CD 65 A8      call clear_screen_and_colors_28E5
 01CA: CD 1F 39      call clear_sprites_31B7
@@ -467,10 +468,10 @@ display_team_names_01C7:
 0299: 20 F8         jr   nz,$0293
 029B: 21 08 A8      ld   hl,number_of_credits_8808
 029E: 34            inc  (hl)
-029F: C3 8B A3      jp   $038B
+029F: C3 8B A3      jp   register_coin_inserted_038B
 coin_routine_02A2:
 02A2: 21 30 88      ld   hl,unknown_8830
-02A5: 06 38         ld   b,$10
+02A5: 06 38         ld   b,$10		| coin slot 1
 02A7: CD 38 A0      call check_coin_inserted_0010
 02AA: 00            nop
 02AB: 00            nop
@@ -496,7 +497,7 @@ coin_routine_02A2:
 02C9: E6 AF         and  $0F
 02CB: 18 B2         jr   $0307
 02CD: 21 31 88      ld   hl,unknown_8830+1
-02D0: 06 00         ld   b,$20
+02D0: 06 00         ld   b,$20	| coin slot 2
 02D2: CD 30 00      call check_coin_inserted_0010
 02D5: 00            nop
 02D6: 00            nop
@@ -531,7 +532,7 @@ coin_routine_02A2:
 0301: B8            cp   b
 0302: 20 83         jr   nz,$0307
 0304: 21 A1 80      ld   hl,unknown_8809
-0307: 01 83 83      ld   bc,$038B
+0307: 01 83 83      ld   bc,register_coin_inserted_038B
 030A: C5            push bc
 030B: E5            push hl
 030C: 4E            ld   c,(hl)
@@ -586,6 +587,7 @@ FF 03 FF 04 FF 05 FF 06 FF 00 01 00 01 01 01 FF
 00 01 00 02 FF 01 01 01 01 02 FF 01 01 01 02 FF
 01 02 FF 02 02 02 02 03 FF 02 02 02 03 FF
 
+register_coin_inserted_038B:
 038B: 06 A8         ld   b,$00		; credit inserted sound
 038D: CD 81 B0      call play_sfx_1889
 0390: 21 83 88      ld   hl,unknown_880B
@@ -717,7 +719,8 @@ loop_0480:
 048E: 28 78         jr   z,loop_0480
 
 ;;; coin has been inserted
-	
+
+coin_has_been_inserted_0490:
 0490: 3E 20         ld   a,$00
 0492: 32 67 90      ld   (character_sprite_bank_selector_9047),a
 0495: 32 42 38      ld   (palette_bank_selector_9042),a
@@ -994,7 +997,7 @@ wait_for_start_and_play_072D:
 0733: 32 16 88      ld   (player_number_8816),a
 0736: CD 6D 28      call clear_screen_and_colors_28E5
 0739: CD 10 03      call update_all_scores_2B10
-073C: CD 04 2A      call $2A2C
+073C: CD 04 2A      call display_push_start_button_2A2C
 073F: 21 8B 20      ld   hl,unknown_880B
 0742: CB FE         set  7,(hl)
 0744: E5            push hl
@@ -1038,7 +1041,7 @@ wait_for_start_0774:
 0797: CD CE 33      call display_snobee_sprite_33CE
 079A: CD 0B 39      call set_character_sprite_code_and_color_39AB
 079D: CD 75 80      call increase_counter_0875
-07A0: CD B1 88      call $0819
+07A0: CD B1 88      call choose_start_screen_action_0819
 07A3: 3A A0 10      ld   a,(dip_switches_9080)
 07A6: 2F            cpl
 07A7: E6 68         and  $60
@@ -1107,19 +1110,22 @@ wait_for_start_0774:
 0817: 71            ld   (hl),c
 0818: C9            ret
 	
+choose_start_screen_action_0819:
 0819: DD 7E A3      ld   a,(ix+intermission_dance_push_anim_counter)
 081C: 11 02 08      ld   de,table_0822
 081F: C3 8F 05      jp   indirect_jump_2D8F
 
 table_0822:
 	 dc.w	block_pushed_3FFA
-	 dc.w	$0830
+	 dc.w	write_n_low_0830
 	 dc.w	$085C
 	 dc.w	block_pushed_401F
-	 dc.w	$0846
+	 dc.w	write_n_high_0846
 	 dc.w	$085C
 	 dc.w	$0870
 
+; start screen: write "N" from "BUTTON" low position
+write_n_low_0830:
 0830: 26 A4         ld   h,$0C
 0832: 2E 33         ld   l,$13
 0834: 22 20 88      ld   (cursor_x_8800),hl
@@ -1130,10 +1136,12 @@ table_0822:
 0842: DD 34 AB      inc  (ix+intermission_dance_push_anim_counter)
 0845: C9            ret
 
+write_n_high_0846:
+; start screen: write "N" from "BUTTON" high position
 0846: 26 84         ld   h,$0C
 0848: 2E B3         ld   l,$13
 084A: 22 A0 88      ld   (cursor_x_8800),hl
-084D: 3E EE         ld   a,$4E
+084D: 3E EE         ld   a,$4E		; "N"
 084F: CD 3C 81      call set_tile_at_current_pos_293C
 0852: CD B1 29      call move_cursor_1_2919
 0855: CD 00 81      call put_blank_at_current_pos_2900
@@ -5182,6 +5190,7 @@ print_line_typewriter_style_29F4:
 2A28: CD F9 A0      call delay_28D1
 2A2B: C9            ret
 
+display_push_start_button_2A2C:
 2A2C: 21 55 A2      ld   hl,push_string_2A7D
 2A2F: CD F4 81      call print_line_typewriter_style_29F4
 2A32: 21 2F 2A      ld   hl,start_button_string_2A87
