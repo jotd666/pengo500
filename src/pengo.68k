@@ -4361,50 +4361,50 @@ x_table_2D08:
 	.align	2
 draw_lives_2D0C:
 	jbsr	get_nb_lives_289E                 	| [call get_nb_lives_289E]
-	tst.b	d0                               	| [and  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
-	jra	l_2d18                             	| [jr   $2D18]
+	jra	draw_nonzero_lives_2d18                             	| [jr   $2D18]
 draw_lives_2D13:
 	jbsr	get_nb_lives_289E                 	| [call get_nb_lives_289E]
 	subq.b	#1,d0                           	| [dec  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
-l_2d18:
+draw_nonzero_lives_2d18:
 	cmp.b	#0x05,d0                         	| [cp   $05]
 	jcs	l_2d1e                             	| [jr   c,$2D1E]
+* clamp to 4 lives drawn (who gets more than 4 lives in that game, that's
+* impossible without cheating)
 	move.b	#0x04,d0                        	| [ld   a,$04]
 l_2d1e:
 	move.b	d0,d1                           	| [ld   b,a]
 	move.b	#0x0B,d0                        	| [ld   a,$0B]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	move.b	#0x24,d2                        	| pengo life upper left tile [ld   c,$24]
-l_2d26:
-	move.w	d1,-(sp)                        	| [push bc]
+draw_lives_loop_2d26:
+	movem.w	d1/d2,-(sp)                        	| [push bc]
 	move.b	d1,d0                           	| [ld   a,b]
 	subq.b	#1,d0                           	| [dec  a]
 	add.b	d0,d0                            	| [add  a,a]
-	move.w	#0x23,d5							| [ld   h,$23]
+	move.b	#0x23,d5							| [ld   h,$23] fixed Y=0x23 (upper status row)
 	move.b	d0,d6								| [ld   l,a]
-	move.w	d5,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
-	move.w	d5,-(sp)                        	| [push hl]
-	move.b	d2,d0                           	| [ld   a,c]
+	bsr		set_current_cursor_from_hl		 	| [ld   (cursor_x_8800),hl]
+	movem.w	d5/d6,-(sp)                        	| [push hl]
+	move.b	d2,d0                           	| [ld   a,c] base upper left tile
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	addq.b	#1,d0                           	| [inc  a]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
-	move.w	(sp)+,d5                        	| [pop  hl]
+	movem.w	(sp)+,d5/d6                        	| [pop  hl]
 	clr.b	d5                               	| [ld   h,$00]
-	move.b	d5,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
-	move.b	d6,cursor_y_8801                	| [ld   (cursor_x_8800),hl]
+	bsr		set_current_cursor_from_hl		 	| [ld   (cursor_x_8800),hl]
 	addq.b	#1,d0                           	| [inc  a]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	addq.b	#1,d0                           	| [inc  a]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
-	move.w	(sp)+,d1                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                        	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
-	jne	l_2d26                             	| [djnz $2D26]
+	jne	draw_lives_loop_2d26                             	| [djnz $2D26]
 	rts                                    	| [ret]
 
 display_eggs_2D4B:
@@ -8675,7 +8675,7 @@ l_474f:
 	btst.b	#2,d1                           	| [bit  2,b]
 	jeq	l_4767                             	| [jr   z,$4767]
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.b	#0x24,d2                        	| [ld   c,$24]
+	move.b	#0x24,d2                        	| [ld   c,$24] pengo left upper tile
 l_4756:
 	move.b	#0x0B,d0                        	| [ld   a,$0B]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
@@ -8683,13 +8683,13 @@ l_4756:
 	subq.b	#1,d0                           	| [dec  a]
 	jeq	l_4765                             	| [jr   z,$4765]
 	move.b	d0,d1                           	| [ld   b,a]
-	jbsr	l_2d26                            	| [call $2D26]
+	jbsr	draw_lives_loop_2d26                            	| [call $2D26]
 l_4765:
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	rts                                    	| [ret]
 l_4767:
 	movem.w	d1/d2,-(sp)                    	| [push bc]
-	move.b	#0x28,d2                        	| [ld   c,$28]
+	move.b	#0x28,d2                        	| [ld   c,$28] depressed pengo upper tile
 	jra	l_4756                             	| [jr   $4756]
 
 table_476C:
@@ -9466,7 +9466,7 @@ snobee_collides_pengo_4C2E:
 	move.b	#0x0B,d0                        	| [ld   a,$0B]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	move.b	#0x2C,d2                        	| [ld   c,$2C]
-	jbsr	l_2d26                            	| [call $2D26]
+	jbsr	draw_lives_loop_2d26                            	| [call $2D26]
 	rts                                    	| [ret]
 
 handle_pengo_eats_stunned_snobees_4C55:

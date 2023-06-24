@@ -5495,20 +5495,24 @@ draw_lives_2D0C:
 2D0C: CD 36 08      call get_nb_lives_289E
 2D0F: A7            and  a
 2D10: C8            ret  z
-2D11: 18 05         jr   $2D18
+2D11: 18 05         jr   draw_nonzero_lives_2d18
 
 
 draw_lives_2D13:
 2D13: CD 9E 00      call get_nb_lives_289E
 2D16: 3D            dec  a
 2D17: C8            ret  z
+draw_nonzero_lives_2d18:
 2D18: FE A5         cp   $05
 2D1A: 38 A2         jr   c,$2D1E
+; clamp to 4 lives drawn (who gets more than 4 lives in that game, that's
+; impossible without cheating)
 2D1C: 3E A4         ld   a,$04
 2D1E: 47            ld   b,a
 2D1F: 3E 8B         ld   a,$0B
 2D21: 32 AA 20      ld   (cursor_color_8802),a
 2D24: 0E 8C         ld   c,$24		; pengo life upper left tile
+draw_lives_loop_2d26:
 2D26: C5            push bc
 2D27: 78            ld   a,b
 2D28: 3D            dec  a
@@ -5529,7 +5533,7 @@ draw_lives_2D13:
 2D43: 3C            inc  a
 2D44: CD BC 09      call set_tile_at_current_pos_293C
 2D47: C1            pop  bc
-2D48: 10 74         djnz $2D26
+2D48: 10 74         djnz draw_lives_loop_2d26
 2D4A: C9            ret
 	;; 
 display_eggs_2D4B: 
@@ -9275,7 +9279,7 @@ check_if_diamonds_are_aligned_4612:
 475E: 3D            dec  a
 475F: 28 AC         jr   z,$4765
 4761: 47            ld   b,a
-4762: CD 8E 0D      call $2D26
+4762: CD 8E 0D      call draw_lives_loop_2d26
 4765: C1            pop  bc
 4766: C9            ret
 4767: C5            push bc
@@ -9924,7 +9928,7 @@ snobee_collides_pengo_4C2E:
 4C4A: 3E 83         ld   a,$0B
 4C4C: 32 A2 88      ld   (cursor_color_8802),a
 4C4F: 0E 2C         ld   c,$2C
-4C51: CD 26 85      call $2D26
+4C51: CD 26 85      call draw_lives_loop_2d26
 4C54: C9            ret
 	
 handle_pengo_eats_stunned_snobees_4C55: 
