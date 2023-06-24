@@ -7789,6 +7789,7 @@ spawn_snobee_if_remaining_eggs_3c4b:
 
 hatch_one_egg_3c6c:
 3C6C: 35            dec  (hl)		; one less egg
+	; find an occupied slot with nonzero coords
 3C6D: 21 C2 A5      ld   hl,egg_location_table_8DC2
 3C70: 4E            ld   c,(hl)	; get X
 3C71: 23            inc  hl
@@ -7797,9 +7798,12 @@ hatch_one_egg_3c6c:
 3C74: 78            ld   a,b
 3C75: 81            add  a,c
 3C76: 28 70         jr   z,$3C70	; 0: empty slot: find another slot
+	; slot HAS to be found, find an animation slot to show ice breaking
 3C78: C5            push bc
 3C79: CD C6 CA      call find_breaking_block_free_slot_42c6
 3C7C: C1            pop  bc
+	; D2 (x) and D1 (y) are grid coordinates. Convert them
+	; to sprite coordinates
 3C7D: CD DE 3C      call convert_grid_coords_to_sprite_coords_3cde
 3C80: DD 71 00      ld   (ix+x_pos),c
 3C83: DD 70 89      ld   (ix+y_pos),b
@@ -8654,6 +8658,10 @@ table_41CB:
 42C1: 21 DD 8D      ld   hl,current_nb_eggs_to_hatch_8DDD
 42C4: 35            dec  (hl)
 42C5: C9            ret
+
+; find an animation to show breaking block
+; also zeroes unatched egg slot at those coordinates
+; < C: X grid, B: Y grid
 
 find_breaking_block_free_slot_42c6:
 42C6: 21 E8 8C      ld   hl,breaking_block_slots_8CC0

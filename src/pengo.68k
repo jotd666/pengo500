@@ -4956,7 +4956,8 @@ look_for_hidden_egg_at_XY_300A:
 	move.b	d0,d1                           	| loop nb eggs times [ld   b,a]
 	lea	egg_location_table_8DC2,a0     	| [ld   hl,egg_location_table_8DC2]
 l_3013:
-	movem.w	d1/d2/d5/d6,-(sp)                    	| [push bc]
+	movem.w	d1/d2,-(sp)                    	| [push bc]
+	move.l	a0,-(sp)						| [push hl]
 
 	move.b	(a0)+,d2                         	| get egg X [ld   c,(hl)]
 												| [inc  hl]
@@ -4966,7 +4967,8 @@ l_3013:
 	* are the egg coords the ones that were passed as parameter?
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jeq	l_3029                             	| [jr   z,$3029]
-	movem.w	(sp)+,d1/d2/d5/d6                    	| [pop  bc]
+	addq.w	#4,sp							| [pop hl] (a0 is already ok)
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	                           	| advance to next egg in table [inc  hl] done above (a0)+
 											| [inc  hl]
 	subq.b	#1,d1                           	| [...]
@@ -4978,7 +4980,8 @@ l_3013:
 	cmp.b	#1,d7                            	| [ccf] (xor a doesn't cut it)
 	rts                                    	| [ret]
 l_3029:
-	movem.w	(sp)+,d1/d2/d5/d6                    	| [pop  bc]
+	move.l	(sp)+,a0						| [pop  hl]
+	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	clr.b	d7
 	cmp.b	#1,d7                            	| set carry flag [scf] (handled)
 	rts                                    	| [ret]
@@ -6923,6 +6926,7 @@ spawn_snobee_if_remaining_eggs_3c4b:
 hatch_one_egg_3c6c:
 	subq.b	#1,(a0)                         	| [dec  (hl)] one less egg
 	lea	egg_location_table_8DC2,a0     	| [ld   hl,egg_location_table_8DC2]
+	* find an occupied slot with nonzero coords
 l_3c70:
 	move.b	(a0)+,d2                         	| [ld   c,(hl)]
 	                           	| [inc  hl]
@@ -6931,9 +6935,13 @@ l_3c70:
 	move.b	d1,d0                           	| [ld   a,b]
 	add.b	d2,d0                            	| [add  a,c]
 	jeq	l_3c70                             	| [jr   z,$3C70]
+
+	* slot HAS to be found, find an animation slot to show ice breaking
 	movem.w	d1/d2,-(sp)                    	| [push bc]
 	jbsr	find_breaking_block_free_slot_42c6                            	| [call $42C6]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	* D2 (x) and D1 (y) are grid coordinates. Convert them
+	* to sprite coordinates
 	jbsr	convert_grid_coords_to_sprite_coords_3cde                 	| [call $3CDE]
 	move.b	d2,(x_pos,a2)                   	| [ld   (ix+x_pos),c]
 	move.b	d1,(y_pos,a2)                   	| [ld   (ix+y_pos),b]
@@ -7930,6 +7938,10 @@ l_42a3:
 	lea	current_nb_eggs_to_hatch_8DDD,a0	| [ld   hl,current_nb_eggs_to_hatch_8DDD]
 	subq.b	#1,(a0)                         	| [dec  (hl)]
 	rts                                    	| [ret]
+
+* find an animation to show breaking block
+* also zeroes unatched egg slot at those coordinates
+* < C: X grid, B: Y grid
 
 find_breaking_block_free_slot_42c6:
 	lea	breaking_block_slots_8CC0,a0   	| [ld   hl,breaking_block_slots_8CC0]

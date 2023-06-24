@@ -4,8 +4,8 @@ General:
 - highscores (today's best 5) wrongly displayed
 - joystick/insert coin
 - sounds
-- "endian bug" in scores
-- monsters hatch wrong position: debug hatch_one_egg_3c6c
+- probable "endian bug" in scores
+- pengo dead: life icon wrongly located
 
 Amiga:
 
