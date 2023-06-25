@@ -8273,7 +8273,9 @@ get_div8_iy_coords_3E8F:
 3F8B: 28 A1         jr   z,$3FAE
 3F8D: DD 7E 27      ld   a,(ix+$0f)
 3F90: 3C            inc  a
+; fire already pressed, skip
 3F91: C8            ret  z
+; set fire flag
 3F92: DD 36 0F 7F   ld   (ix+$0f),$FF
 3F96: 21 5C 8C      ld   hl,pengo_moving_direction_8CF4
 3F99: CB D6         set  2,(hl)

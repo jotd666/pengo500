@@ -15,9 +15,9 @@
 	OPT_SKIP_TITLE_SCREEN=0
 	OPT_SKIP_ICE_PACK_SCREEN=0
 	* test mode: only first snobee is active
-	OPT_ONLY_ONE_SNOBEE=1
+	OPT_ONLY_ONE_SNOBEE=0
 	* draw maze quicky, like set 2, quick game start!
-	OPT_QUICK_MAZE_DRAW=1
+	OPT_QUICK_MAZE_DRAW=0
 ***
 *** end of BUILD OPTIONS
 ***

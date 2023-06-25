@@ -1480,7 +1480,8 @@ osd_read_dipswitches:
 * reads most inputs in one call
 * bits 0-8     coins
 * bits 16-24   start buttons
-* bits 24-     joystick
+* bits 24-28   joystick directions
+* bit 31       joystick fire
 osd_read_inputs:
 	bsr		handle_keyboard
 	moveq	#-1,d0
@@ -1520,6 +1521,10 @@ osd_read_inputs:
 	btst	#JPB_BTN_RIGHT,d1
 	beq.b	0f
 	bclr	#27,d0
+0:
+	btst	#JPB_BTN_RED,d1
+	beq.b	0f
+	bclr	#31,d0
 0:
 	movem.l	(a7)+,a0/d1
 	rts

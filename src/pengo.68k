@@ -7680,14 +7680,16 @@ l_3f85:
 	move.b	(0x0f,a2),d0                    	| [ld   a,(ix+$0f)]
 	addq.b	#1,d0                           	| [inc  a]
 	bne.b	0f
+	* fire already pressed, skip
 	rts                                    	| [ret  z]
 0:
+	* set fire flag
 	move.b	#0xFF,(0x0f,a2)                 	| [ld   (ix+$0f),$FF]
 	lea	pengo_moving_direction_8CF4,a0 	| [ld   hl,pengo_moving_direction_8CF4]
 	bset.b	#2,(a0)                         	| [set  2,(hl)]
 l_3f9b:
 	move.b	block_moving_flag_8DBF,d0       	| [ld   a,(block_moving_flag_8DBF)]
-	tst.b	d0                               	| [and  a]
+												| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:

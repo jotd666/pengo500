@@ -2,19 +2,21 @@ General:
 
 - dip switches (see ** code)
 - highscores (today's best 5) wrongly displayed
-- joystick
 - sounds
 - probable "endian bug" in scores
-- pengo doesn't seem to be able to push blocks
 - lives should not be displayed in demo mode/intro screens
 - play: die: maze is destroyed, unhatched eggs drawn at wrong location
 - dipswitches easy/... (look for TODO)
 - start game from ice bank screen => issue (blitz)
+- diamond align 2-3: detected by blinking diamonds, but bonus not triggered
+  by 3 aligned diamonds (create an option to create 2 or 3 aligned diamonds
+  at start)
+  
 
 Amiga:
 
-- fire/push to code!!!
-- whdload cheat keys: complete level
+- sprite color slot not working: pushing block => snobees turn blue!
+- whdload cheat: complete level key, invincible
 - sound
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization

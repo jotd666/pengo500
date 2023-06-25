@@ -17,7 +17,7 @@ def dump_asm_bytes(*args,**kwargs):
     bitplanelib.dump_asm_bytes(*args,**kwargs,mit_format=True)
 
 
-
+opposite = {"left":"right","right":"left"}
 
 block_dict = {}
 
@@ -164,7 +164,7 @@ for k,data in sprite_config.items():
 
     spr = sprites[k]
     spr["name"] = data['name']
-    mirror = "left" in data["name"]
+    mirror = any(x in data["name"] for x in ("left","right"))
 
     right = None
     outname = f"{k:02x}_{clut_index}_{data['name']}.png"
@@ -247,7 +247,7 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
                 for d in ["left","right"]:
                     bitmap = sprite[d]
                     if bitmap:
-                        f.write(f"\t.long\t{name}_{j}_sprdata\n".replace("left",d))
+                        f.write(f"\t.long\t{name}_{j}_sprdata\n".replace(d,opposite[d]))
                     else:
                         f.write("\t.long\t0\n")
 
@@ -263,7 +263,7 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
                 for d in ["left","right"]:
                     bitmap = sprite[d]
                     if bitmap:
-                        sprite_label = f"{name}_{j}_sprdata".replace("left",d)
+                        sprite_label = f"{name}_{j}_sprdata".replace(d,opposite[d])
                         f.write(f"{sprite_label}:\n\t.long\t0\t| control word")
                         bitplanelib.dump_asm_bytes(sprite[d],f,mit_format=True)
                         f.write("\t.long\t0\n")
