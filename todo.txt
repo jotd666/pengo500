@@ -6,14 +6,14 @@ General:
 - sounds
 - probable "endian bug" in scores
 - pengo doesn't seem to be able to push blocks
-- snobees are in slow "ice break" mode all the time, ice break anim
-  is shown even if not ice
 - lives should not be displayed in demo mode/intro screens
 - play: die: maze is destroyed, unhatched eggs drawn at wrong location
 - dipswitches easy/... (look for TODO)
+- start game from ice bank screen => issue (blitz)
+
 Amiga:
 
-
+- fire/push to code!!!
 - whdload cheat keys: complete level
 - sound
 - log used cluts to filter out unused clut/char combination

@@ -203,7 +203,7 @@ w\@:
 		.global osd_read_high_scores
 		.global osd_write_high_scores
 		.global	osd_get_start_stack
-		
+		.global osd_get_sync_period
 		.global osd_sound_start
 		.global osd_sound_stop
 		.global osd_sound_enable
@@ -545,8 +545,14 @@ _vblank:
 osd_break:
 	blitz
 	rts
+	
+* speed regulation for game mainloop, the bigger, the faster
+* Slightly depends on PAL/NTSC. For PAL I found that 12.
 
-
+osd_get_sync_period:
+	move.w	#12,d0
+	rts
+	
 * this needs tuning. waits roughly 400 micro seconds
 * this emulates Z80 active loop found in the intro and in other
 * places too
