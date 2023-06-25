@@ -16,6 +16,8 @@
 	OPT_SKIP_THANKS_SCREEN=0
 	OPT_SKIP_TITLE_SCREEN=0
 	OPT_SKIP_ICE_PACK_SCREEN=0
+	* test mode: only first snobee is active
+	OPT_ONLY_ONE_SNOBEE=1
 ***
 *** end of BUILD OPTIONS
 ***

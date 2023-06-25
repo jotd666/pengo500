@@ -1359,10 +1359,10 @@ main_game_loop_09E7:
 09F0: CD 89 18      call play_sfx_1889
 09F3: FB            ei
 09F4: CD 75 08      call increase_counter_0875
-09F7: CD 0E 33      call $330E	;  timer to animate snobees when pengo killed
-09FA: CD B4 33      call $3314	;  timer to end the level (and if 1 or 0 snobee make it disappear...)
-09FD: CD 1A 33      call $331A	;  ??? something to do with eggs hatching...
-0A00: CD 20 33      call $3320	;  ???
+09F7: CD 0E 33      call animate_snobee_1_330e
+09FA: CD B4 33      call animate_snobee_2_3314
+09FD: CD 1A 33      call animate_snobee_3_331a
+0A00: CD 20 33      call animate_snobee_4_3320
 0A03: CD 73 15      call pengo_moves_3D73
 0A06: CD 1E 69      call pengo_block_push_41BE
 0A09: CD B9 C1      call snobee_block_break_4919
@@ -6384,7 +6384,7 @@ init_snobee_positions_31EF:
 321F: DD 36 80 FF   ld   (ix+$08),$FF
 3223: DD 36 81 00   ld   (ix+$09),$00
 3227: DD 36 9D FF   ld   (ix+$15),$FF
-322B: CD 6E 1A      call $326E
+322B: CD 6E 1A      call enable_snobees_depending_on_level_326E
 322E: C9            ret
 	
 322F: AF            xor  a
@@ -6426,13 +6426,18 @@ compute_snobee_speed_324E:
 326A: DD 77 06      ld   (ix+instant_move_period),a
 326D: C9            ret
 
+enable_snobees_depending_on_level_326E:
+; enable all or partial snobees: how many snobees
+; are active at the same time
 326E: DD 36 1F 0E   ld   (ix+char_state),$0E
 3272: CD 07 28      call get_level_number_288F
 3275: FE 05         cp   $05
 3277: D0            ret  nc
+; below level 5
 3278: DD 7E 05      ld   a,(ix+char_id)
 327B: FE 04         cp   $04
 327D: C0            ret  nz
+; below level 5, only 3 first characters are active at the same time
 327E: DD 36 37 88   ld   (ix+char_state),$00
 3282: C9            ret
 	
@@ -6503,12 +6508,16 @@ init_moving_block_3283:
 330B: 10 7B         djnz $3308
 330D: C9            ret
 
+animate_snobee_1_330e:
 330E: DD 21 00 25   ld   ix,snobee_1_struct_8D00
 3312: 18 90         jr   $3324
+animate_snobee_2_3314:
 3314: DD 21 20 25   ld   ix,snobee_2_struct_8D20
 3318: 18 A2         jr   $3324
+animate_snobee_3_331a:
 331A: DD 21 40 25   ld   ix,snobee_3_struct_8D40
 331E: 18 84         jr   $3324
+animate_snobee_4_3320:
 3320: DD 21 E0 05   ld   ix,snobee_4_struct_8D60
 3324: DD 7E 9F      ld   a,(ix+char_state)
 3327: 11 AD BB      ld   de,snobee_jump_table_332D
@@ -6636,7 +6645,7 @@ handle_snobee_direction_change_33D8:
 	
 33ED: 3A 18 05      ld   a,(remaining_alive_snobees_8D98)
 33F0: FE 83         cp   $03
-33F2: 30 BA         jr   nc,$342E ; > 3 :	go
+33F2: 30 BA         jr   nc,snobee_normal_movement_342e ; > 3 :	go
 33F4: FE 82         cp   $02
 33F6: 20 84         jr   nz,$33FC
 	;; only 2 snobees remaining
@@ -6645,7 +6654,7 @@ handle_snobee_direction_change_33D8:
 33F9: 32 23 20      ld   (five_second_counter_8823),a
 33FC: 3A 8B 88      ld   a,(five_second_counter_8823)
 33FF: FE 03         cp   $03
-3401: 38 2B         jr   c,$342E
+3401: 38 2B         jr   c,snobee_normal_movement_342e
 	;; after 15 seconds, the last snobee runs and disappears
 snobees_play_chicken_3403:
 3403: DD 7E 96      ld   a,(ix+ai_mode)
@@ -6677,6 +6686,7 @@ snobees_play_chicken_3403:
 	;; level 12:	5
 	;; level 15:	6
 	
+snobee_normal_movement_342e:
 342E: CD A7 28      call get_level_number_288F
 3431: 3D            dec  a	; level - 1
 3432: 0F            rrca	; level * 64

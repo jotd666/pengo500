@@ -38,6 +38,9 @@ ONE_TICK = 1
 	.ifne	OPT_START_SCORE
 	.error	"nonzero score option in release mode"
 	.endif
+	.ifne	OPT_ONLY_ONE_SNOBEE
+	.error	"one snobee option in release mode"
+	.endif
 	.else
 OPT_ENABLE_LOGGING = 1
 OPT_ENABLE_PROFILING = 0
@@ -184,10 +187,9 @@ w\@:
 * osd layer		
 		.global osd_enable_vblank_interrupt
 		.global osd_ack_vblank_interrupt
-		.global osd_test_vblank_interrupt
 		.global osd_disable_vblank_interrupt
 		.global osd_break		| for debug	
-		.global osd_calibrate_display		| for debug
+		*.global osd_calibrate_display		| for debug
 		.global osd_w_videoram
 		.global osd_w_colorram
 		.global osd_r_videoram
@@ -195,7 +197,7 @@ w\@:
 		.global osd_set_bank_selectors
 		.global osd_update_sprites
 		.global osd_set_vblank_return_address
-		.global osd_read_dsw1_9000
+		.global osd_read_dipswitches
 		.global osd_small_wait
 		.global osd_read_inputs
 		.global osd_read_high_scores
@@ -562,20 +564,20 @@ osd_small_wait:
 	movem.w	(a7)+,d0/d1
 	rts
 	
-osd_calibrate_display:
-	movem.l	a0/d0-d1,-(a7)
-	move.l	bg_drawed_screen_ptr,a0
-	move.w	#NB_LINES-1,d1
-	clr		d0
-0:
-	st.b	(8,a0,d0.W)
-	st.b	(9,a0,d0.W)
-	st.b	(10,a0,d0.W)
-	
-	add.w	#NB_BYTES_PER_ROW,d0
-	dbf		D1,0b
-	movem.l	(a7)+,a0/d0-d1
-	rts
+*osd_calibrate_display:
+*	movem.l	a0/d0-d1,-(a7)
+*	move.l	bg_drawed_screen_ptr,a0
+*	move.w	#NB_LINES-1,d1
+*	clr		d0
+*0:
+*	st.b	(8,a0,d0.W)
+*	st.b	(9,a0,d0.W)
+*	st.b	(10,a0,d0.W)
+*	
+*	add.w	#NB_BYTES_PER_ROW,d0
+*	dbf		D1,0b
+*	movem.l	(a7)+,a0/d0-d1
+*	rts
 
 * < A0: pointer on 8FF2 zone:
 * the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
@@ -1125,10 +1127,11 @@ osd_ack_vblank_interrupt:
 	move.w	#0x30,_custom+intreq
  	rts
 		
-osd_test_vblank_interrupt:
-	move.w	_custom+intreqr,d0
-	btst	#5,d0
-	rts
+* not used after all
+*osd_test_vblank_interrupt:
+*	move.w	_custom+intreqr,d0
+*	btst	#5,d0
+*	rts
 	
 osd_disable_vblank_interrupt:
 	move.w	#0x0030,_custom+intena
@@ -1464,9 +1467,8 @@ set_bg_bitplanes:
 osd_debug_hook:
 	rts
 	
-osd_read_dsw1_9000:
+osd_read_dipswitches:
 	moveq	#0,d0
-	move.b	#1,0x201
 	rts
 	
 * reads most inputs in one call
@@ -1517,53 +1519,6 @@ osd_read_inputs:
 	rts
 	
 
-
-	
-osd_read_dipswitches:
-	moveq	#-1,d0
-	illegal
-	movem.l	d3/d1,-(a7)
-	beq.b	0f
-	bclr	#0,d0
-	
-0:
-	cmp.b	#6,d1		| "6" key like in MAME
-	beq.b	0f
-	bclr	#1,d0
-0:
-
-	move.l	_joypad_state(pc),d3
-	btst	#JPB_BTN_LEFT,d3
-	beq.b	0f
-	bset	#2,d0
-0:
-	btst	#JPB_BTN_RIGHT,d3
-	beq.b	0f
-	bset	#3,d0
-0:
-	btst	#JPB_BTN_RED,d3
-	beq.b	0f
-	bset	#4,d0
-0:
-	tst.b	game_playing_8817
-	bne.b	2f
-	* game not in play, accept start 1P game with "up"
-	btst	#JPB_BTN_UP,d3
-	beq.b	0f
-	bset	#0,d1
-0:
-	* game not in play, accept start 2P game with "down"
-	btst	#JPB_BTN_DOWN,d3
-	beq.b	0f
-	bset	#1,d1
-0:
-	btst	#JPB_BTN_RED,d3
-	beq.b	2f
-	* game not in play, accept insert coin with fire
-	bclr	#0,d0
-2:
-	movem.l	(a7)+,d3/d1
-	rts
 
 		
 osd_read_high_scores:

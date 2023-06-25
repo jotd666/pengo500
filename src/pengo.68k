@@ -545,7 +545,7 @@ l_02b6:
 	lea	unknown_881C(pc),a0                	| [ld   hl,unknown_881C]
 	addq.b	#1,(a0)                         	| [inc  (hl)]
 	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
-	jbsr	osd_read_dsw1_9000           	| [ld   a,(dsw_1_9000_coinage)]
+	jbsr	osd_read_dipswitches           	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	jra	l_0307                             	| [jr   $0307]
@@ -563,11 +563,11 @@ l_02e1:
 	lea	unknown_881E(pc),a0                	| [ld   hl,unknown_881E]
 	addq.b	#1,(a0)                         	| [inc  (hl)]
 	lea	unknown_880a(pc),a0                	| [ld   hl,unknown_880a]
-	jbsr	osd_read_dsw1_9000           	| [ld   a,(dsw_1_9000_coinage)]
+	jbsr	osd_read_dipswitches           	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	move.b	d0,d1                           	| [ld   b,a]
-	jbsr	osd_read_dsw1_9000           	| [ld   a,(dsw_1_9000_coinage)]
+	jbsr	osd_read_dipswitches           	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	ror.b	#4,d0                            	| [rrca]
 												| [rrca]
@@ -1071,17 +1071,17 @@ l_07bc:
 	**jbsr	l_07d1                            	| [call $07D1]
 	rts                                    	| [ret]
 l_07d1:
-	jbsr	osd_read_dsw1_9000                   	| [ld   a,(dsw_1_9000_coinage)]
+	jbsr	osd_read_dipswitches                   	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	lea	unknown_8809,a0                	| [ld   hl,unknown_8809]
 	jbsr	l_07fb                            	| [call $07FB]
 	lea	unknown_880a,a0                	| [ld   hl,unknown_880a]
-	jbsr	osd_read_dsw1_9000                   	| [ld   a,(dsw_1_9000_coinage)]
+	jbsr	osd_read_dipswitches                   	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	move.b	d0,d1                           	| [ld   b,a]
-	jbsr	osd_read_dsw1_9000                   	| [ld   a,(dsw_1_9000_coinage)]
+	jbsr	osd_read_dipswitches                   	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	ror.b	#4,d0                            	| [rrca]
 												| [rrca]
@@ -1405,10 +1405,10 @@ main_game_loop_09E7:
 
 l_09f4:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
-	jbsr	l_330e                            	|  timer to animate snobees when pengo killed [call $330E]
-	jbsr	l_3314                            	|  timer to end the level (and if 1 or 0 snobee make it disappear...) [call $3314]
-	jbsr	l_331a                            	|  ??? something to do with eggs hatching... [call $331A]
-	jbsr	l_3320                            	|  ??? [call $3320]
+	jbsr	animate_snobee_1_330e               | [call $330E]
+	jbsr	animate_snobee_2_3314               | [call $3314]
+	jbsr	animate_snobee_3_331a               | [call $331A]
+	jbsr	animate_snobee_4_3320               | [call $3320]
 	jbsr	pengo_moves_3D73                  	| [call pengo_moves_3D73]
 	jbsr	pengo_block_push_41BE             	| [call pengo_block_push_41BE]
 	jbsr	snobee_block_break_4919           	| [call snobee_block_break_4919]
@@ -1531,7 +1531,7 @@ l_0b03:
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
 	and.b	#0x01,d0                         	| [and  $01]
-	bne	0f
+	bne.b	0f
 	jbsr	pengo_intermission_or_title_1D29  	| level number is even; call pengo intermission [call z,pengo_intermission_or_title_1D29]
 0:
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
@@ -3908,6 +3908,10 @@ score_act_text_2845:
 	.byte	0xC8
 	.align	2
 
+* get level number of current player
+* returns D0: level number
+*         A0: pointer on level number (to change it)
+
 get_level_number_288F:
 	lea	level_number_player1_8812,a0   	| [ld   hl,level_number_player1_8812]
 	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
@@ -5496,7 +5500,7 @@ l_320c:
 	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
 	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
 	move.b	#0xFF,(0x15,a2)                 	| [ld   (ix+$15),$FF]
-	jbsr	l_326e                            	| [call $326E]
+	jbsr	enable_snobees_depending_on_level_326E                            	| [call $326E]
 	rts                                    	| [ret]
 
 l_322f:
@@ -5526,7 +5530,7 @@ compute_snobee_speed_324E:
 	tst.b	d0                               	| [and  a]
 	jeq	l_3267                             	| [jr   z,$3267]
 	**move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-	clr.b	d0		| TEMP
+	clr.b	d0		| TEMP TODO difficulty
 	not.b	d0                               	| [cpl]
 	rol.b	#2,d0                            	| [rlca]
 											| [rlca]
@@ -5540,21 +5544,34 @@ l_3267:
 	move.b	d0,(instant_move_period,a2)     	| [ld   (ix+instant_move_period),a]
 	rts                                    	| [ret]
 
-l_326e:
+enable_snobees_depending_on_level_326E:
+* enable all or partial snobees: how many snobees
+* are active at the same time
 	move.b	#0x0E,(char_state,a2)           	| [ld   (ix+char_state),$0E]
+	.ifeq	OPT_ONLY_ONE_SNOBEE
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
 	cmp.b	#0x05,d0                         	| [cp   $05]
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
+	.endif
+* below level 5
 	move.b	(char_id,a2),d0                 	| [ld   a,(ix+char_id)]
+	.ifne	OPT_ONLY_ONE_SNOBEE
+	* cheat/test: only first snobee is active
+	cmp.b	#0x01,d0                         	| [cp   $04]
+	bne.b	0f
+	.else
 	cmp.b	#0x04,d0                         	| [cp   $04]
 	beq.b	0f
+	.endif
 	rts                                    	| [ret  nz]
 0:
+* below level 5, only 3 first characters are active at the same time
 	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
 	rts                                    	| [ret]
-
+	
+	
 init_moving_block_3283:
 	lea	moving_block_struct_8DA0,a2    	| [ld   ix,moving_block_struct_8DA0]
 	clr.b	(x_pos,a2)                       	| [ld   (ix+x_pos),$00]
@@ -5641,16 +5658,16 @@ l_3308:
 	jne	l_3308                             	| [djnz 0x3308]
 	rts       	
 
-l_330e:
+animate_snobee_1_330e:
 	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
 	jra	l_3324                             	| [jr   $3324]
-l_3314:
+animate_snobee_2_3314:
 	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
 	jra	l_3324                             	| [jr   $3324]
-l_331a:
+animate_snobee_3_331a:
 	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
 	jra	l_3324                             	| [jr   $3324]
-l_3320:
+animate_snobee_4_3320:
 	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
 l_3324:
 	move.b	(char_state,a2),d0              	| [ld   a,(ix+char_state)]
@@ -5797,7 +5814,7 @@ handle_snobee_direction_change_33D8:
 
 	move.b	remaining_alive_snobees_8D98,d0 	| [ld   a,(remaining_alive_snobees_8D98)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
-	jcc	l_342e                             	| > 3 :	go [jr   nc,$342E]
+	jcc	snobee_normal_movement_342e                             	| > 3 :	go [jr   nc,$342E]
 	cmp.b	#0x02,d0                         	| [cp   $02]
 	jne	l_33fc                             	| [jr   nz,$33FC]
  * only 2 snobees remaining
@@ -5807,7 +5824,7 @@ handle_snobee_direction_change_33D8:
 l_33fc:
 	move.b	timer_16bit_8822_msb,d0     	| [ld   a,(five_second_counter_8823)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
-	jcs	l_342e                             	| [jr   c,$342E]
+	jcs	snobee_normal_movement_342e                             	| [jr   c,$342E]
  * after 15 seconds, the last snobee runs and disappears
 snobees_play_chicken_3403:
 	move.b	(ai_mode,a2),d0                 	| [ld   a,(ix+ai_mode)]
@@ -5839,11 +5856,11 @@ snobees_play_chicken_3403:
  * level 12:	5
  * level 15:	6
 
-l_342e:
+snobee_normal_movement_342e:
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
 	subq.b	#1,d0                           	| level - 1 [dec  a]
-	ror.b	#1,d0                            	| level * 64 [rrca]
-	ror.b	#1,d0                            	| [rrca]
+	ror.b	#2,d0                            	| level * 64 [rrca]
+												| [rrca]
 	and.b	#0x03,d0                         	| level & 0x3 [and  $03]
 	addq.b	#0x03,d0                        	| level += 3 [add  a,$03]
 	move.b	d0,d1                           	| [ld   b,a]
@@ -6906,8 +6923,8 @@ l_3ad7:
 l_3aff:
 	add.b	d0,d0                            	| [add  a,a]
 	add.b	#0x12,d0                         	| [add  a,$12]
-	rol.b	#1,d0                            	| [rlca]
-	rol.b	#1,d0                            	| [rlca]
+	rol.b	#2,d0                            	| [rlca]
+												| [rlca]
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	cmp.b	#0x02,d0                         	| [cp   $02]
@@ -7103,6 +7120,7 @@ spawn_snobee_if_remaining_eggs_3c4b:
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 												| [and  a]
 	jne	hatch_one_egg_3c6c                             	| [jr   nz,$3C6C]
+	* no more eggs to hatch
 	clr.b	(char_state,a2)                  	| [ld   (ix+char_state),$00]
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
 	subq.b	#1,d0                           	| [dec  a]

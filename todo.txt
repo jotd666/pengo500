@@ -10,8 +10,9 @@ General:
   is shown even if not ice
 - lives should not be displayed in demo mode/intro screens
 - play: die: maze is destroyed, unhatched eggs drawn at wrong location
-
+- dipswitches easy/... (look for TODO)
 Amiga:
+
 
 - whdload cheat keys: complete level
 - sound
