@@ -11,11 +11,12 @@ General:
 - diamond align 2-3: detected by blinking diamonds, but bonus not triggered
   by 3 aligned diamonds (create an option to create 2 or 3 aligned diamonds
   at start)
-  
+- wobble walls to stun enemies: kills pengo when monster is stunned!
 
 Amiga:
 
-- sprite color slot not working: pushing block => snobees turn blue!
+- debug aligned mode: why addresses are shifted by 2
+- sprite color slot system not working: pushing block => snobees turn blue!
 - whdload cheat: complete level key, invincible
 - sound
 - log used cluts to filter out unused clut/char combination

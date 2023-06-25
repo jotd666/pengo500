@@ -8646,15 +8646,16 @@ table_41CB:
 426B: C9            ret
 426C: 3E B0         ld   a,$10
 426E: BE            cp   (hl)
-426F: 28 11         jr   z,$4282
+426F: 28 11         jr   z,make_pengo_shake_wall_4282
 4271: 3C            inc  a
 4272: BE            cp   (hl)
-4273: 28 0D         jr   z,$4282
+4273: 28 0D         jr   z,make_pengo_shake_wall_4282
 4275: DD 36 B7 02   ld   (ix+char_state_1F),$02
 4279: FD E5         push iy
 427B: DD E1         pop  ix
 427D: DD 36 B7 28   ld   (ix+char_state_1F),$00
 4281: C9            ret
+make_pengo_shake_wall_4282:
 4282: DD 36 BF A5   ld   (ix+char_state_1F),$05
 4286: FD E5         push iy
 4288: DD E1         pop  ix

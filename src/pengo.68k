@@ -8119,20 +8119,22 @@ l_425e:
 	bset.b	#7,d0                           	| [set  7,a]
 	move.b	d0,(0x19,a3)                    	| [ld   (iy+$19),a]
 	rts                                    	| [ret]
+	* we're called with D6 = screen address
 l_426c:
-	move.b	#0x10,d0                        	| [ld   a,$10]
-	cmp.b	(a0),d0                          	| [cp   (hl)]
-	jeq	l_4282                             	| [jr   z,$4282]
-	addq.b	#1,d0                           	| [inc  a]
-	cmp.b	(a0),d0                          	| [cp   (hl)]
-	jeq	l_4282                             	| [jr   z,$4282]
+	jbsr	osd_r_videoram
+	cmp.b	#0x10,d0                        	| [ld   a,$10]
+												| [cp   (hl)]
+	jeq	make_pengo_shake_wall_4282                             	| [jr   z,$4282]
+	cmp.b	#0x11,d0                           	| [inc  a]
+												| [cp   (hl)]
+	jeq	make_pengo_shake_wall_4282                             	| [jr   z,$4282]
 	move.b	#0x02,(char_state_1F,a2)           	| [ld   (ix+char_state_1F),$02]
 
 	move.l	a3,-(sp)                        	| [push iy]
 	move.l	(sp)+,a2                        	| [pop  ix]
 	clr.b	(char_state_1F,a2)                  	| [ld   (ix+char_state_1F),$00]
 	rts                                    	| [ret]
-l_4282:
+make_pengo_shake_wall_4282:
 	move.b	#0x05,(char_state_1F,a2)           	| [ld   (ix+char_state_1F),$05]
 
 	move.l	a3,-(sp)                        	| [push iy]
@@ -8263,13 +8265,12 @@ l_4322:
 	jbsr	convert_coords_to_screen_address_296F                            	| [call $296F]
 												| [ld   a,$1A]
 	jbsr	osd_r_videoram                        	| [cp   (hl)]
-	cmp.b	#0x1A,d0
+	cmp.b	#0x1A,d0            | bottom left ice block
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
 	bset.b	#4,(0x18,a3)                    	| [set  4,(iy+$18)]
-	jbsr	osd_r_videoram                        	| [cp   (hl)]
-	cmp.b	#0x1E,d0                        	| [ld   a,$1E]
+	cmp.b	#0x1E,d0                        	| [ld   a,$1E] bottom left diamond
 											| [cp   (hl)]
 	bne.b	0f
 	rts                                    	| [ret  z]
@@ -8277,17 +8278,17 @@ l_4322:
 	bclr.b	#4,(0x18,a3)                    	| [res  4,(iy+$18)]
 	rts                                    	| [ret]
 l_4337:
-	addq.b	#1,d1                           	| [inc  b]
-	addq.b	#1,d1                           	| [inc  b]
+	addq.b	#2,d1                           	| [inc  b]
+												| [inc  b]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
 	jbsr	osd_r_videoram                        	| [cp   (hl)]
-	cmp.b	#0x18,d0                        	| [ld   a,$18]
+	cmp.b	#0x18,d0                        	| [ld   a,$18] upper left ice block
 												| [cp   (hl)]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
 	bset.b	#4,(0x18,a3)                    	| [set  4,(iy+$18)]
-	cmp.b	#0x1C,d0                        	| [ld   a,$1C]
+	cmp.b	#0x1C,d0                        	| [ld   a,$1C] upper left diamond
 												| [cp   (hl)]
 	bne.b	0f
 	rts                                    	| [ret  z]
@@ -8298,13 +8299,13 @@ l_434d:
 	subq.b	#1,d2                           	| [dec  c]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
 	jbsr	osd_r_videoram                        	| [cp   (hl)]
-	cmp.b	#0x19,d0                        	| [ld   a,$19]
+	cmp.b	#0x19,d0                        	| [ld   a,$19] upper right ice block
 												| [cp   (hl)]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
 	bset.b	#4,(0x18,a3)                    	| [set  4,(iy+$18)]
-	cmp.b	#0x1D,d0                        	| [ld   a,$1D]
+	cmp.b	#0x1D,d0                        	| [ld   a,$1D] upper right diamond
 												| [cp   (hl)]
 	bne.b	0f
 	rts                                    	| [ret  z]
@@ -8312,17 +8313,17 @@ l_434d:
 	bclr.b	#4,(0x18,a3)                    	| [res  4,(iy+$18)]
 	rts                                    	| [ret]
 l_4362:
-	addq.b	#1,d2                           	| [inc  c]
-	addq.b	#1,d2                           	| [inc  c]
+	addq.b	#2,d2                           	| [inc  c]
+												| [inc  c]
 	jbsr	convert_coords_to_screen_address_296F	| [call convert_coords_to_screen_address_296F]
 	jbsr	osd_r_videoram                        	| [cp   (hl)]
-	cmp.b	#0x18,d0                        	| [ld   a,$18]
+	cmp.b	#0x18,d0                        	| [ld   a,$18]  upper left ice block
 												| [cp   (hl)]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
 	bset.b	#4,(0x18,a3)                    	| [set  4,(iy+$18)]
-	cmp.b	#0x1C,d0                        	| [ld   a,$1C]
+	cmp.b	#0x1C,d0                        	| [ld   a,$1C]  upper left diamond
 												| [cp   (hl)]
 	bne.b	0f
 	rts                                    	| [ret  z]
