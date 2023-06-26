@@ -1421,7 +1421,6 @@ l_09f4:
 	jbsr	handle_pengo_eats_stunned_snobees_4C55	| [call handle_pengo_eats_stunned_snobees_4C55]
 * check player state (alive/dead)
 	move.b	pengo_struct_8D80+ai_mode_1E,d0       	| [ld   a,(pengo_struct_8D80+$1E)]
-	move.l	#pengo_struct_8D80+ai_mode_1E,0x200
 	btst.b	#7,d0                           	| [bit  7,a]
 	jne	player_dies_0CD2                   	| [jp   nz,player_dies_0CD2]
 	move.b	remaining_alive_snobees_8D98,d0 	| [ld   a,(remaining_alive_snobees_8D98)]

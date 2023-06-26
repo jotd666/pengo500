@@ -11,21 +11,20 @@ General:
 - diamond align 2-3: detected by blinking diamonds, but bonus not triggered
   by 3 aligned diamonds (create an option to create 2 or 3 aligned diamonds
   at start)
-- wobble walls to stun enemies: kills pengo when monster is stunned!
+
 
 Amiga:
 
-- debug aligned mode: why addresses are shifted by 2
-- sprite color slot system not working: pushing block => snobees turn blue!
 - whdload cheat: complete level key, invincible
 - sound
+- break when wrong colors, get sprite state to investigate!
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization
 - title: wrong color for snobee that erase "squash the snobees" message
 - also set all 3 colors at the copperlist Y (would fix title screen 4 snobees)
 - redundant bg_cluts / clut asm file
 - alternate tileset: all symmetric? plus slow and wrong chars (ok in the end)
-- ACT 1 + flags: draw vertically on the side?
+- ACT 1 + flags: draw vertically on the side? shift pengo lives 2 pixels up?
 
 	int code = m_videoram[tile_index] | (m_charbank << 8);
 	int attr = (m_colorram[tile_index] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6);
