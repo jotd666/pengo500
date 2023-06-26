@@ -590,7 +590,6 @@ osd_small_wait:
 *                        X flip (bit 1); the second byte the color
 * < A1: pointer on 9022 zone (X,Y coords)
 osd_update_sprites:
-	*move.b	#1,0x150
 	*lea		test_sprites_xy,a1
 	*lea		test_sprites_code,a0
 	* clear host sprites
@@ -603,7 +602,6 @@ osd_update_sprites:
 	add.w	#SPRITE_SIZEOF,a2
 	dbf		d0,0b
 	
-
 	* check active sprites, we'll disable the sprites that aren't active anymore
 	moveq	#NB_TARGET_SPRITES-1,d7
 1:
@@ -716,6 +714,7 @@ osd_update_sprites:
 
 test_sprites_xy:
 	**dc.b	0xEA,0xD8,0xEB,0xB0,0xEB,0x90,0xFF,0xF8,0xFF,0xE8,0xFF,0xC8,0x00,0x00
+	*       snobee                      pengo   ice block 
 	.word	0xC792,0xFF00,0xFF00,0xFF00,0x2730,0x2768,0x0000
 test_sprites_code:
 	**dc.b	0x5E,0x0A,0x16,0x0B,0x5E,0x01,0x08,0x0B,0x08,0x0D,0x08,0x0C,0x00,0x00
@@ -742,7 +741,10 @@ alloc_sprite:
 	beq.b	1f
 	* odd: check if previous entry is free
 	tst.b	(SPRITE_X-SPRITE_SIZEOF,a2)
+	beq.b	8f
+	tst.b	(SPRITE_Y-SPRITE_SIZEOF,a2)
 	bne.b	10f
+8:
 	* previous entry is free, same clut: we can use that
 	* entry, no color conflict
 	lea		(-SPRITE_SIZEOF,a2),a2
@@ -755,7 +757,10 @@ alloc_sprite:
 1:
 	* even: check if next entry is free
 	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
+	beq.b	2f
+	tst.b	(SPRITE_Y+SPRITE_SIZEOF,a2)
 	bne.b	10f
+2:
 	* next entry is free, same clut: we can use that
 	* entry, no color conflict
 	lea		(SPRITE_SIZEOF,a2),a2
@@ -774,11 +779,19 @@ alloc_sprite:
 	lea		host_sprites(pc),a2
 	moveq	#0,d6
 11:
+	* we consider that a sprite is not allocated
+	* if one of the coordinates is zero (real game
+	* doesn't care and sets X to 255, and Y to 0 at times
+	tst.b	(SPRITE_Y,a2)
+	beq.b	12f
 	tst.b	(SPRITE_X,a2)
 	bne.b	20f
+12:
 	* not allocated: test odd sprite
+	tst.b	(SPRITE_Y,a2)
+	jeq	9b
 	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
-	beq.b	9b		| ok, both slots are free, allocate the first one
+	jeq	9b		| ok, both slots are free, allocate the first one
 20:
 	* next sprite pair
 	lea		(2*SPRITE_SIZEOF,a2),a2

@@ -505,7 +505,6 @@ l_015b:
 	
 
 coin_test_aux_027f:
-	move.b	#1,0x201
 	jbsr	osd_read_inputs              	| [ld   a,(coin_input_90C0)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x40,d0                         	| [and  $40]
@@ -1251,7 +1250,7 @@ play_one_life_08D6:
 	jra	l_08f0                             	| [jr   $08F0]
 l_08e4:
 	btst.b	#0,(a0)                         	| [bit  0,(hl)]
-	beq	0f
+	beq.b	0f
 	jbsr	swap_players_0EC4                 	| [call nz,swap_players_0EC4]
 0:
 	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
@@ -1422,6 +1421,7 @@ l_09f4:
 	jbsr	handle_pengo_eats_stunned_snobees_4C55	| [call handle_pengo_eats_stunned_snobees_4C55]
 * check player state (alive/dead)
 	move.b	pengo_struct_8D80+ai_mode_1E,d0       	| [ld   a,(pengo_struct_8D80+$1E)]
+	move.l	#pengo_struct_8D80+ai_mode_1E,0x200
 	btst.b	#7,d0                           	| [bit  7,a]
 	jne	player_dies_0CD2                   	| [jp   nz,player_dies_0CD2]
 	move.b	remaining_alive_snobees_8D98,d0 	| [ld   a,(remaining_alive_snobees_8D98)]
@@ -2003,7 +2003,7 @@ l_0e61:
 	* cmp doesn't set X flag, sub does. We don't care about
 	* d0 value so let's change it
 	sub.b	#0x20,d0                         	| [cp   $20]
-	roxl.b	#1,d3                         	| [rl   (hl)]
+	roxl.b	#1,d3                         	| [rl   (hl)] we emulate it with a register
 	move.b	d3,(a0)
 	move.w	(sp)+,d3                        	| [pop  de]
 	move.w	(sp)+,d1                        	| [pop  bc]
@@ -5898,7 +5898,6 @@ l_344b:
 apply_snobee_behaviour_3461:
 	move.b	(ai_mode_1E,a2),d0                 	| [ld   a,(ix+ai_mode_1E)]
 	lea	snobee_behaviour_table_346A(pc),a1 	| [ld   de,snobee_behaviour_table_346A]
-	move.b	#1,0x200
 	jra	indirect_jump_2D8F                 	| [jp   indirect_jump_2D8F]
 
 snobee_behaviour_table_346A:
@@ -9659,32 +9658,40 @@ handle_pengo_snobee_collisions_4BE6:
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	move.b	d1,d5                           	| [ld   h,b]
 	move.b	d2,d6                           	| [ld   l,c]
-	* changed the logic, replaced carry test by zero test
+
 	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
 	jbsr	snobee_pengo_collision_test_4C1C  	| [call snobee_pengo_collision_test_4C1C]
-	jeq	snobee_collides_pengo_4C2E         	| [jr   c,snobee_collides_pengo_4C2E]
+	jcs	snobee_collides_pengo_4C2E         	| [jr   c,snobee_collides_pengo_4C2E]
 	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
 	jbsr	snobee_pengo_collision_test_4C1C  	| [call snobee_pengo_collision_test_4C1C]
-	jeq	snobee_collides_pengo_4C2E         	| [jr   c,snobee_collides_pengo_4C2E]
+	jcs	snobee_collides_pengo_4C2E         	| [jr   c,snobee_collides_pengo_4C2E]
 	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
 	jbsr	snobee_pengo_collision_test_4C1C  	| [call snobee_pengo_collision_test_4C1C]
-	jeq	snobee_collides_pengo_4C2E         	| [jr   c,snobee_collides_pengo_4C2E]
+	jcs	snobee_collides_pengo_4C2E         	| [jr   c,snobee_collides_pengo_4C2E]
 	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
 	jbsr	snobee_pengo_collision_test_4C1C  	| [call snobee_pengo_collision_test_4C1C]
-	jeq	snobee_collides_pengo_4C2E         	| [jr   c,snobee_collides_pengo_4C2E]
+	jcs	snobee_collides_pengo_4C2E         	| [jr   c,snobee_collides_pengo_4C2E]
 	rts                                    	| [ret]
 
 snobee_pengo_collision_test_4C1C:
 	move.b	(char_state_1F,a2),d0              	| [ld   a,(ix+char_state_1F)]
 	cmp.b	#0x04,d0                         	| [cp   $04]
 	bcs.b	0f
-	st.b	d7		| clears Z
+	st.b	d7
+	cmp.b	#1,d7                            	| [ccf]
 	rts                                    	| [ret  nc]
 0:
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	move.b	d1,d3                           	| [ld   d,b]
 	move.b	d2,d4                           	| [ld   e,c]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
+	beq.b	1f									| [scf] + [ret  z]
+	st.b	d7
+	cmp.b	#1,d7                            	| [ccf]
+	rts
+1:
+	clr.b	d7
+	cmp.b	#1,d7                            	| set carry flag [scf] (handled)
 	rts                                    	| [ret]
 	
 snobee_collides_pengo_4C2E:

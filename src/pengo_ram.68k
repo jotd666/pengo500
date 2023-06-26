@@ -25,7 +25,7 @@
     * disassembles in raw WinUAE disassembler to
 	* 0011b6ee 41fa d124                lea.l (pc,$d124) == $00118814,a0 ($8814 LSW matches!)
 	*
-	ds.b	0x8000
+	ds.b	0x8000-2		| for some reason, there's a 2 byte shift, let's make up for it
 	.endif
 	.else
 	* Neogeo: needs different writable section from ROM code
