@@ -934,9 +934,8 @@ display_demo_and_top_scores_6E1:
 											| [ld   hl,$0000]
 	clr.w	counter_msb_8824             	| [ld   (counter_lsb_8824),hl]
  * init number of lives
-	**move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-	clr.b	d0	| TEMP
-	not.b	d0                               	| [cpl]
+	jbsr	osd_read_dipswitches            	| [ld   a,(dip_switches_9040)]
+	not.b	d0                               	| [cpl] FUCK
 	and.b	#0x18,d0                         	| [and  $18]
 	ror.b	#3,d0                            	| [rrca]
 												| [rrca]
@@ -1186,8 +1185,7 @@ play_one_game_087D:
 	move.b	#0x01,d0                        	| [ld   a,$01]
 	move.b	d0,level_number_player1_8812    	| [ld   (level_number_player1_8812),a]
 	move.b	d0,level_number_player2_8813    	| [ld   (level_number_player2_8813),a]
-	*move.b	dip_switches_9040,d0            	|  dip switch [ld   a,(dip_switches_9040)]
-	clr.b	d0		| temp
+	jbsr	osd_read_dipswitches            	|  dip switch [ld   a,(dip_switches_9040)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x18,d0                         	| [and  $18]
 	ror.b	#3,d0                            	| [rrca]
@@ -1265,7 +1263,7 @@ l_08f0:
 	jbsr	display_eggs_2D4B                 	| [call display_eggs_2D4B]
 	jbsr	display_player_ready_0F76         	| [call display_player_ready_0F76]
 	jbsr	draw_borders_2E5D                 	| [call draw_borders_2E5D]
-	jbsr	l_0e77                            	| [call $0E77]
+	jbsr	show_borders_0e77                            	| [call $0E77]
 	move.b	#0x09,d0                        	| [ld   a,$09]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	bsr		get_diamond_block_1_xy_8DB0_to_bc  	| [ld   bc,(diamond_block_1_xy_8DB0)]
@@ -1274,8 +1272,8 @@ l_08f0:
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
 	bsr		get_diamond_block_3_xy_8DB4_to_bc  	| [ld   bc,(diamond_block_3_xy_8DB4)]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
-	jbsr	l_0d66                            	| [call $0D66]
-	jbsr	l_0dd0                            	| [call $0DD0]
+	jbsr	reposition_pengo_0d66                            	| [call $0D66]
+	jbsr	reposition_snobees_0dd0                            	| [call $0DD0]
 	jra	l_09a0                             	| [jr   $09A0]
 
 * runs until pengo is killed, then returns
@@ -1826,7 +1824,10 @@ l_0d44:
 	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
 	rts                                    	| [ret]
 
-l_0d66:
+* position pengo at more or less center
+* unless there are diamonds or hidden eggs there
+
+reposition_pengo_0d66:
 	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	lea	table_0D9D(pc),a0                  	| [ld   hl,table_0D9D]
 l_0d6d:
@@ -1886,41 +1887,37 @@ l_0dcd:
 	st.b	d7
 	rts                                    	| [ret]
 
-l_0dd0:
+reposition_snobees_0dd0:
 	lea	table_0E2C(pc),a0                  	| [ld   hl,table_0E2C]
 	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
 	move.b	(char_state_1F,a2),d0              	| [ld   a,(ix+char_state_1F)]
-	tst.b	d0                               	| [and  a]
-	beq	0f
+	beq.b	0f
 	jbsr	l_0e00                            	| [call nz,$0E00]
 0:
 	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
 	move.b	(char_state_1F,a2),d0              	| [ld   a,(ix+char_state_1F)]
-	tst.b	d0                               	| [and  a]
-	beq	0f
+	beq.b	0f
 	jbsr	l_0e00                            	| [call nz,$0E00]
 0:
 	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
 	move.b	(char_state_1F,a2),d0              	| [ld   a,(ix+char_state_1F)]
-	tst.b	d0                               	| [and  a]
-	beq	0f
+	beq.b	0f
 	jbsr	l_0e00                            	| [call nz,$0E00]
 0:
 	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
 	move.b	(char_state_1F,a2),d0              	| [ld   a,(ix+char_state_1F)]
-	tst.b	d0                               	| [and  a]
-	beq	0f
+	beq.b	0f
 	jbsr	l_0e00                            	| [call nz,$0E00]
 0:
 	rts                                    	| [ret]
 
 l_0e00:
-	move.b	(a0),d2                         	| [ld   c,(hl)]
-	addq.w	#1,a0                           	| [inc  hl]
-	move.b	(a0),d1                         	| [ld   b,(hl)]
-	addq.w	#1,a0                           	| [inc  hl]
-	move.b	(a0),d3                         	| [ld   d,(hl)]
-	addq.w	#1,a0                           	| [inc  hl]
+	move.b	(a0)+,d2                         	| [ld   c,(hl)]
+	                           	| [inc  hl]
+	move.b	(a0)+,d1                         	| [ld   b,(hl)]
+	                           	| [inc  hl]
+	move.b	(a0)+,d3                         	| [ld   d,(hl)]
+	                           	| [inc  hl]
 	move.l	a0,-(sp)                        	| [push hl]
 l_0e07:
 	move.l	a1,-(sp)                        	| [push de]
@@ -2011,7 +2008,7 @@ l_0e61:
 	jne	l_0e61                             	| [djnz $0E61]
 	addq.w	#1,a0                           	| [inc  hl]
 	rts                                    	| [ret]
-l_0e77:
+show_borders_0e77:
 	clr.b	d0                               	| [ld   a,$00]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	lea	unknown_8DE0,a0                	| [ld   hl,unknown_8DE0]
@@ -4209,14 +4206,13 @@ l_2a46:
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
 	lea	bonus_for_30000_pts_2ADC(pc),a0    	| [ld   hl,bonus_for_30000_pts_2ADC]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
-**	lea	for_50000_pts_2AF3(pc),a0          	| [ld   hl,for_50000_pts_2AF3]
-**	jbsr	osd_get_dip
-**	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-**	btst.b	#0,d0                           	| [bit  0,a]
+	lea	for_50000_pts_2AF3(pc),a0          	| [ld   hl,for_50000_pts_2AF3]
+	jbsr	osd_read_dipswitches         	| [ld   a,(dip_switches_9040)]
+	btst.b	#0,d0                           	| [bit  0,a]
 * if DSW is set accordignly, overwrite "30000" string with "50000"
-**	beq	0f
-**	jbsr	print_line_typewriter_style_29F4                   	| [call nz,print_line_typewriter_style_29F4]
-*0:
+	beq.b	0f
+	jbsr	print_line_typewriter_style_29F4                   	| [call nz,print_line_typewriter_style_29F4]
+0:
 	move.b	#0x0B,d0                        	| [ld   a,0x0B]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 											| [ld   h,0x14]
@@ -4361,14 +4357,14 @@ check_p1_score_for_extra_life_2BAE:
 	**move.w	d6,-(sp)                        	| [push hl]
 	move.b	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
 	move.b	player_1_score_880E+1,d5      	| [ld   hl,(player_1_score_880E)]
-	move.b	#0x0B,d3                      	| [ld   de,$0BB8] 3000 points
+	move.b	#0x0B,d3                      	| [ld   de,$0BB8] 30000 points
 	move.b	#0xB8,d4                      	| [ld   de,$0BB8]
-*	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-*	btst.b	#0,d0                           	| [bit  0,a]
-*	jeq	l_2bf5                             	| [jr   z,$2BF5]
-*	move.b	#0x13,d3                      	| [ld   de,$1388] 5000 points 
-*	move.w	#0x88,d4                      	| [ld   de,$1388] 5000 points 
-*l_2bf5:
+	jbsr	osd_read_dipswitches            	| [ld   a,(dip_switches_9040)]
+	btst.b	#0,d0                           	| [bit  0,a]
+	jeq	l_2bf5                             	| [jr   z,$2BF5]
+	move.b	#0x13,d3                      	| [ld   de,$1388] 50000 points 
+	move.w	#0x88,d4                      	| [ld   de,$1388] 50000 points 
+l_2bf5:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	**movem.w	(sp)+,d6                        	| [pop  hl]
 	bcc.b	l_2bfa
@@ -4390,11 +4386,11 @@ check_p2_score_for_extra_life_2C06:
 	move.w	d6,-(sp)                        	| [push hl]
 	move.w	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
 	move.w	#0x0BB8,d3                      	| [ld   de,$0BB8]
-*	move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-*	btst.b	#0,d0                           	| [bit  0,a]
-*	jeq	l_2c1d                             	| [jr   z,$2C1D]
-*	move.w	#0x1388,d3                      	| 5000 [ld   de,$1388]
-*l_2c1d:
+	jbsr	osd_read_dipswitches	           	| [ld   a,(dip_switches_9040)]
+	btst.b	#0,d0                           	| [bit  0,a]
+	jeq	l_2c1d                             	| [jr   z,$2C1D]
+	move.w	#0x1388,d3                      	| 5000 [ld   de,$1388]
+l_2c1d:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	movem.w	(sp)+,d6                        	| [pop  hl]
 	bcc.b	0f
@@ -4619,8 +4615,7 @@ display_eggs_2D4B:
 	add.b	#0x08,d0                         	| [add  a,$08]
 	clr.b	d5                               	| [ld   h,$00]
 	move.b	d0,d6                           	| [ld   l,a]
-	move.b	d6,cursor_y_8801                	| [ld   (cursor_x_8800),hl]
-	move.b	d5,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	bsr		set_current_cursor_from_hl                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x10,d0                        	| [ld   a,$10]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	move.l	a0,-(sp)                        	| [push hl]
@@ -4635,8 +4630,7 @@ l_2d64:
 	move.b	total_eggs_to_hatch_8DC0,d0     	| [ld   a,(total_eggs_to_hatch_8DC0)]
 	sub.b	d1,d0                            	| [sub  b]
 	move.b	d0,d1                           	| [ld   b,a]
-	move.b	d6,cursor_y_8801                	| [ld   (cursor_x_8800),hl]
-	move.b	d5,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
+	bsr		set_current_cursor_from_hl                	| [ld   (cursor_x_8800),hl]
 l_2d76:
 	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
 	subq.b	#1,d1                           	| [...]
@@ -5536,8 +5530,7 @@ compute_snobee_speed_324E:
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
 	tst.b	d0                               	| [and  a]
 	jeq	l_3267                             	| [jr   z,$3267]
-	**move.b	dip_switches_9040,d0            	| [ld   a,(dip_switches_9040)]
-	clr.b	d0		| TEMP TODO difficulty
+	jbsr	osd_read_dipswitches            	| [ld   a,(dip_switches_9040)]
 	not.b	d0                               	| [cpl]
 	rol.b	#2,d0                            	| [rlca]
 											| [rlca]

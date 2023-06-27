@@ -1,23 +1,22 @@
 General:
 
-- dip switches (see ** code)
 - highscores (today's best 5) wrongly displayed
 - sounds
 - probable "endian bug" in scores
 - lives should not be displayed in demo mode/intro screens
-- play: die: maze is destroyed, unhatched eggs drawn at wrong location
-- dipswitches easy/... (look for TODO)
+- play: die: maze is destroyed (color attribute vs tile mixup??)
+- dipswitches easy/... test!
 - start game from ice bank screen => issue (blitz)
 - diamond align 2-3: detected by blinking diamonds, but bonus not triggered
   by 3 aligned diamonds (create an option to create 2 or 3 aligned diamonds
-  at start)
+  at start or blank maze+invincible)
 
 
 Amiga:
 
+- sprite allocation is still wrong (red ice cube)  break when wrong colors, get sprite state to investigate!
 - whdload cheat: complete level key, invincible
 - sound
-- break when wrong colors, get sprite state to investigate!
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization
 - title: wrong color for snobee that erase "squash the snobees" message

@@ -1247,8 +1247,8 @@ play_one_life_08D6:
 091B: CD A9 07      call set_diamond_position_2FA9
 091E: ED 4B 34 25   ld   bc,(diamond_block_3_xy_8DB4)
 0922: CD 29 0F      call set_diamond_position_2FA9
-0925: CD 6E A5      call $0D66
-0928: CD 50 8D      call $0DD0
+0925: CD 6E A5      call reposition_pengo_0d66
+0928: CD 50 8D      call reposition_snobees_0dd0
 092B: 18 7B         jr   $09A0
 	
 ; runs until pengo is killed, then returns
@@ -1711,6 +1711,10 @@ player_dies_0CD2:
 0D62: CD 80 09      call put_blank_at_current_pos_2900
 0D65: C9            ret
 	
+; position pengo at more or less center
+; unless there are diamonds or hidden eggs there
+
+reposition_pengo_0d66:
 0D66: DD 21 A0 25   ld   ix,pengo_struct_8D80
 0D6A: 21 35 8D      ld   hl,table_0D9D
 0D6D: 4E            ld   c,(hl)
@@ -1764,6 +1768,7 @@ does_bc_match_a_diamond_block_xy_0daf:
 0DCE: 37            scf
 0DCF: C9            ret
 
+reposition_snobees_0dd0:
 0DD0: 21 04 0E      ld   hl,table_0E2C
 0DD3: DD 21 A0 8D   ld   ix,snobee_1_struct_8D00
 0DD7: DD 7E 97      ld   a,(ix+char_state_1F)

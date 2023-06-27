@@ -37,8 +37,9 @@ _config
 	dc.b    "C1:X:invincibility:0;"    
 	dc.b    "C1:X:infinite lives:1;"       
 	dc.b    "C1:X:help skips levels:2;"       
+	dc.b    "C3:L:bonus life:30000,50000;"
 	dc.b    "C4:L:difficulty:easy,medium,hard,hardest;"
-	dc.b    "C5:L:lives:3,4,5;"  
+	dc.b    "C5:L:lives:2,3,4,5;"  
 	dc.b	0
 
 	IFD BARFLY
