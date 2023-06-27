@@ -202,7 +202,6 @@ w\@:
 		.global osd_read_inputs
 		.global osd_read_high_scores
 		.global osd_write_high_scores
-		.global	osd_get_start_stack
 		.global osd_get_sync_period
 		.global osd_sound_start
 		.global osd_sound_stop
@@ -375,12 +374,7 @@ eye_catcher:
 * we're not doing things the NeoGeo way
 		rts
 
-* return start stack in D0
-* useful as game redirects from vblank
-* to another location
-osd_get_start_stack:
-	move.l	old_stack,D0
-	rts
+
 
 * change return address from vblank
 * D0: return address (0: no change)

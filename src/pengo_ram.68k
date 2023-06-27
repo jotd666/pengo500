@@ -12,7 +12,7 @@
 	.global	vbl_sync_counter
 	.global	vbl_sync_counter_start_screen
 	.global	unknown_87FF
-	
+	.global stack_top
 	.ifdef	__amiga__
 	
 	.ifndef	RELEASE
@@ -63,6 +63,8 @@ vbl_sync_counter_start_screen:
 	.word	0
 high_score_beaten:
 	.word	0
+stack_top:
+	.long	0
 invincible_flag:
 	.byte	0
 infinite_lives_flag:

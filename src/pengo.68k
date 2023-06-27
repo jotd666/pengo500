@@ -379,7 +379,7 @@ pengo_reset:
 	* we need 60 updates / second so on amiga PAL
 	* we need to set this variable to 2 once out of 5 calls
 	move.b	#1,vb_ticks_count
-
+	move.l	sp,stack_top
 	
 	jra		INITIALISE_SYSTEM
 
@@ -525,14 +525,14 @@ l_0293:
 	not.b	d0                               	| [cpl]
 	and.b	#0x40,d0                         	| [and  $40]
 	jne	l_0293                             	| [jr   nz,$0293]
-	lea	number_of_credits_8808(pc),a0      	| [ld   hl,number_of_credits_8808]
+	lea	number_of_credits_8808,a0      	| [ld   hl,number_of_credits_8808]
 	addq.b	#1,(a0)                         	| [inc  (hl)]
 	jra	register_coin_inserted_038B        	| [jp   register_coin_inserted_038B]
 	
 	* those coin routines are pretty hard to make work
 	* I disabled them
 coin_routine_02A2:
-	lea	unknown_8830(pc),a0                	| [ld   hl,unknown_8830]
+	lea	unknown_8830,a0                	| [ld   hl,unknown_8830]
 	move.b	#0x10,d1                        	| [ld   b,$10| coin slot 1]
 	jbsr	check_coin_inserted_0010          	| [call check_coin_inserted_0010]
 	* check for coin release
@@ -541,15 +541,15 @@ l_02b6:
 	not.b	d0                               	| [cpl]
 	and.b	#0x10,d0                         	| [and  $10]
 	jne	l_02b6                             	| [jr   nz,$02B6]
-	lea	unknown_881C(pc),a0                	| [ld   hl,unknown_881C]
+	lea	unknown_881C,a0                	| [ld   hl,unknown_881C]
 	addq.b	#1,(a0)                         	| [inc  (hl)]
-	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
+	lea	unknown_8809,a0                	| [ld   hl,unknown_8809]
 	jbsr	osd_read_dipswitches           	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	jra	l_0307                             	| [jr   $0307]
 coin_routine_02cd:
-	lea	unknown_8830+1(pc),a0              	| [ld   hl,unknown_8830+1]
+	lea	unknown_8830+1,a0              	| [ld   hl,unknown_8830+1]
 	move.b	#0x20,d1                        	| [ld   b,$20| coin slot 2]
 	jbsr	check_coin_inserted_0010          	| [call check_coin_inserted_0010]
 
@@ -559,9 +559,9 @@ l_02e1:
 	not.b	d0                               	| [cpl]
 	and.b	#0x20,d0                         	| [and  $20]
 	jne	l_02e1                             	| [jr   nz,$02E1]
-	lea	unknown_881E(pc),a0                	| [ld   hl,unknown_881E]
+	lea	unknown_881E,a0                	| [ld   hl,unknown_881E]
 	addq.b	#1,(a0)                         	| [inc  (hl)]
-	lea	unknown_880a(pc),a0                	| [ld   hl,unknown_880a]
+	lea	unknown_880a,a0                	| [ld   hl,unknown_880a]
 	jbsr	osd_read_dipswitches           	| [ld   a,(dsw_1_9000_coinage)]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
@@ -575,7 +575,7 @@ l_02e1:
 	and.b	#0x0F,d0                         	| [and  $0F]
 	cmp.b	d1,d0                            	| [cp   b]
 	jne	l_0307                             	| [jr   nz,$0307]
-	lea	unknown_8809(pc),a0                	| [ld   hl,unknown_8809]
+	lea	unknown_8809,a0                	| [ld   hl,unknown_8809]
 l_0307:
 	pea	register_coin_inserted_038B(pc) 	| [ld   bc,register_coin_inserted_038B]
 											| [push bc]
@@ -601,7 +601,7 @@ l_0307:
 
 	move.l	a0,-(sp)                        	| [push hl]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
-	lea	number_of_credits_8808(pc),a0      	| [ld   hl,number_of_credits_8808]
+	lea	number_of_credits_8808,a0      	| [ld   hl,number_of_credits_8808]
 	add.b	(a0),d0                          	| [add  a,(hl)]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	move.l	(sp)+,a0                        	| [pop  hl]
@@ -731,8 +731,7 @@ loop_0480:
 coin_has_been_inserted_0490:
 	* originally called from interrupt, stack is reset to avoid to run out of stack after
 	* several games
-	jbsr	osd_get_start_stack
-	move.l	d0,a7
+	move.l	stack_top,a7
 	
 		| [ld   a,$00]
 		| [ld   (character_sprite_bank_selector_9047),a]
