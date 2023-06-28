@@ -369,6 +369,10 @@ set_current_cursor_from_bc:
 	move.b	d2,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
 	move.b	d1,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
 	rts
+set_current_cursor_from_de:
+	move.b	d4,cursor_x_8800                	| [ld   (cursor_x_8800),de]
+	move.b	d3,cursor_y_8801                	| [ld   (cursor_x_8800),de]
+	rts
 set_current_cursor_from_hl:
 	move.b	d6,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	d5,cursor_y_8801                	| [ld   (cursor_x_8800),hl]
@@ -1263,7 +1267,7 @@ l_08f0:
 	jbsr	display_eggs_2D4B                 	| [call display_eggs_2D4B]
 	jbsr	display_player_ready_0F76         	| [call display_player_ready_0F76]
 	jbsr	draw_borders_2E5D                 	| [call draw_borders_2E5D]
-	jbsr	show_borders_0e77                            	| [call $0E77]
+	jbsr	draw_ice_block_matrix_0e77                            	| [call $0E77]
 	move.b	#0x09,d0                        	| [ld   a,$09]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	bsr		get_diamond_block_1_xy_8DB0_to_bc  	| [ld   bc,(diamond_block_1_xy_8DB0)]
@@ -1788,7 +1792,7 @@ l_0d05:
 	move.b	#0x80,d0                        	| [ld   a,$80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jbsr	clear_maze_and_borders_0C39       	| [call clear_maze_and_borders_0C39]
-	jbsr	l_0e38                            	| [call $0E38]
+	jbsr	backup_ice_block_locations_0e38                            	| [call $0E38]
 	lea	player_number_8816,a0          	| [ld   hl,player_number_8816]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	jeq	l_0d41                             	| [jr   z,$0D41]
@@ -1952,8 +1956,8 @@ table_0E2C:
 	.byte	0x01,0x02,0x02,0x19,0x1E,0xFE,0x19,0x02,0x02,0x01,0x1E,0xFE
 
 
-l_0e38:
-	lea	unknown_8DE0,a0                	| [ld   hl,unknown_8DE0]
+backup_ice_block_locations_0e38:
+	lea	ice_block_location_bits_8DE0,a0                	| [ld   hl,ice_block_location_bits_8DE0]
 	move.b	#0x02,d1                        	| [ld   b,$02]
 l_0e3d:
 	move.w	d1,-(sp)                        	| [push bc]
@@ -1986,8 +1990,8 @@ l_0e5d:
 	clr.b	(a0)                             	| [ld   (hl),$00]
 	move.b	#0x08,d1                        	| [ld   b,$08]
 l_0e61:
-	move.w	d1,-(sp)                        	| [push bc]
-	move.w	d3,-(sp)                        	| [push de]
+	movem.w	d1-d3,-(sp)                        	| [push bc]
+	                        	| [push de]
 	move.b	d3,d1                           	| [ld   b,d]
 	move.b	d4,d2                           	| [ld   c,e]
 	move.l	a0,-(sp)                        	| [push hl] useless now
@@ -2000,18 +2004,18 @@ l_0e61:
 	sub.b	#0x20,d0                         	| [cp   $20]
 	roxl.b	#1,d3                         	| [rl   (hl)] we emulate it with a register
 	move.b	d3,(a0)
-	move.w	(sp)+,d3                        	| [pop  de]
-	move.w	(sp)+,d1                        	| [pop  bc]
+	                        	| [pop  de]
+	movem.w	(sp)+,d1-d3                        	| [pop  bc]
 	addq.b	#2,d3                           	| [inc  d]
 												| [inc  d]
 	subq.b	#1,d1                           	| [...]
 	jne	l_0e61                             	| [djnz $0E61]
 	addq.w	#1,a0                           	| [inc  hl]
 	rts                                    	| [ret]
-show_borders_0e77:
-	clr.b	d0                               	| [ld   a,$00]
-	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
-	lea	unknown_8DE0,a0                	| [ld   hl,unknown_8DE0]
+draw_ice_block_matrix_0e77:
+											| [ld   a,$00]
+	clr.b	cursor_color_8802            	| [ld   (cursor_color_8802),a]
+	lea	ice_block_location_bits_8DE0,a0                	| [ld   hl,ice_block_location_bits_8DE0]
 	move.b	#0x02,d1                        	| [ld   b,$02]
 l_0e81:
 	move.w	d1,-(sp)                        	| [push bc]
@@ -2027,7 +2031,7 @@ l_0e84:
 	move.b	#0x02,d3                        	| [ld   d,$02]
 	subq.b	#1,d0                           	| [dec  a]
 	jeq	l_0e97                             	| [jr   z,$0E97]
-	jbsr	l_0eab                            	| [call $0EAB]
+	jbsr	draw_8_vertical_ice_blocks_0eab                            	| [call $0EAB]
 	jra	l_0e9c                             	| [jr   $0E9C]
 l_0e97:
 	move.b	#0x12,d3                        	| [ld   d,$12]
@@ -2045,27 +2049,31 @@ l_0e9c:
 l_0ea7:
 	move.b	#0x07,d1                        	| [ld   b,$07]
 	jra	l_0ead                             	| [jr   $0EAD]
-l_0eab:
+draw_8_vertical_ice_blocks_0eab:
 	move.b	#0x08,d1                        	| [ld   b,$08]
 l_0ead:
 	movem.w	d1-d3,-(sp)                        	| [push bc]
 												| [push de]
-	bsr		set_current_cursor_from_bc                	| [ld   (cursor_x_8800),bc]
+	bsr		set_current_cursor_from_de                	| [ld   (cursor_x_8800),de]
 	move.b	(a0),d7
+	* we have to emulate rl (address), and it's more complex than expected
+	* because moving back from register to memory clears the carry
 	roxl.b	#1,d7                         	| [rl   (hl)]
-	move.b	d7,(a0)
 	jcc	l_0ebc                             	| [jr   nc,$0EBC]
+	* there's a bit: draw an ice block there
 	move.l	a0,-(sp)                        	| [push hl]
 	jbsr	draw_ice_block_tile_2EFE          	| [call draw_ice_block_tile_2EFE]
 	move.l	(sp)+,a0                        	| [pop  hl]
 l_0ebc:
+	move.b	d7,(a0)							| move back to memory
+0:
 	movem.w	(sp)+,d1-d3                        	| [pop  de]
 												| [pop  bc]
-	addq.b	#2,d3                           	| [inc  d]
+	addq.b	#2,d3                           	| [inc  d] Y+=2 (grid coords)
 	                           	| [inc  d]
 	subq.b	#1,d1                           	| [...]
 	jne	l_0ead                             	| [djnz $0EAD]
-	addq.w	#1,a0                           	| [inc  hl]
+	addq.w	#1,a0                           	| [inc  hl] next bit pack (8 blocks)
 	rts                                    	| [ret]
 
 * restore the saved memory for characters (pengo+alive snobees)
@@ -2151,8 +2159,7 @@ erase_rectangular_char_zone_0F2E:
 l_0f3a:
 	move.w	d1,-(sp)                        	| [push bc]
 	movem.w	d3/d4,-(sp)                        	| [push de]
-	move.b	d4,cursor_x_8800                	| [ld   (cursor_x_8800),de]
-	move.b	d3,cursor_y_8801                	| [ld   (cursor_x_8800),de]
+	bsr		set_current_cursor_from_de         	| [ld   (cursor_x_8800),de]
 l_0f40:
 	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
 	subq.b	#1,d2                           	| [dec  c]
@@ -3850,8 +3857,7 @@ print_b_lines_277B:
 * < DE: XY
 * < HL: address of score
 write_best_score_27B3:
-	move.b	d4,cursor_x_8800                	| [ld   (cursor_x_8800),de]
-	move.b	d3,cursor_y_8801                	| [ld   (cursor_x_8800),de]
+	bsr		set_current_cursor_from_de         	| [ld   (cursor_x_8800),de]
 	move.b	(a0)+,d4                         	| [ld   e,(hl)]
 	                           	| [inc  hl]
 	move.b	(a0)+,d3                         	| [ld   d,(hl)]

@@ -4,13 +4,14 @@ General:
 - sounds
 - probable "endian bug" in scores
 - lives should not be displayed in demo mode/intro screens
-- play: die: maze is destroyed (color attribute vs tile mixup??)
+- completed level screen: time position wrong
 - dipswitches easy/... test!
 - start game from ice bank screen => issue (blitz)
 - diamond align 2-3: detected by blinking diamonds, but bonus not triggered
   by 3 aligned diamonds (create an option to create 2 or 3 aligned diamonds
   at start or blank maze+invincible)
-
+- crash @ 123C0078 at intermission level 4
+- level erase diagonal not properly erased
 
 Amiga:
 

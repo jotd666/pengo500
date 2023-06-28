@@ -76,7 +76,7 @@
 	.global	egg_location_table_8DC2
 	.global	current_nb_eggs_to_hatch_8DDD
 	.global	timer_16_bit_8DDE
-	.global	unknown_8DE0
+	.global	ice_block_location_bits_8DE0
 	.global	backup_player_struct_8E00
 	.global	sound_buffer_8F00
 	.global	sound_variable_8F10
@@ -251,7 +251,7 @@ current_nb_eggs_to_hatch_8DDD:
 	ds.b	0x01
 timer_16_bit_8DDE:
 	ds.b	0x02
-unknown_8DE0:
+ice_block_location_bits_8DE0:
 	ds.b	0x20
 backup_player_struct_8E00:
 	ds.b	0x100

@@ -1238,7 +1238,7 @@ play_one_life_08D6:
 08FF: CD CB AD      call display_eggs_2D4B
 0902: CD DE 8F      call display_player_ready_0F76
 0905: CD DD AE      call draw_borders_2E5D
-0908: CD DF 8E      call $0E77
+0908: CD DF 8E      call draw_ice_block_matrix_0E77
 090B: 3E 89         ld   a,$09
 090D: 32 AA 20      ld   (cursor_color_8802),a
 0910: ED 4B B0 8D   ld   bc,(diamond_block_1_xy_8DB0)
@@ -1681,7 +1681,7 @@ player_dies_0CD2:
 0D28: 3E 00         ld   a,$80
 0D2A: CD 51 08      call delay_28D1
 0D2D: CD 19 A4      call clear_maze_and_borders_0C39
-0D30: CD 10 0E      call $0E38
+0D30: CD 10 0E      call backup_ice_block_locations_0e38
 0D33: 21 16 88      ld   hl,player_number_8816
 0D36: CB 7E         bit  7,(hl)
 0D38: 28 A7         jr   z,$0D41
@@ -1819,13 +1819,13 @@ reposition_snobees_0dd0:
 0E24: DD 77 29      ld   (ix+y_pos),a
 0E27: CD CE 33      call display_snobee_sprite_33CE
 0E2A: E1            pop  hl
-0E2B: C9            ret
+0E2B: C9            ret		; return
 
 table_0E2C:
   01 02 02 19 1E FE 19 02 02 01 1E FE
 
-
-0E38: 21 48 8D      ld   hl,unknown_8DE0
+backup_ice_block_locations_0e38:
+0E38: 21 48 8D      ld   hl,ice_block_location_bits_8DE0
 0E3B: 06 02         ld   b,$02
 0E3D: C5            push bc
 0E3E: 0E A5         ld   c,$0D
@@ -1870,9 +1870,11 @@ table_0E2C:
 0E73: 10 EC         djnz $0E61
 0E75: 23            inc  hl
 0E76: C9            ret
+
+draw_ice_block_matrix_0E77:
 0E77: 3E 00         ld   a,$00
 0E79: 32 02 A8      ld   (cursor_color_8802),a
-0E7C: 21 48 8D      ld   hl,unknown_8DE0
+0E7C: 21 48 8D      ld   hl,ice_block_location_bits_8DE0
 0E7F: 06 2A         ld   b,$02
 0E81: C5            push bc
 0E82: 0E 85         ld   c,$0D
@@ -1886,7 +1888,7 @@ table_0E2C:
 0E8D: 16 2A         ld   d,$02
 0E8F: 3D            dec  a
 0E90: 28 25         jr   z,$0E97
-0E92: CD 8B 0E      call $0EAB
+0E92: CD 8B 0E      call draw_8_vertical_ice_blocks_0eab
 0E95: 18 05         jr   $0E9C
 0E97: 16 12         ld   d,$12
 0E99: CD A7 A6      call $0EA7
@@ -1900,6 +1902,8 @@ table_0E2C:
 
 0EA7: 06 2F         ld   b,$07
 0EA9: 18 2A         jr   $0EAD
+
+draw_8_vertical_ice_blocks_0eab:
 0EAB: 06 A8         ld   b,$08
 0EAD: C5            push bc
 0EAE: D5            push de
