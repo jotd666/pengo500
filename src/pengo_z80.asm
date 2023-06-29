@@ -1378,7 +1378,7 @@ main_game_loop_09E7:
 0A20: 3A 98 8D      ld   a,(remaining_alive_snobees_8D98)
 0A23: A7            and  a
 0A24: 20 E9         jr   nz,main_game_loop_09E7
-0A26: CD DD AB      call $0BDD	;  ???
+0A26: CD DD AB      call can_level_be_completed_now_0bdd
 0A29: 38 94         jr   c,main_game_loop_09E7
 	
 level_completed_0A2B:
@@ -1499,7 +1499,9 @@ text_start_0B20:
 0BD0  20 20 20 20 4E 4F 20 42 4F 4E 55 53 BA        NO BONUSº
 
 
-
+; if a block is moving or other misc stuff, wait for all
+; things to settle before completing the level
+can_level_be_completed_now_0bdd:
 0BDD: CD EC 83      call $0BEC
 0BE0: CD 79 8B      call $0BF9
 0BE3: D8            ret  c
@@ -4058,7 +4060,7 @@ jump_table_214C
 	.word	block_broken_406E 
 	.word	$217C
 	.word	block_broken_406E
-	 
+	.word	$2138 
 
 2170: 06 50         ld   b,$78
 2172: DD 70 02      ld   (ix+animation_frame),b

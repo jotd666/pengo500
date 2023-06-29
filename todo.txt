@@ -2,21 +2,19 @@ General:
 
 - highscores (today's best 5) wrongly displayed
 - sounds
-- probable "endian bug" in scores
+- probable "endian bug" in scores: high score not updating/following
 - lives should not be displayed in demo mode/intro screens
-- completed level screen: time position wrong
 - dipswitches easy/... test!
 - start game from ice bank screen => issue (blitz)
 - diamond align 2-3: detected by blinking diamonds, but bonus not triggered
   by 3 aligned diamonds (create an option to create 2 or 3 aligned diamonds
   at start or blank maze+invincible)
-- crash @ 123C0078 at intermission level 4
-- level erase diagonal not properly erased
+- crash when level 1 starts after level 16
 
 Amiga:
 
-- sprite allocation is still wrong (red ice cube)  break when wrong colors, get sprite state to investigate!
-- whdload cheat: complete level key, invincible
+- sprite allocation is still wrong (red ice cube/yellow pengo...)  break when wrong colors, get sprite state to investigate!
+- whdload cheat: invincible
 - sound
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization

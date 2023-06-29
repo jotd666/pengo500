@@ -1186,7 +1186,8 @@ increase_counter_0875:
 play_one_game_087D:
 	clr.w	player_1_score_880E          	| [ld   (player_1_score_880E),hl]
 	clr.w	player_2_score_8810          	| [ld   (player_2_score_8810),hl]
-	move.b	#0x01,d0                        	| [ld   a,$01]
+	*move.b	#0x01,d0                        	| [ld   a,$01]
+	jbsr	osd_get_start_level
 	move.b	d0,level_number_player1_8812    	| [ld   (level_number_player1_8812),a]
 	move.b	d0,level_number_player2_8813    	| [ld   (level_number_player2_8813),a]
 	jbsr	osd_read_dipswitches            	|  dip switch [ld   a,(dip_switches_9040)]
@@ -1424,10 +1425,10 @@ l_09f4:
 	move.b	pengo_struct_8D80+ai_mode_1E,d0       	| [ld   a,(pengo_struct_8D80+$1E)]
 	btst.b	#7,d0                           	| [bit  7,a]
 	jne	player_dies_0CD2                   	| [jp   nz,player_dies_0CD2]
-	move.b	remaining_alive_snobees_8D98,d0 	| [ld   a,(remaining_alive_snobees_8D98)]
-	tst.b	d0                               	| [and  a]
+	tst.b	remaining_alive_snobees_8D98 	| [ld   a,(remaining_alive_snobees_8D98)]
+											| [and  a]
 	jne	main_game_loop_09E7                	| [jr   nz,main_game_loop_09E7]
-	jbsr	l_0bdd                            	|  ??? [call $0BDD]
+	jbsr	can_level_be_completed_now_0bdd                            	|  ??? [call $0BDD]
 	jcs	main_game_loop_09E7                	| [jr   c,main_game_loop_09E7]
 
 level_completed_0A2B:
@@ -1551,14 +1552,14 @@ text_start_0B20:
 	.byte	0xBA,0x02,0x0A,0x11,0x46,0x52,0x4F,0x4D,0x20,0x33,0x30,0x20,0x54,0x4F,0x20,0x33  	 |	º...FROM,0x30 TO 3
 	.byte	0x39,0x20,0x3A,0x31,0x30,0x30,0x30,0x20,0x50,0x54,0x53,0xBA,0x02,0x0C,0x11,0x46  	 |	9 :1000 PTSº...F
 	.byte	0x52,0x4F,0x4D,0x20,0x34,0x30,0x20,0x54,0x4F,0x20,0x34,0x39,0x20,0x3A,0x3A,0x35  	 |	ROM,0x40 TO,0x49 ::5
-	.byte	0x30,0x30,0x20,0x50,0x54,0x53,0xBA,0x02,0x0E,0x11,0x46,0x52,0x4F,0x4D,0x20,0x35,0x00 | 	PTSº...FROM 5
+	.byte	0x30,0x30,0x20,0x50,0x54,0x53,0xBA,0x02,0x0E,0x11,0x46,0x52,0x4F,0x4D,0x20,0x35      | 	PTSº...FROM 5
 	.byte	0x30,0x20,0x54,0x4F,0x20,0x35,0x39,0x20,0x3A,0x3A,0x3A,0x31,0x30,0x20,0x50,0x54  	 |	 0 TO 59 :::10 PT
 	.byte	0x53,0xBA,0x02,0x10,0x11,0x36,0x30,0x20,0x41,0x4E,0x44,0x20,0x4F,0x56,0x45,0x52  	 |	 Sº...60 AND OVER
 	.byte	0x20,0x20,0x20,0x20,0x4E,0x4F,0x20,0x42,0x4F,0x4E,0x55,0x53,0xBA      			 	 |	 NO BONUSº
 
 	.align	2
 
-l_0bdd:
+can_level_be_completed_now_0bdd:
 	jbsr	l_0bec                            	| [call $0BEC]
 l_0be0:
 	jbsr	l_0bf9                            	| [call $0BF9]
@@ -1655,8 +1656,7 @@ l_0c3b:
 	addq.b	#1,d0                           	| [inc  a]
 	move.b	d0,d1                           	| [ld   b,a]
 	clr.b	d2                               	| [ld   c,$00]
-	move.b	d1,cursor_x_8800                	| [ld   (cursor_x_8800),bc]
-	move.b	d0,cursor_y_8801                	| [ld   (cursor_x_8800),bc]
+	bsr		set_current_cursor_from_bc          | [ld   (cursor_x_8800),bc]
 	clr.b	d0                               	| [ld   a,$00]
 	jbsr	draw_attribute_line_2F30          	| [call draw_attribute_line_2F30]
 	move.b	#0x01,d0                        	| [ld   a,$01]
@@ -2369,7 +2369,7 @@ move_character_intermission_path_1DC0:
 l_1dc4:
 	lea	table_title_1DF9(pc),a1                  	| [ld   de,table_title_1DF9]
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
+											| [and  a]
 	jeq	l_1dda                             	| not playing, skip [jr   z,$1DDA]
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
 	lea	table_low_levels_1DE1(pc),a1                  	| [ld   de,table_low_levels_1DE1]
@@ -2917,6 +2917,7 @@ jump_table_214C:
 	.long	block_broken_406E
 	.long	l_217c
 	.long	block_broken_406E
+	.long	l_2148
 
 
 l_2170:
@@ -4085,7 +4086,6 @@ l_2966:
 	bsr		set_current_cursor_from_bc	    	| update current cursor pos [ld   (cursor_x_8800),bc]
 										| [pop  hl]
 	movem.w	(sp)+,d0-d3/d6                        	| [pop  de]
-	                        	| [pop  bc]
 	                        	| [pop  bc]
 	                        	| [pop  af]
 	rts                                    	| [ret]
