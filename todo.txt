@@ -9,13 +9,13 @@ General:
 - diamond align 2-3: detected by blinking diamonds, but bonus not triggered
   by 3 aligned diamonds (create an option to create 2 or 3 aligned diamonds
   at start or blank maze+invincible)
-- crash when level 1 starts after level 16
+- crash when level 1 starts after level 16 (in crash)
+- "1P" doesn't flash when playing
 
 Amiga:
 
 - sprite allocation is still wrong (red ice cube/yellow pengo...)  break when wrong colors, get sprite state to investigate!
-- whdload cheat: invincible
-- sound
+- complete sound
 - log used cluts to filter out unused clut/char combination
 - tile planar optimization
 - title: wrong color for snobee that erase "squash the snobees" message

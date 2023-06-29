@@ -1186,8 +1186,7 @@ increase_counter_0875:
 play_one_game_087D:
 	clr.w	player_1_score_880E          	| [ld   (player_1_score_880E),hl]
 	clr.w	player_2_score_8810          	| [ld   (player_2_score_8810),hl]
-	*move.b	#0x01,d0                        	| [ld   a,$01]
-	jbsr	osd_get_start_level
+	move.b	start_level,d0                        	| [ld   a,$01]
 	move.b	d0,level_number_player1_8812    	| [ld   (level_number_player1_8812),a]
 	move.b	d0,level_number_player2_8813    	| [ld   (level_number_player2_8813),a]
 	jbsr	osd_read_dipswitches            	|  dip switch [ld   a,(dip_switches_9040)]
@@ -1500,7 +1499,7 @@ l_0a45:
 	tst.b	d0                               	| [and  a]
 	jne	l_0afb                             	| [jr   nz,$0AFB]
 	move.b	#0x01,d1                        	| [ld   b,$01]
-	jbsr	sound_18AF                            	| [call $18AF]
+	jbsr	play_sfx_18AF                            	| [call $18AF]
 	move.b	#0x02,d6                        	| [ld   l,$02]
 	move.b	#0x0E,d5                        	| [ld   h,$0E]
 	move.w	#1,d3	                      	| [ld   de,$0001]
@@ -2265,6 +2264,14 @@ str_ready_FF9:
 	
 
 	
+play_sfx_18c7:
+	move.w	d0,-(sp)
+	clr		D0
+	move.b	d1,d0
+	add.b	#0x10,d0		| not the same indices
+	bsr		osd_sound_start
+	move.w	(sp)+,d0
+	rts
 play_sfx_1889:
 	move.w	d0,-(sp)
 	clr		D0
@@ -2273,11 +2280,16 @@ play_sfx_1889:
 	move.w	(sp)+,d0
 	rts
 	
-sound_18AF:
+play_sfx_18AF:
+	move.w	d0,-(sp)
+	clr		D0
+	move.b	d1,d0
+	add.b	#0x18,d0		| not the same indices
+	bsr		osd_sound_start
+	move.w	(sp)+,d0
 	rts
+
 	
-update_sound_18c7:
-	rts
 	
 enable_sound_18EC:
 	jra		osd_sound_enable
@@ -4380,7 +4392,7 @@ l_2bfa:
 	bset.b	#7,(a0)                         	| [set  7,(hl)]
 	jbsr	draw_lives_2D13                            	| [call $2D13]
 	move.b	#0x01,d1                        	| [ld   b,$01]
-	jbsr	sound_18AF                            	| [call $18AF]
+	jbsr	play_sfx_18AF                            	| [call $18AF]
 	rts                                    	| [ret]
 
 check_p2_score_for_extra_life_2C06:
@@ -5851,7 +5863,7 @@ snobees_play_chicken_3403:
 	move.b	#0x09,d1                        	| super fast game music [ld   b,$09]
 	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
 	move.b	#0x01,d1                        	| [ld   b,$01]
-	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 	jra	apply_snobee_behaviour_3461        	| [jr   apply_snobee_behaviour_3461]
 
  * normal movement
@@ -6757,8 +6769,8 @@ _04_snobee_stunned_39B5:
 l_39c3:
 	move.b	#0x05,(stunned_push_block_counter,a2)	| [ld   (ix+stunned_push_block_counter),$05]
 	move.b	#0x0F,(0x09,a2)                 	| [ld   (ix+$09),$0F]
-	move.b	#0x06,d1                        	| [ld   b,$06]
-	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	move.b	#0x06,d1                        	| [ld   b,$06] stunned snobees
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 	rts                                    	| [ret]
 
 l_39d1:
@@ -6864,8 +6876,8 @@ l_3a77:
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	move.w	#10,d3                      	| [ld   de,$000A]  100 points
 	jbsr	add_to_current_player_score_28AF                            	| [call $28AF]
-	move.b	#0x02,d1                        	| [ld   b,$02]
-	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	move.b	#0x02,d1                        	| [ld   b,$02] eats stunned snobee
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 	rts                                    	| [ret]
 
 l_3a92:
@@ -7188,8 +7200,8 @@ l_3c70:
 	move.b	d0,(ai_mode_1E,a2)                 	| sets A.I. mode at random from 1 to 8 [ld   (ix+ai_mode_1E),a]
 	move.b	#0x14,(0x1b,a2)                 	| [ld   (ix+$1b),$14]
 	addq.b	#1,(char_state_1F,a2)              	| [inc  (ix+char_state_1F)]
-	move.b	#0x03,d1                        	| [ld   b,$03]
-	jbsr	update_sound_18c7                            	| [call $18C7]
+	move.b	#0x03,d1                        	| [ld   b,$03] egg hatching
+	jbsr	play_sfx_18c7                            	| [call $18C7]
 	lea	snobee_1_struct_8D00+ai_mode_1E,a0   	| A.I. mode [ld   hl,snobee_1_struct_8D00+$1E]
 												| [ld   de,$0020]
 	move.b	#0x04,d1                        	| [ld   b,$04]
@@ -8102,7 +8114,7 @@ l_424f:
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(char_state_1F,a2)              	| [inc  (ix+char_state_1F)]
 	move.b	#0x05,d1                        	| [ld   b,$05]
-	jbsr	sound_18AF                            	| [call $18AF]
+	jbsr	play_sfx_18AF                            	| [call $18AF]
 	rts                                    	| [ret]
 
 l_425e:
@@ -8137,7 +8149,7 @@ make_pengo_shake_wall_4282:
 	move.l	(sp)+,a2                        	| [pop  ix]
 	clr.b	(char_state_1F,a2)                  	| [ld   (ix+char_state_1F),$00]
 	move.b	#0x03,d1                        	| [ld   b,$03]
-	jbsr	sound_18AF                            	| [call $18AF]
+	jbsr	play_sfx_18AF                            	| [call $18AF]
 	rts                                    	| [ret]
 l_4294:
 	move.b	#0x04,(char_state_1F,a2)           	| [ld   (ix+char_state_1F),$04]
@@ -8154,7 +8166,7 @@ l_42a3:
 	clr.b	(char_state_1F,a2)                  	| [ld   (ix+char_state_1F),$00]
 	movem.w	d1/d2,-(sp)                    	| [push bc]
 	move.b	#0x02,d1                        	| [ld   b,$02]
-	jbsr	sound_18AF                            	| [call $18AF]
+	jbsr	play_sfx_18AF                            	| [call $18AF]
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	jbsr	find_breaking_block_free_slot_42c6                            	| [call $42C6]
 	bset.b	#5,(a0)                         	| [set  5,(hl)]
@@ -8641,14 +8653,14 @@ l_454f:
 	addq.b	#1,(char_state_1F,a2)              	| [inc  (ix+char_state_1F)]
 l_455a:
 	move.b	#0x04,d1                        	| [ld   b,$04]
-	jbsr	sound_18AF                            	| [call $18AF]
+	jbsr	play_sfx_18AF                            	| [call $18AF]
 	move.b	(0x0f,a2),d0                    	| [ld   a,(ix+$0f)]
 	tst.b	d0                               	| [and  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
 	move.b	#0x05,d1                        	| [ld   b,$05]
-	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 	move.w	#0x20,d3                      	| [ld   de,$0020]
 	move.b	#0x0A,d0                        	| [ld   a,$0A]
 	lea	snobee_1_struct_8D00,a3        	| [ld   iy,snobee_1_struct_8D00]
@@ -8835,8 +8847,8 @@ l_46a7:
 	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
 	move.b	#0x2A,d0                        	| [ld   a,$2A]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	move.b	#0x07,d1                        	| [ld   b,$07]
-	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	move.b	#0x07,d1                        	| [ld   b,$07]  score countdown (0x20 in mame)
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 	move.b	#0x64,d1                        	| [ld   b,$64]
 	move.w	#0x03E8,d6                      	| 1000 [ld   hl,$03E8]
 	btst.b	#7,(0x16,a2)                    	| [bit  7,(ix+$16)]
@@ -8879,9 +8891,9 @@ l_46d0:
 	subq.b	#1,d1                           	| [...]
 	jne	l_46d0                             	| [djnz $46D0]
 	st.b	d1                                	| [ld   b,$FF]
-	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 	move.b	#0x08,d1                        	| [ld   b,$08]
-	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 	move.b	#0x40,d0                        	| [ld   a,$40]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jbsr	l_0fba                            	| [call $0FBA]
@@ -9268,7 +9280,7 @@ l_494d:
 	move.b	d0,(0x04,a2)                    	| [ld   (ix+$04),a]
 	subq.b	#1,(a0)                         	| [dec  (hl)]
 	move.b	#0x04,d1                        	| [ld   b,$04]
-	jbsr	update_sound_18c7                 	| [call update_sound_18c7]
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 l_4960:
 	addq.b	#1,(0x05,a2)                    	| [inc  (ix+$05)]
 	lea	maze_data_8C20+0x3F,a0         	| [ld   hl,maze_data_8C20+$3F]
@@ -9692,6 +9704,10 @@ snobee_pengo_collision_test_4C1C:
 	rts                                    	| [ret]
 	
 snobee_collides_pengo_4C2E:
+	tst.b	invincible_flag
+	beq.b	0f
+	rts
+0:
 	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	clr.b	(char_state_1F,a2)                  	| [ld   (ix+char_state_1F),$00]
 	move.b	#0xFF,(ai_mode_1E,a2)              	| [ld   (ix+ai_mode_1E),$FF]
@@ -9701,6 +9717,8 @@ snobee_collides_pengo_4C2E:
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	jbsr	get_nb_lives_289E                 	| [call get_nb_lives_289E]
+	tst.b	infinite_lives_flag
+	bne.b	0f
 	subq.b	#1,d0                           	| [dec  a]
 	bne.b	0f
 	rts                                    	| [ret  z]

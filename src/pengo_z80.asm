@@ -589,7 +589,7 @@ FF 03 FF 04 FF 05 FF 06 FF 00 01 00 01 01 01 FF
 
 register_coin_inserted_038B:
 038B: 06 A8         ld   b,$00		; credit inserted sound
-038D: CD 81 B0      call play_sfx_1889
+038D: CD 81 B0      call play_tune_1889
 0390: 21 83 88      ld   hl,unknown_880B
 0393: CB 7E         bit  7,(hl)
 0395: C8            ret  z
@@ -1321,9 +1321,9 @@ run_one_life_092D:
 09AD: CD 58 BE      call get_div8_ix_coords_3E78
 09B0: CD 09 43      call clear_2x2_tiles_at_current_pos_43A9
 09B3: 06 FF         ld   b,$FF		; stop sound
-09B5: CD 89 90      call play_sfx_1889
+09B5: CD 89 90      call play_tune_1889
 09B8: 06 A2         ld   b,$02		; start music
-09BA: CD 89 18      call play_sfx_1889
+09BA: CD 89 18      call play_tune_1889
 09BD: 3A 40 B8      ld   a,(dip_switches_9040)
 09C0: 2F            cpl
 09C1: CB 6F         bit  5,a	;  rack test dip switch
@@ -1356,7 +1356,7 @@ main_game_loop_09E7:
 09EB: 20 AF         jr   nz,$09F4
 09ED: F3            di
 09EE: 06 A0         ld   b,$08		; play in-game music
-09F0: CD 89 18      call play_sfx_1889
+09F0: CD 89 18      call play_tune_1889
 09F3: FB            ei
 09F4: CD 75 08      call increase_counter_0875
 09F7: CD 0E 33      call animate_snobee_1_330e
@@ -1383,7 +1383,7 @@ main_game_loop_09E7:
 	
 level_completed_0A2B:
 0A2B: 06 2C         ld   b,$04		; level completed sound
-0A2D: CD 89 90      call play_sfx_1889
+0A2D: CD 89 90      call play_tune_1889
 0A30: F3            di
 0A31: DD 21 28 8D   ld   ix,pengo_struct_8D80
 0A35: 3A 5C AC      ld   a,(elapsed_seconds_since_start_of_round_8C5C)
@@ -1645,7 +1645,7 @@ player_dies_0CD2:
 0CD2: CD 48 0B      call $0BE0
 0CD5: DA E7 A1      jp   c,main_game_loop_09E7
 0CD8: 06 25         ld   b,$05
-0CDA: CD A9 18      call play_sfx_1889		; player dies music
+0CDA: CD A9 18      call play_tune_1889		; player dies music
 0CDD: 3E 06         ld   a,$06
 0CDF: 32 9F 8D      ld   (pengo_struct_8D80+char_state_1F),a
 0CE2: DD 21 08 8D   ld   ix,pengo_struct_8D80
@@ -1941,7 +1941,7 @@ swap_players_0EC4:
 
 0ED7: CD B7 11      call clear_sprites_31B7
 0EDA: 06 26         ld   b,$06
-0EDC: CD A9 18      call play_sfx_1889
+0EDC: CD A9 18      call play_tune_1889
 0EDF: 21 EC 87      ld   hl,table_0F4C
 0EE2: CD 06 AF      call erase_rectangular_char_zone_0F2E
 0EE5: 21 79 87      ld   hl,$0F51
@@ -2921,7 +2921,7 @@ string_17D9:
 1887: AF            xor  a
 1888: C9            ret
 	
-play_sfx_1889: F3            di
+play_tune_1889: F3            di
 188A: 21 48 A4      ld   hl,sound_channel_0_struct_8C60
 188D: 04            inc  b
 188E: 28 9C         jr   z,$18A4
@@ -2956,7 +2956,7 @@ sound_18AF:
 18C3: 36 00         ld   (hl),$00
 18C5: 18 FA         jr   $18C1
 
-update_sound_18c7:
+play_sfx_18c7:
 18C7: F3            di
 18C8: 21 28 A4      ld   hl,sound_channel_4_struct_8CA0
 18CB: 04            inc  b
@@ -3520,7 +3520,7 @@ sound_related_1CE0:
 ; during non-playing parts of the game
 pengo_intermission_or_title_1D29:
 1D29: 06 87         ld   b,$07
-1D2B: CD 09 30      call play_sfx_1889	; dance music
+1D2B: CD 09 30      call play_tune_1889	; dance music
 1D2E: 3E 68         ld   a,$40
 1D30: CD 51 28      call delay_28D1
 1D33: CD 60 B5      call init_all_characters_states_1D60
@@ -4608,7 +4608,7 @@ set_3_chars_2589:
 2598: CD 6D 28      call clear_screen_and_colors_28E5
 259B: CD B7 31      call clear_sprites_31B7
 259E: 06 81         ld   b,$09			; 0xA in MAME menu
-25A0: CD 21 98      call play_sfx_1889		; play highscore entry music
+25A0: CD 21 98      call play_tune_1889		; play highscore entry music
 25A3: CD 96 8E      call create_highscore_entry_269E
 25A6: 21 B2 08      ld   hl,todays_best_text_27F7+$81A-$7F7
 25A9: 06 88         ld   b,$08
@@ -5664,7 +5664,7 @@ draw_maze_2DA1:
 2DB0: C0            ret  nz	; rack test:	don't draw
 	
 2DB1: 06 01         ld   b,$01			; draw maze sound
-2DB3: CD 89 90      call play_sfx_1889	; sound routine
+2DB3: CD 89 90      call play_tune_1889	; sound routine
 
 	;; install a modifiable routine in ram_code_8C24 (self-modifying code used
 	;; for maze path drawing)
@@ -6683,11 +6683,11 @@ snobees_play_chicken_3403:
 3418: 3E 8B         ld   a,$03
 341A: 32 33 8C      ld   (game_phase_8CBB),a
 341D: 06 FF         ld   b,$FF
-341F: CD A1 90      call play_sfx_1889
+341F: CD A1 90      call play_tune_1889
 3422: 06 80         ld   b,$09			; super fast game music
-3424: CD A1 30      call play_sfx_1889
+3424: CD A1 30      call play_tune_1889
 3427: 06 01         ld   b,$01
-3429: CD C7 90      call update_sound_18c7
+3429: CD C7 90      call play_sfx_18c7
 342C: 18 1B         jr   apply_snobee_behaviour_3461
 	
 	;; normal movement
@@ -7488,7 +7488,7 @@ _04_snobee_stunned_39B5:
 39C3: DD 36 22 85   ld   (ix+stunned_push_block_counter),$05
 39C7: DD 36 21 8F   ld   (ix+$09),$0F
 39CB: 06 86         ld   b,$06
-39CD: CD 47 30      call update_sound_18c7
+39CD: CD 47 30      call play_sfx_18c7
 39D0: C9            ret
 
 39D1: 3A 24 20      ld   a,(counter_lsb_8824)
@@ -7578,7 +7578,7 @@ _06_stunned_picked_3A6C:
 3A86: 11 82 00      ld   de,$000A
 3A89: CD AF 00      call add_to_current_player_score_28AF
 3A8C: 06 8A         ld   b,$02
-3A8E: CD EF 18      call update_sound_18c7
+3A8E: CD EF 18      call play_sfx_18c7
 3A91: C9            ret
 
 3A92: 3A AC 88      ld   a,(counter_lsb_8824) ;  count mask
@@ -7863,7 +7863,7 @@ hatch_one_egg_3c6c:
 3CB1: DD 36 1B 14   ld   (ix+$1b),$14
 3CB5: DD 34 1F      inc  (ix+char_state_1F)
 3CB8: 06 8B         ld   b,$03
-3CBA: CD C7 18      call update_sound_18c7
+3CBA: CD C7 18      call play_sfx_18c7
 3CBD: 21 1E 05      ld   hl,snobee_1_struct_8D00+$1E	; A.I. mode
 3CC0: 11 08 00      ld   de,$0020
 3CC3: 06 04         ld   b,$04
@@ -9094,7 +9094,7 @@ go_right_test_44CF:
 4562: A7            and  a
 4563: C8            ret  z
 4564: 06 85         ld   b,$05
-4566: CD 47 98      call update_sound_18c7
+4566: CD 47 98      call play_sfx_18c7
 4569: 11 28 80      ld   de,$0020
 456C: 3E A2         ld   a,$0A
 456E: FD 21 00 8D   ld   iy,snobee_1_struct_8D00
@@ -9202,7 +9202,7 @@ check_if_diamonds_are_aligned_4612:
 ; diamonds are aligned
 4658: DD 36 17 20   ld   (ix+$17),$00
 465C: 06 23         ld   b,$03
-465E: CD A9 B8      call play_sfx_1889		; diamond align music bonus
+465E: CD A9 B8      call play_tune_1889		; diamond align music bonus
 4661: 1E 21         ld   e,$21		; stars
 4663: CD F2 06      call draw_borders_2E7A
 4666: 06 E0         ld   b,$40
@@ -9244,7 +9244,7 @@ check_if_diamonds_are_aligned_4612:
 46B6: 3E 82         ld   a,$2A
 46B8: CD 79 28      call delay_28D1
 46BB: 06 07         ld   b,$07
-46BD: CD C7 B0      call update_sound_18c7
+46BD: CD C7 B0      call play_sfx_18c7
 46C0: 06 64         ld   b,$64
 46C2: 21 48 2B      ld   hl,$03E8		; 1000
 46C5: DD CB B6 F6   bit  7,(ix+$16)
@@ -9280,9 +9280,9 @@ check_if_diamonds_are_aligned_4612:
 4701: C1            pop  bc
 4702: 10 64         djnz $46D0
 4704: 06 7F         ld   b,$FF
-4706: CD 47 98      call update_sound_18c7
+4706: CD 47 98      call play_sfx_18c7
 4709: 06 88         ld   b,$08
-470B: CD E7 B0      call update_sound_18c7
+470B: CD E7 B0      call play_sfx_18c7
 470E: 3E C0         ld   a,$40
 4710: CD F9 28      call delay_28D1
 4713: CD BA 87      call $0FBA
@@ -9608,7 +9608,7 @@ table_4939:
 4957: DD 77 A4      ld   (ix+$04),a
 495A: 35            dec  (hl)
 495B: 06 04         ld   b,$04
-495D: CD C7 90      call update_sound_18c7
+495D: CD C7 90      call play_sfx_18c7
 4960: DD 34 AD      inc  (ix+$05)
 4963: 21 DF 24      ld   hl,maze_data_8C20+$3F
 4966: 35            dec  (hl)

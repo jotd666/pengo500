@@ -13,6 +13,7 @@
 	.global	vbl_sync_counter_start_screen
 	.global	unknown_87FF
 	.global stack_top
+	.global	start_level
 	.ifdef	__amiga__
 	
 	.ifndef	RELEASE
@@ -78,4 +79,6 @@ vbl_sync_flag:
 vbl_sync_counter:
 	.byte	0
 unknown_87FF:
+	.byte	0
+start_level:
 	.byte	0

@@ -24,15 +24,17 @@ EMPTY_SND = "EMPTY_SND"
 sound_dict = {
 #"EXTRA_SOLVALOU_SND"     :{"index":0x04,"channel":3,"sample_rate":hq_sample_rate,"priority":10},
 "CREDIT_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate},
-"SHOOT_SND"              :{"index":1,"channel":1,"sample_rate":hq_sample_rate},
-"INTRO_SND"               :{"index":2,"channel":1,"sample_rate":lq_sample_rate},
-"ALIEN_SHOT_SND"               :{"index":3,"channel":3,"sample_rate":hq_sample_rate},
-"FLAGSHIP_SHOT_SND"               :{"index":4,"channel":3,"sample_rate":hq_sample_rate,"priority":10},
-"PLAYER_SHOT_SND"              :{"index":5,"channel":1,"sample_rate":lq_sample_rate,"priority":10},
-"ATTACK_END_SND"              :{"index":6,"channel":2,"sample_rate":hq_sample_rate},
-"SWARM_1_SND"              :{"index":7,"channel":0,"sample_rate":hq_sample_rate},
-"EXTRA_LIFE_SND"              :{"index":8,"channel":1,"sample_rate":hq_sample_rate,"priority":10},
-"ATTACK_START_SND"              :{"index":9,"channel":2,"sample_rate":lq_sample_rate},
+"DIAMONDS_ALIGNED_SND"               :{"index":3,"channel":0,"sample_rate":hq_sample_rate},
+
+
+# second channel (called by 18C7)
+"SNOBEE_EATEN_SND"               :{"index":0x12,"channel":1,"sample_rate":hq_sample_rate},
+"SNOBEE_HATCHING_SND"               :{"index":0x13,"channel":1,"sample_rate":hq_sample_rate},
+"SNOBEE_STUNNED_SND"               :{"index":0x16,"channel":1,"sample_rate":hq_sample_rate},
+
+"BLOCK_BROKEN_SND"               :{"index":0x1A,"channel":1,"sample_rate":hq_sample_rate},
+"SHAKE_WALL_SND"               :{"index":0x1B,"channel":1,"sample_rate":hq_sample_rate},
+
 }
 
 max_sound = max(x["index"] for x in sound_dict.values())+1

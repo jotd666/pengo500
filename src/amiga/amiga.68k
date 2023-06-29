@@ -352,6 +352,18 @@ _user:
 	not.b	d0		| active low
 	move.b	d0,dip_switches+1
 
+osd_get_start_level:
+	move.l	start_level_option(pc),d0
+	and.l	#0x0F,d0
+	addq	#1,d0
+	move.b	d0,start_level
+	
+	move.l	cheat_flags,d0
+	btst	#0,d0
+	sne		invincible_flag
+	btst	#1,cheat_flags
+	sne		infinite_lives_flag
+	
 	* we don't need extra joypad buttons, and that will save a few cycles
 	* because reading CD32 joypad is (relatively) costly. Usually it doesn't
 	* matter but I've seen issues (Shadow of the beast 3 for instance)
@@ -512,12 +524,7 @@ _vblank:
 	
 	tst.b	pause_flag
 	bne.b	23f
-	* decrease intro sound lock until zero
-	move.w	intro_sound_lock,d0
-	beq.b	222f
-	subq.w	#1,d0
-	move.w	d0,intro_sound_lock
-222:
+
 	jbsr		pengo_irq
 	.ifne  OPT_ENABLE_DOUBLE_BUFFERING_BG
 	bsr		switch_screen_buffers
@@ -545,17 +552,13 @@ osd_break:
 	blitz
 	rts
 	
-osd_get_start_level:
-	move.l	start_level,d0
-	and.l	#0x0F,d0
-	addq	#1,d0
-	rts
+
 	
 * speed regulation for game mainloop, the bigger, the faster
-* Slightly depends on PAL/NTSC. For PAL I found that 12.
+* Slightly depends on PAL/NTSC.
 
 osd_get_sync_period:
-	move.w	#14,d0
+	move.w	#16,d0
 	rts
 	
 * this needs tuning. waits roughly 400 micro seconds
@@ -848,16 +851,10 @@ osd_sound_enable:
 osd_sound_disable:	
 	rts
 osd_sound_start:
-	rts
-	
 	movem.l	d0/d1/a0/a6,-(a7)
-
-	cmp.w	#INTRO_SND,d0
-	bne.b	0f
-	* intro sound played: arm decrease counter: we can't start
-	* swarm sound immediately
-	move.w	#30,intro_sound_lock
-0:
+	tst.b	d0
+	bmi.b	1f		| should stop the sound
+	
 	lea		_custom,a6
 	lsl.w	#3,d0
 	lea		sound_table,a0
@@ -901,8 +898,6 @@ osd_sound_stop:
 	lea		_custom,a6
     clr.w   music_tick   | not playing anymore
 	clr.b	music_playing
-	move.b	#-1,alien_swarm_loop_frequency
-	clr.b	alien_swarm_loop_playing
     jsr		_mt_end
 0:
 	movem.l	(a7)+,d0/a6
@@ -2010,7 +2005,7 @@ _tag:
 cheat_flags:
 		.long	0
 		.long	WHDLTAG_CUSTOM2_GET
-start_level:
+start_level_option:
 		.long	0
 		.long	WHDLTAG_CUSTOM3_GET
 dip_switch_bonus_life:
