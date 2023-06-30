@@ -31,9 +31,12 @@ sound_dict = {
 "SNOBEE_EATEN_SND"               :{"index":0x12,"channel":1,"sample_rate":hq_sample_rate},
 "SNOBEE_HATCHING_SND"               :{"index":0x13,"channel":1,"sample_rate":hq_sample_rate},
 "SNOBEE_STUNNED_SND"               :{"index":0x16,"channel":1,"sample_rate":hq_sample_rate},
+"DIAMONDS_BONUS_SND"               :{"index":0x17,"channel":1,"sample_rate":hq_sample_rate},
 
-"BLOCK_BROKEN_SND"               :{"index":0x1A,"channel":1,"sample_rate":hq_sample_rate},
-"SHAKE_WALL_SND"               :{"index":0x1B,"channel":1,"sample_rate":hq_sample_rate},
+# third channel
+"EXTRA_LIFE_SND"               :{"index":0x19,"channel":2,"sample_rate":hq_sample_rate},
+"BLOCK_BROKEN_SND"               :{"index":0x1A,"channel":2,"sample_rate":hq_sample_rate},
+"SHAKE_WALL_SND"               :{"index":0x1B,"channel":2,"sample_rate":hq_sample_rate},
 
 }
 

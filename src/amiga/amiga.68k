@@ -346,7 +346,7 @@ _user:
 *	bset	#2,d0	| demo sounds on
 
 	tst.l	dip_switch_bonus_life
-	beq.b	0f
+	bne.b	0f
 	bset	#0,d0
 0:
 	not.b	d0		| active low
@@ -601,6 +601,7 @@ osd_small_wait:
 osd_update_sprites:
 	*lea		test_sprites_xy,a1
 	*lea		test_sprites_code,a0
+	
 	* clear host sprites
 	move.w	#NB_HOST_SPRITES-1,d0
 
@@ -797,7 +798,7 @@ alloc_sprite:
 	bne.b	20f
 12:
 	* not allocated: test odd sprite
-	tst.b	(SPRITE_Y,a2)
+	tst.b	(SPRITE_Y+SPRITE_SIZEOF,a2)
 	jeq	9b
 	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
 	jeq	9b		| ok, both slots are free, allocate the first one
@@ -824,6 +825,8 @@ alloc_sprite:
 	moveq	#0,d6
 21:
 	tst.b	(SPRITE_X,a2)
+	beq.b	9b		| ok, a slot is free, allocate it
+	tst.b	(SPRITE_Y,a2)
 	beq.b	9b		| ok, a slot is free, allocate it
 30:
 	* next sprite

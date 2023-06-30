@@ -442,7 +442,7 @@ l_0061:
 	move.b	unknown_87FF,d0                       	| [ld   a,(0x87FF)]
 	jne	l_013f                             	| [jp   nz,0x013F]
 	addq.w	#1,timer_16bit_8822_msb         	| [ld   hl,(timer_16bit_8822)]
-	jbsr	l_32bc                            	| [call 0x32BC]
+	jbsr	flashing_player_name_32BC                            	| [call 0x32BC]
 	* a lot of coin stuff
 	*jbsr	coin_routine_02A2                         	| [call 0x02A2]
 	*jbsr	coin_routine_02cd                           	| [call 0x02CD]
@@ -2158,15 +2158,15 @@ erase_rectangular_char_zone_0F2E:
 	                           	| [inc  hl]
 	move.b	(a0),d1                         	| [ld   b,(hl)]
 l_0f3a:
-	move.w	d1,-(sp)                        	| [push bc]
-	movem.w	d3/d4,-(sp)                        	| [push de]
+	movem.w	d1-d4,-(sp)                        	| [push bc]
+												| [push de]
 	bsr		set_current_cursor_from_de         	| [ld   (cursor_x_8800),de]
 l_0f40:
 	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
 	subq.b	#1,d2                           	| [dec  c]
 	jne	l_0f40                             	| [jr   nz,$0F40]
-	movem.w	(sp)+,d3/d4                        	| [pop  de]
-	move.w	(sp)+,d1                        	| [pop  bc]
+	movem.w	(sp)+,d1-d4                        	| [pop  de]
+												| [pop  bc]
 	addq.b	#1,d3                           	| [inc  d]
 	subq.b	#1,d1                           	| [...]
 	jne	l_0f3a                             	| [djnz $0F3A]
@@ -2193,7 +2193,8 @@ l_0f83:
 	lea	rect_dimensions_FDE(pc),a0         	| [ld   hl,rect_dimensions_FDE]
 	jbsr	erase_rectangular_char_zone_0F2E  	| [call erase_rectangular_char_zone_0F2E]
 	rts                                    	| [ret]
-l_0f98:
+	
+backup_center_maze_blocks_0f98:
 	move.b	#0x10,d1                        	| [ld   b,$10]
 	move.b	#0x09,d2                        	| [ld   c,$09]
 	move.b	#0x05,d3                        	| [ld   d,$05]
@@ -2201,7 +2202,7 @@ l_0f98:
 	lea	maze_hole_wall_bit_table_8C27,a0	| [ld   hl,maze_hole_wall_bit_table_8C27]
 l_0fa3:
 	movem.w	d3/d4,-(sp)                        	| [push de]
-	move.w	d1,-(sp)                        	| [push bc]
+	movem.w	d1/d2,-(sp)                        	| [push bc]
 l_0fa5:
 	movem.w	d3/d4,-(sp)                        	| [push de]
 	move.l	a0,-(sp)                        	| [push hl]  useless now
@@ -2214,21 +2215,22 @@ l_0fa5:
 	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	subq.b	#1,d4                           	| [dec  e]
 	jne	l_0fa5                             	| [jr   nz,$0FA5]
-	move.w	(sp)+,d1                        	| [pop  bc]
+	movem.w	(sp)+,d1/d2                        	| [pop  bc]
 	addq.b	#1,d1                           	| [inc  b]
 	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	subq.b	#1,d3                           	| [dec  d]
 	jne	l_0fa3                             	| [jr   nz,$0FA3]
 	rts                                    	| [ret]
-l_0fba:
+	
+restore_center_maze_blocks_0fba:
 	move.b	#0x10,d1                        	| [ld   b,$10]
 	move.b	#0x09,d2                        	| [ld   c,$09]
 	move.b	#0x05,d3                        	| [ld   d,$05]
 	move.b	#0x0A,d4                        	| [ld   e,$0A]
 	lea	maze_hole_wall_bit_table_8C27,a0	| [ld   hl,maze_hole_wall_bit_table_8C27]
 l_0fc5:
-	movem.w	d3/d4,-(sp)                        	| [push de]
-	move.w	d1,-(sp)                        	| [push bc]
+	movem.w	d3-d4,-(sp)                        	| [push de]
+	movem.w	d1-d2,-(sp)                        	| [push bc]
 l_0fc7:
 	movem.w	d3/d4,-(sp)                        	| [push de]
 	move.l	a0,-(sp)                        	| [push hl] useless now
@@ -2243,7 +2245,7 @@ l_0fc7:
 	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	subq.b	#1,d4                           	| [dec  e]
 	jne	l_0fc7                             	| [jr   nz,$0FC7]
-	move.w	(sp)+,d1                        	| [pop  bc]
+	movem.w	(sp)+,d1-d2                        	| [pop  bc]
 	addq.b	#1,d1                           	| [inc  b]
 	movem.w	(sp)+,d3/d4                        	| [pop  de]
 	subq.b	#1,d3                           	| [dec  d]
@@ -5001,17 +5003,23 @@ l_2f32:
 	rts                                    	| [ret]
 
 compute_diamond_positions_and_draw_2F3A:
+	.ifeq	OPT_ALMOST_GROUP_DIAMONDS
 	jbsr	get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
 	
 	* D2,D1 holds coords for a xy grid
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	* if on egg, re-cast random
 	jcs	compute_diamond_positions_and_draw_2F3A                 	| [jr   c,compute_diamond_positions_and_draw_2F3A]
+	.else
+	move.b	#10,d1
+	move.b	#3,d2
+	.endif
 	move.b	d1,diamond_block_1_xy_8DB0+1      	| [ld   (diamond_block_1_xy_8DB0),bc]
 	move.b	d2,diamond_block_1_xy_8DB0      	| [ld   (diamond_block_1_xy_8DB0),bc]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
 
 l_2f49:
+	.ifeq	OPT_ALMOST_GROUP_DIAMONDS
 	bsr		get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
 	bsr		get_diamond_block_1_xy_8DB0_to_hl  	| [ld   hl,(diamond_block_1_xy_8DB0)]
 	move.b	d1,d3                           	| [ld   d,b]
@@ -5021,11 +5029,22 @@ l_2f49:
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	jcs	l_2f49                             	| [jr   c,$2F49]
 	* no egg: ok
+	.else
+	* horizontally
+	move.b	#10,d1
+	move.b	#5,d2
+	* uncomment for vertically
+	*move.b	#12,d1
+	*move.b	#3,d2
+	
+	.endif
+	
 	move.b	d1,diamond_block_2_xy_8DB2+1      	| [ld   (diamond_block_2_xy_8DB2),bc]
 	move.b	d2,diamond_block_2_xy_8DB2      	| [ld   (diamond_block_2_xy_8DB2),bc]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
 
 l_2f62:
+	.ifeq	OPT_ALMOST_GROUP_DIAMONDS
 	jbsr	get_random_xy_grid_in_bc_2F84     	| [call get_random_xy_grid_in_bc_2F84]
 	bsr		get_diamond_block_1_xy_8DB0_to_hl  	| [ld   hl,(diamond_block_1_xy_8DB0)]
 	move.b	d1,d3                           	| [ld   d,b]
@@ -5037,6 +5056,15 @@ l_2f62:
 	jeq	l_2f62                             	| [jr   z,$2F62]
 	jbsr	look_for_hidden_egg_at_XY_300A          	| [call look_for_hidden_egg_at_XY_300A]
 	jcs	l_2f62                             	| [jr   c,$2F62]
+	.else
+	* horizontally
+	move.b	#10,d1
+	move.b	#9,d2
+	* uncomment for vertically
+	*move.b	#16,d1
+	*move.b	#3,d2
+	
+	.endif
 	move.b	d1,diamond_block_3_xy_8DB4+1      	| [ld   (diamond_block_3_xy_8DB4),bc]
 	move.b	d2,diamond_block_3_xy_8DB4      	| [ld   (diamond_block_3_xy_8DB4),bc]
 	jbsr	set_diamond_position_2FA9         	| [call set_diamond_position_2FA9]
@@ -5600,9 +5628,8 @@ l_32b4:
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	rts                                    	| [ret]
 
-l_32bc:
+flashing_player_name_32BC:
 	move.b	game_playing_8817,d0            	| [ld   a,(game_playing_8817)]
-	tst.b	d0                               	| [and  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
@@ -5611,13 +5638,13 @@ l_32bc:
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	move.b	#0x01,d1                      	| [ld   bc,0x2201]
-	move.b	#0x22,d2                      	| [ld   bc,0x2201]
+	move.b	#0x01,d2                      	| [ld   bc,0x2201]
+	move.b	#0x22,d1                      	| [ld   bc,0x2201]
 	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
 	btst.b	#0,d0                           	| [bit  0,a]
 	jeq	l_32d4                             	| [jr   z,0x32D4]
-	move.b	#0x13,d1                      	| [ld   bc,0x2213]
-	move.b	#0x22,d2                      	| [ld   bc,0x2213]
+	move.b	#0x13,d2                      	| [ld   bc,0x2213]
+	*move.b	#0x22,d1                      	| [ld   bc,0x2213]
 l_32d4:
 	move.b	timer_16bit_8823_lsb,d0             	| [ld   a,(timer_16bit_8822)]
 	btst.b	#5,d0                           	| [bit  5,a]
@@ -8773,14 +8800,13 @@ l_464a:
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	jbsr	l_4896                            	| [call $4896]
-	jeq	l_4658                             	| [jr   z,$4658]
-	jbsr	l_4863                            	| [call $4863]
-	beq.b	0f
+	jbsr	test_diamonds_aligned_horizontally_4896                            	| [call $4896]
+	jeq	diamonds_are_aligned_4658                             	| [jr   z,$4658]
+	jbsr	test_diamonds_aligned_vertically_4863                           	| [call $4863]
+	beq.b	diamonds_are_aligned_4658
 	rts                                    	| [ret  nz]
-0:
 * diamonds are aligned
-l_4658:
+diamonds_are_aligned_4658:
 	clr.b	(0x17,a2)                        	| [ld   (ix+$17),$00]
 	move.b	#0x03,d1                        	| [ld   b,$03]
 	jbsr	play_sfx_1889                     	| diamond align music bonus [call play_sfx_1889]
@@ -8801,7 +8827,7 @@ l_4668:
 	subq.b	#1,d0                           	| [dec  a]
 	and.b	#0x07,d0                         	| [and  $07]
 	addq.b	#1,d0                           	| [inc  a]
-	jbsr	l_47fe                            	| [call $47FE]
+	jbsr	change_ice_block_color_47fe                            	| [call $47FE]
 	movem.w	(sp),d1/d2                    	| [pop  bc]
 											| [push bc]
 	move.b	d1,d2                           	| [ld   c,b]
@@ -8812,8 +8838,9 @@ l_4668:
 	subq.b	#1,d1                           	| [...]
 	jne	l_4668                             	| [djnz $4668]
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
-	jbsr	l_0f98                            	| [call $0F98]
+	jbsr	backup_center_maze_blocks_0f98                            	| [call $0F98]
 	lea	table_476C(pc),a0                  	| [ld   hl,table_476C]
+	* prepare center part to display "BONUS 10000/5000"
 	jbsr	erase_rectangular_char_zone_0F2E  	| [call erase_rectangular_char_zone_0F2E]
 	lea	table_476C+0x79-0x6C(pc),a0        	| [ld   hl,table_476C+$79-$6C]
 	btst.b	#7,(0x16,a2)                    	| 10000 [bit  7,(ix+$16)]
@@ -8841,7 +8868,7 @@ l_46d0:
 	move.w	d6,-(sp)                        	| [push hl]
 	move.b	d1,d0                           	| [ld   a,b]
 	and.b	#0x03,d0                         	| [and  $03]
-	bne	0f
+	bne.b	0f
 	jbsr	l_474f                            	| [call z,$474F]
 0:
 	move.w	#0x000A,d3                      	| [ld   de,$000A]
@@ -8876,21 +8903,21 @@ l_46d0:
 	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 	move.b	#0x40,d0                        	| [ld   a,$40]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	jbsr	l_0fba                            	| [call $0FBA]
-	move.b	#0xFF,(0x16,a2)                 	| [ld   (ix+$16),$FF]
+	jbsr	restore_center_maze_blocks_0fba                            	| [call $0FBA]
+	st.b	(0x16,a2)                 	| [ld   (ix+$16),$FF]
 	move.b	#0x09,d0                        	| [ld   a,$09]
-	jbsr	l_47fe                            	| [call $47FE]
+	jbsr	change_ice_block_color_47fe                            	| [call $47FE]
 	jbsr	draw_borders_2E6A                 	| [call draw_borders_2E6A]
 
 	move.l	a2,-(sp)                        	| [push ix]
 	lea	snobee_1_struct_8D00,a2        	| [ld   ix,snobee_1_struct_8D00]
-	jbsr	l_4790                            	| [call $4790]
+	jbsr	stun_snobee_if_alive_4790                            	| [call $4790]
 	lea	snobee_2_struct_8D20,a2        	| [ld   ix,snobee_2_struct_8D20]
-	jbsr	l_4790                            	| [call $4790]
+	jbsr	stun_snobee_if_alive_4790                            	| [call $4790]
 	lea	snobee_3_struct_8D40,a2        	| [ld   ix,snobee_3_struct_8D40]
-	jbsr	l_4790                            	| [call $4790]
+	jbsr	stun_snobee_if_alive_4790                            	| [call $4790]
 	lea	snobee_4_struct_8D60,a2        	| [ld   ix,snobee_4_struct_8D60]
-	jbsr	l_4790                            	| [call $4790]
+	jbsr	stun_snobee_if_alive_4790                            	| [call $4790]
 	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
 	move.b	#0x20,d0                        	| [ld   a,$20]
@@ -8923,7 +8950,7 @@ table_476C:
 	.byte	0x31,0x30,0x30,0x30,0xB0,0x0E,0x13,0x19,0x50,0x54,0x53,0xBA,0x0B,0x12,0x10,0x20   | 1000°...PTSº...
 	.byte	0x35,0x30,0x30
 	.align	2
-l_4790:
+stun_snobee_if_alive_4790:
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	cmp.b	(char_state_1F,a2),d0               	| [cp   (ix+char_state_1F)]
@@ -8977,12 +9004,14 @@ l_47e8:
 	rts                                    	| [ret]
 
 * change colors when diamonds are aligned
-l_47fe:
+change_ice_block_color_47fe:
 	move.w	#0x8462,d6                      	| [ld   hl,$8462]
 	move.b	#0x1A,d1                        	| [ld   b,$1A]
+	* for each column
 l_4806:
 	move.w	d1,-(sp)                    	| [push bc]
 	move.w	#0x001D-1,d1                      	| [ld   bc,$001D]
+0:
 	jbsr	osd_w_colorram			      	| [ld   (hl),a]
 	addq.w	#1,d6
 	dbf		d1,0b
@@ -9051,25 +9080,27 @@ l_4856:
 	subq.b	#1,d1                           	| [...]
 	jne	l_4856                             	| [djnz $4856]
 	rts                                    	| [ret]
-l_4863:
+test_diamonds_aligned_vertically_4863:
 	lea	diamond_block_1_xy_8DB0,a0     	| [ld   hl,diamond_block_1_xy_8DB0]
-	move.b	(a0),d0                         	| [ld   a,(hl)]
+	move.b	(a0),d0                         	| [ld   a,(hl)] load first diamond Y
+	addq.w	#2,a0                           	| [inc  hl]
+										| [inc  hl]
+	cmp.b	(a0),d0                          	| [cp   (hl)] compare to second diamond Y
+	beq.b	0f
+	rts                                    	| [ret  nz]
+0:
+* equal, now compare to third diamond Y
 	addq.w	#2,a0                           	| [inc  hl]
 										| [inc  hl]
 	cmp.b	(a0),d0                          	| [cp   (hl)]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	addq.w	#2,a0                           	| [inc  hl]
-										| [inc  hl]
-	cmp.b	(a0),d0                          	| [cp   (hl)]
-	beq.b	0f
-	rts                                    	| [ret  nz]
-0:
-	jbsr	l_48d0                            	| [call $48D0]
-	lea	moving_block_struct_8DA0+0x11,a0	| [ld   hl,moving_block_struct_8DA0+$11]
+* all 3 diamond Ys are equal
+	jbsr	sort_diamond_blocks_by_x_48D0                            	| [call $48D0]
+	lea	diamond_block_1_xy_8DB0+1,a0	| [ld   hl,diamond_block_1_xy_8DB0+1]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
-	add.w	#0x20,a0							| [add  hl,de]
+	addq.w	#0x2,a0							| [add  hl,de]
 	subq.b	#2,d0                           	| [dec  a]
 	                           	| [dec  a]
 	cmp.b	(a0),d0                          	| [cp   (hl)]
@@ -9084,17 +9115,19 @@ l_4863:
 0:
 	move.b	diamond_block_1_xy_8DB0,d0      	| [ld   a,(diamond_block_1_xy_8DB0)]
 	cmp.b	#0x01,d0                         	| [cp   $01]
-	jeq	l_4890                             	| [jr   z,$4890]
+	jeq	set_border_half_diamond_points_4890                             	| [jr   z,$4890]
 	cmp.b	#0x19,d0                         	| [cp   $19]
-	jeq	l_4890                             	| [jr   z,$4890]
+	jeq	set_border_half_diamond_points_4890                             	| [jr   z,$4890]
 	clr.b	d0                               	| [xor  a]
 	rts                                    	| [ret]
-l_4890:
-	move.b	#0xFF,(0x16,a2)                 	| [ld   (ix+$16),$FF]
+set_border_half_diamond_points_4890:
+* on the border: less points
+	st.b	(0x16,a2)                 	| [ld   (ix+$16),$FF]
 	clr.b	d0                               	| [xor  a]
 	rts                                    	| [ret]
-l_4896:
-	lea	moving_block_struct_8DA0+0x11,a0	| [ld   hl,moving_block_struct_8DA0+$11]
+	
+test_diamonds_aligned_horizontally_4896:
+	lea	diamond_block_1_xy_8DB0+1,a0	| [ld   hl,diamond_block_1_xy_8DB0+1]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	addq.w	#2,a0                           	| [inc  hl]
 	cmp.b	(a0),d0                          	| [cp   (hl)]
@@ -9106,7 +9139,7 @@ l_4896:
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	jbsr	l_48c3                            	| [call $48C3]
+	jbsr	sort_diamond_blocks_by_y_48C3                            	| [call $48C3]
 	lea	diamond_block_1_xy_8DB0,a0     	| [ld   hl,diamond_block_1_xy_8DB0]
 	                      	| [ld   de,$0002]
 	move.b	(a0),d0                         	| [ld   a,(hl)]
@@ -9124,14 +9157,14 @@ l_4896:
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	move.b	moving_block_struct_8DA0+0x11,d0	| [ld   a,(moving_block_struct_8DA0+$11)]
+	move.b	diamond_block_1_xy_8DB0+1,d0	| [ld   a,(diamond_block_1_xy_8DB0+1)]
 	cmp.b	#0x02,d0                         	| [cp   $02]
-	jeq	l_4890                             	| [jr   z,$4890]
+	jeq	set_border_half_diamond_points_4890                             	| [jr   z,$4890]
 	cmp.b	#0x1E,d0                         	| [cp   $1E]
-	jeq	l_4890                             	| [jr   z,$4890]
+	jeq	set_border_half_diamond_points_4890                             	| [jr   z,$4890]
 	clr.b	d0                               	| [xor  a]
 	rts                                    	| [ret]
-l_48c3:
+sort_diamond_blocks_by_y_48C3:
 	lea	diamond_block_1_xy_8DB0,a0     	| [ld   hl,diamond_block_1_xy_8DB0]
 	move.b	#0x02,d1                        	| [ld   b,$02]
 l_48c8:
@@ -9141,7 +9174,7 @@ l_48c8:
 	subq.b	#1,d1                           	| [...]
 	jne	l_48c8                             	| [djnz $48C8]
 	rts                                    	| [ret]
-l_48d0:
+sort_diamond_blocks_by_x_48D0:
 	lea	diamond_block_1_xy_8DB0,a0     	| [ld   hl,diamond_block_1_xy_8DB0]
 	move.b	#0x02,d1                        	| [ld   b,$02]
 l_48d5:

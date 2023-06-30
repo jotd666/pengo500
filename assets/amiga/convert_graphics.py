@@ -117,14 +117,6 @@ for j,c in enumerate(["pengo","snobee"]):
 del sprite_config[0x39]
 
 
-##for i in range(NB_POSSIBLE_SPRITES):
-##    if i not in sprite_config:
-##        sprite_config[i] = {"cluts":[1],"name":"wtf_{}".format(i)}
-##    else:
-##        sprite_config[i].pop("mirror",None)
-##        sprite_config[i].pop("clip_right",None)
-##with open(os.path.join(this_dir,"sprite_config2.json"),"w") as f:
-##    json.dump(sprite_config,f,indent=2,sort_keys=True)
 
 sprites = collections.defaultdict(dict)
 
@@ -249,7 +241,8 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
                     if bitmap:
                         f.write(f"\t.long\t{name}_{j}_sprdata\n".replace(d,opposite[d]))
                     else:
-                        f.write("\t.long\t0\n")
+                        # same for both
+                        f.write(f"\t.long\t{name}_{j}_sprdata\n")
 
     f.write("\t.section\t.datachip\n")
 

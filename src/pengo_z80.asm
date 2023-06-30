@@ -249,7 +249,7 @@ check_coin_inserted_0010:
 0068: 2A 22 88      ld   hl,(timer_16bit_8822)
 006B: 23            inc  hl
 006C: 22 22 88      ld   (timer_16bit_8822),hl
-006F: CD BC 12      call $32BC
+006F: CD BC 12      call flashing_player_name_32BC
 0072: CD 0A 02      call coin_routine_02A2
 0075: CD CD 22      call $02CD
 0078: CD D7 02      call $027F
@@ -2024,6 +2024,8 @@ display_player_ready_0F76:
 0F91: 21 DE 87      ld   hl,rect_dimensions_FDE
 0F94: CD 06 0F      call erase_rectangular_char_zone_0F2E
 0F97: C9            ret
+
+backup_center_maze_blocks_0f98:
 0F98: 06 B0         ld   b,$10
 0F9A: 0E 81         ld   c,$09
 0F9C: 16 A5         ld   d,$05
@@ -2048,6 +2050,8 @@ display_player_ready_0F76:
 0FB6: 15            dec  d
 0FB7: 20 EA         jr   nz,$0FA3
 0FB9: C9            ret
+
+restore_center_maze_blocks_0fba:
 0FBA: 06 B0         ld   b,$10
 0FBC: 0E 81         ld   c,$09
 0FBE: 16 A5         ld   d,$05
@@ -6480,6 +6484,7 @@ init_moving_block_3283:
 32BA: 77            ld   (hl),a
 32BB: C9            ret
 
+flashing_player_name_32BC:
 32BC: 3A 9F 88      ld   a,(game_playing_8817)
 32BF: A7            and  a
 32C0: C8            ret  z
@@ -9195,11 +9200,11 @@ check_if_diamonds_are_aligned_4612:
 4649: C9            ret
 464A: DD CB 3E 56   bit  7,(ix+$16)
 464E: C0            ret  nz
-464F: CD 96 E0      call $4896
-4652: 28 24         jr   z,$4658
-4654: CD 43 48      call $4863
+464F: CD 96 E0      call test_diamonds_aligned_horizontally_4896
+4652: 28 24         jr   z,diamonds_are_aligned_4658
+4654: CD 43 48      call test_diamonds_aligned_vertically_4863
 4657: C0            ret  nz
-; diamonds are aligned
+diamonds_are_aligned_4658:
 4658: DD 36 17 20   ld   (ix+$17),$00
 465C: 06 23         ld   b,$03
 465E: CD A9 B8      call play_tune_1889		; diamond align music bonus
@@ -9219,7 +9224,7 @@ check_if_diamonds_are_aligned_4612:
 467A: 3D            dec  a
 467B: E6 07         and  $07
 467D: 3C            inc  a
-467E: CD DE 6F      call $47FE
+467E: CD DE 6F      call change_ice_block_color_47fe
 4681: C1            pop  bc
 4682: C5            push bc
 4683: 48            ld   c,b
@@ -9229,7 +9234,7 @@ check_if_diamonds_are_aligned_4612:
 468C: C1            pop  bc
 468D: 10 D9         djnz $4668
 468F: CD B7 11      call clear_sprites_31B7
-4692: CD B8 0F      call $0F98
+4692: CD B8 0F      call backup_center_maze_blocks_0f98
 4695: 21 6C 67      ld   hl,table_476C
 4698: CD 86 0F      call erase_rectangular_char_zone_0F2E
 469B: 21 79 67      ld   hl,table_476C+$79-$6C
@@ -9285,20 +9290,20 @@ check_if_diamonds_are_aligned_4612:
 470B: CD E7 B0      call play_sfx_18c7
 470E: 3E C0         ld   a,$40
 4710: CD F9 28      call delay_28D1
-4713: CD BA 87      call $0FBA
+4713: CD BA 87      call restore_center_maze_blocks_0fba
 4716: DD 36 16 5F   ld   (ix+$16),$FF
 471A: 3E 81         ld   a,$09
-471C: CD 5E 47      call $47FE
+471C: CD 5E 47      call change_ice_block_color_47fe
 471F: CD 4A AE      call draw_borders_2E6A
 4722: DD E5         push ix
 4724: DD 21 A8 25   ld   ix,snobee_1_struct_8D00
-4728: CD 10 EF      call $4790
+4728: CD 10 EF      call stun_snobee_if_alive_4790
 472B: DD 21 88 85   ld   ix,snobee_2_struct_8D20
-472F: CD 90 E7      call $4790
+472F: CD 90 E7      call stun_snobee_if_alive_4790
 4732: DD 21 40 8D   ld   ix,snobee_3_struct_8D40
-4736: CD B8 47      call $4790
+4736: CD B8 47      call stun_snobee_if_alive_4790
 4739: DD 21 60 8D   ld   ix,snobee_4_struct_8D60
-473D: CD 90 E7      call $4790
+473D: CD 90 E7      call stun_snobee_if_alive_4790
 4740: DD 21 A0 25   ld   ix,pengo_struct_8D80
 4744: CD 66 3B      call display_snobee_sprite_33CE
 4747: 3E 28         ld   a,$20
@@ -9327,6 +9332,7 @@ table_476C:
  477C  31 30 30 30 B0 0E 13 19 50 54 53 BA 0B 12 10 20   1000°...PTSº...
  478C  35 30 30
 
+stun_snobee_if_alive_4790:
 4790: CD CE 33      call display_snobee_sprite_33CE
 4793: 3E 02         ld   a,$02
 4795: DD BE 97      cp   (ix+char_state_1F)
@@ -9373,6 +9379,7 @@ table_479E:
 47FA: CD D8 4B      call set_2x2_tile_color_09_4BD8
 47FD: C9            ret
 
+change_ice_block_color_47fe:
 47FE: 21 62 0C      ld   hl,$8462
 4801: 11 63 AC      ld   de,$8463
 4804: 06 92         ld   b,$1A
@@ -9438,41 +9445,50 @@ table_479E:
 485F: 0C            inc  c
 4860: 10 7C         djnz $4856
 4862: C9            ret
+
+test_diamonds_aligned_vertically_4863:
 4863: 21 10 8D      ld   hl,diamond_block_1_xy_8DB0
-4866: 7E            ld   a,(hl)
+4866: 7E            ld   a,(hl)		; load first diamond Y
 4867: 23            inc  hl
 4868: 23            inc  hl
-4869: BE            cp   (hl)
+4869: BE            cp   (hl)		; compare to second diamond Y
 486A: C0            ret  nz
+; equal, now compare to third diamond Y
 486B: 23            inc  hl
 486C: 23            inc  hl
 486D: BE            cp   (hl)
 486E: C0            ret  nz
-486F: CD D0 E0      call $48D0
-4872: 21 19 8D      ld   hl,moving_block_struct_8DA0+$11
+; all 3 diamond Ys are equal (at some point the diamond structs have to be
+; sorted by X, this is probably what the next call does
+486F: CD D0 E0      call sort_diamond_blocks_by_x_48D0
+4872: 21 19 8D      ld   hl,diamond_block_1_xy_8DB0+1
 4875: 11 02 20      ld   de,$0002
-4878: 7E            ld   a,(hl)
+4878: 7E            ld   a,(hl)		; load first diamond X
 4879: 19            add  hl,de
 487A: 3D            dec  a
 487B: 3D            dec  a
-487C: BE            cp   (hl)
+487C: BE            cp   (hl)		; check if second diamond X coord is first-2
 487D: C0            ret  nz
 487E: 19            add  hl,de
 487F: 3D            dec  a
 4880: 3D            dec  a
-4881: BE            cp   (hl)
+4881: BE            cp   (hl)		; check if third diamond X coord is second-2
 4882: C0            ret  nz
 4883: 3A 10 8D      ld   a,(diamond_block_1_xy_8DB0)
 4886: FE A1         cp   $01
-4888: 28 A6         jr   z,$4890
+4888: 28 A6         jr   z,set_border_half_diamond_points_4890
 488A: FE 91         cp   $19
-488C: 28 A2         jr   z,$4890
+488C: 28 A2         jr   z,set_border_half_diamond_points_4890
 488E: AF            xor  a
 488F: C9            ret
+; on the border: less points
+set_border_half_diamond_points_4890:
 4890: DD 36 16 DF   ld   (ix+$16),$FF
 4894: AF            xor  a
 4895: C9            ret
-4896: 21 19 8D      ld   hl,moving_block_struct_8DA0+$11
+
+test_diamonds_aligned_horizontally_4896:
+4896: 21 19 8D      ld   hl,diamond_block_1_xy_8DB0+1
 4899: 7E            ld   a,(hl)
 489A: 23            inc  hl
 489B: 23            inc  hl
@@ -9482,7 +9498,9 @@ table_479E:
 489F: 23            inc  hl
 48A0: BE            cp   (hl)
 48A1: C0            ret  nz
-48A2: CD EB E8      call $48C3
+; all 3 diamond Xs are equal (at some point the diamond structs have to be
+; sorted by Y, this is probably what the next call does
+48A2: CD EB E8      call sort_diamond_blocks_by_y_48C3
 48A5: 21 10 8D      ld   hl,diamond_block_1_xy_8DB0
 48A8: 11 A2 28      ld   de,$0002
 48AB: 7E            ld   a,(hl)
@@ -9496,11 +9514,11 @@ table_479E:
 48B3: 3D            dec  a
 48B4: BE            cp   (hl)
 48B5: C0            ret  nz
-48B6: 3A 19 8D      ld   a,(moving_block_struct_8DA0+$11)
+48B6: 3A 19 8D      ld   a,(diamond_block_1_xy_8DB0+1)
 48B9: FE 02         cp   $02
-48BB: 28 D3         jr   z,$4890
+48BB: 28 D3         jr   z,set_border_half_diamond_points_4890
 48BD: FE 1E         cp   $1E
-48BF: 28 CF         jr   z,$4890
+48BF: 28 CF         jr   z,set_border_half_diamond_points_4890
 48C1: AF            xor  a
 48C2: C9            ret
 48C3: 21 10 8D      ld   hl,diamond_block_1_xy_8DB0
@@ -9510,6 +9528,8 @@ table_479E:
 48CC: C1            pop  bc
 48CD: 10 D1         djnz $48C8
 48CF: C9            ret
+
+sort_diamond_blocks_by_x_48D0:
 48D0: 21 18 8D      ld   hl,diamond_block_1_xy_8DB0
 48D3: 06 02         ld   b,$02
 48D5: C5            push bc
