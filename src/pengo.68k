@@ -581,7 +581,7 @@ l_02e1:
 	jne	l_0307                             	| [jr   nz,$0307]
 	lea	unknown_8809,a0                	| [ld   hl,unknown_8809]
 l_0307:
-	pea	register_coin_inserted_038B(pc) 	| [ld   bc,register_coin_inserted_038B]
+	pea	register_coin_inserted_038B 	| [ld   bc,register_coin_inserted_038B]
 											| [push bc]
 											| [push bc]
 
@@ -648,7 +648,7 @@ l_034D:
 register_coin_inserted_038B:
 	clr.b	d1                               	| credit inserted sound [ld   b,$00]
 	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
-	lea	unknown_880B(pc),a0                	| [ld   hl,unknown_880B]
+	lea	unknown_880B,a0                	| [ld   hl,unknown_880B]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	bne.b	0f
 	rts                                    	| [ret  z]
