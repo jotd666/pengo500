@@ -21,10 +21,10 @@
 	.global	unknown_881E
 	.global	delay_timer_8820
 	.global	delay_timer_2_8821
-	.global	timer_16bit_8822
-	.global	five_second_counter_8823
-	.global	counter_lsb_8824
-	.global	counter_msb_8825
+	.global	timer_16bit_8822_msb
+	.global	timer_16bit_8823_lsb
+	.global	counter_msb_8824
+	.global	counter_lsb_8825
 	.global	random_seed_8826
 	.global	unknown_8828
 	.global	unknown_8829

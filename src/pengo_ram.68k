@@ -7,7 +7,7 @@
 	.global	bg_videoram
 	.global	bg_colorram
 	.global	sprite_ram_8FF2
-	.global	sprite_ram_9020
+	.global	sprite_ram_9022
 	.global	vbl_sync_flag
 	.global	vbl_sync_counter
 	.global	vbl_sync_counter_start_screen
