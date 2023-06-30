@@ -4973,7 +4973,7 @@ add_to_current_player_score_28AF:
 28BB: 2A 10 A8      ld   hl,(player_2_score_8810)
 28BE: 19            add  hl,de
 28BF: 22 38 88      ld   (player_2_score_8810),hl
-28C2: CD 24 A4      call update_and_display_p1_score_2C24
+28C2: CD 24 A4      call update_and_display_p2_score_2C24
 28C5: C9            ret
 
 ; add de to player 1 score
@@ -5273,7 +5273,7 @@ update_all_scores_2B10:
 2B13: CD F4 01      call print_line_typewriter_style_29F4
 2B16: CD BB 2B      call write_hiscore_to_screen_2B93
 2B19: CD AE 03      call update_and_display_p1_score_2BAE
-2B1C: CD 24 2C      call update_and_display_p1_score_2C24
+2B1C: CD 24 2C      call update_and_display_p2_score_2C24
 2B1F: C9            ret
 
 score_titles_string_2B20:
@@ -5346,7 +5346,7 @@ update_and_display_p1_score_2BAE:
 2BC0: CD D4 0C      call write_5_digits_to_screen_2C54
 2BC3: 3E 38         ld   a,$30		; write the fixed '0' for score
 2BC5: CD 1C A9      call set_tile_at_current_pos_293C
-2BC8: CD 76 0B      call check_p1_score_for_extra_life_2BAE
+2BC8: CD 76 0B      call check_p1_score_for_extra_life_2BDE
 2BCB: 2A 8C 20      ld   hl,(high_score_880C)
 2BCE: ED 5B 0E 88   ld   de,(player_1_score_880E)
 2BD2: CD 99 2D      call compare_hl_to_de_2D99
@@ -5355,7 +5355,7 @@ update_and_display_p1_score_2BAE:
 2BDA: CD BB 2B      call write_hiscore_to_screen_2B93
 2BDD: C9            ret
 
-check_p1_score_for_extra_life_2BAE:
+check_p1_score_for_extra_life_2BDE:
 2BDE: 21 B4 80      ld   hl,lives_counter_p1_8814
 2BE1: CB 7E         bit  7,(hl)
 2BE3: C0            ret  nz
@@ -5392,7 +5392,7 @@ check_p2_score_for_extra_life_2C06:
 2C21: D8            ret  c
 2C22: 18 FE         jr   $2BFA
 
-update_and_display_p1_score_2C24:
+update_and_display_p2_score_2C24:
 2C24: 2A B0 88      ld   hl,(player_2_score_8810)
 2C27: CD 68 03      call convert_number_2B40
 2C2A: 26 22         ld   h,$22

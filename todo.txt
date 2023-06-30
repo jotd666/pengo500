@@ -1,9 +1,6 @@
 General:
 
-- highscores (today's best 5) wrongly displayed
 - sounds
-- probable "endian bug" in scores: high score not updating/following
-- lives should not be displayed in demo mode/intro screens
 - dipswitches easy/... test!
 - start game from ice bank screen => issue (blitz)
 - diamond align 2-3: detected by blinking diamonds, but bonus not triggered
@@ -11,9 +8,11 @@ General:
   at start or blank maze+invincible)
 - crash when level 1 starts after level 16 (in crash)
 - "1P" doesn't flash when playing
+- test player extra life award score vs dipswitches and sound
 
 Amiga:
 
+- time simulate 60Hz with ticks
 - sprite allocation is still wrong (red ice cube/yellow pengo...)  break when wrong colors, get sprite state to investigate!
 - complete sound
 - log used cluts to filter out unused clut/char combination

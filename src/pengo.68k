@@ -931,6 +931,7 @@ display_top_scores_6C0:
 	rts                                    	| [ret]
  * demo mode
 display_demo_and_top_scores_6E1:
+	.ifeq	OPT_SKIP_GAME_DEMO
 	move.b	#0x05,d0                        	| [ld   a,$05]
 	move.b	d0,level_number_player1_8812    	| [ld   (level_number_player1_8812),a]
 	move.b	d0,level_number_player2_8813    	| [ld   (level_number_player2_8813),a]
@@ -969,6 +970,7 @@ l_071e:
 	clr.b	d0                               	| [xor  a]
 	move.b	d0,demo_mode_var_8CF5           	| [ld   (demo_mode_var_8CF5),a]
 	jbsr	run_one_life_092D                 	| [call run_one_life_092D]
+	.endif
 	jbsr	display_top_scores_6C0            	| [call display_top_scores_6C0]
 	rts                                    	| [ret]
 
@@ -3845,24 +3847,24 @@ print_b_lines_277B:
 	jne	print_b_lines_277B                 	| [djnz print_b_lines_277B]
 	move.b	#0x11,d0                        	| [ld   a,$11]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
-	move.b	#0x06,d1
-	move.b	#0x0E,d2                    	| [ld   de,$0E06]
+	move.b	#0x06,d4
+	move.b	#0x0E,d3                    	| [ld   de,$0E06]
 	lea	hiscore_pos_5_8840+0x18,a0     	| [ld   hl,hiscore_pos_5_8840+$18]
 	jbsr	write_best_score_27B3             	| [call write_best_score_27B3]
-	move.b	#0x06,d1
-	move.b	#0x11,d2      		  	| [ld   de,$1106]
+	move.b	#0x06,d4
+	move.b	#0x11,d3      		  	| [ld   de,$1106]
 	lea	hiscore_pos_5_8840+0x12,a0     	| [ld   hl,hiscore_pos_5_8840+$12]
 	jbsr	write_best_score_27B3             	| [call write_best_score_27B3]
-	move.b	#0x06,d1
-	move.b	#0x14,d2      		  	| [ld   de,$1406]
+	move.b	#0x06,d4
+	move.b	#0x14,d3      		  	| [ld   de,$1406]
 	lea	hiscore_pos_5_8840+12,a0       	| [ld   hl,hiscore_pos_5_8840+12]
 	jbsr	write_best_score_27B3             	| [call write_best_score_27B3]
-	move.b	#0x06,d1
-	move.b	#0x17,d2      		  	| [ld   de,$1706]
+	move.b	#0x06,d4
+	move.b	#0x17,d3      		  	| [ld   de,$1706]
 	lea	hiscore_pos_5_8840+6,a0        	| [ld   hl,hiscore_pos_5_8840+6]
 	jbsr	write_best_score_27B3             	| [call write_best_score_27B3]
-	move.b	#0x06,d1
-	move.b	#0x1A,d2      		  	| [ld   de,$1A06]
+	move.b	#0x06,d4
+	move.b	#0x1A,d3      		  	| [ld   de,$1A06]
 	lea	hiscore_pos_5_8840,a0          	| [ld   hl,hiscore_pos_5_8840]
 	jbsr	write_best_score_27B3             	| [call write_best_score_27B3]
 	rts                                    	| [ret]
@@ -3877,9 +3879,9 @@ write_best_score_27B3:
 	                           	| [inc  hl]
 	move.l	a0,-(sp)                        	| [push hl]
 												| [ex   de,hl]
-	move.b	d3,d6
-	lsl.w	#8,d6
 	move.b	d4,d6
+	lsl.w	#8,d6
+	move.b	d3,d6
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
 	move.b	#0x30,d0                        	| [ld   a,$30]
@@ -3965,7 +3967,7 @@ add_to_current_player_score_28AF:
 	move.w	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
 	add.w	d3,d6							| [add  hl,de]
 	move.w	d6,player_2_score_8810          	| [ld   (player_2_score_8810),hl]
-	jbsr	update_and_display_p1_score_2C24  	| [call update_and_display_p1_score_2C24]
+	jbsr	update_and_display_p2_score_2C24  	| [call update_and_display_p2_score_2C24]
 	rts                                    	| [ret]
 
 * add de to player 1 score
@@ -4353,7 +4355,7 @@ update_and_display_p1_score_2BAE:
 	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
 	move.b	#0x30,d0                        	| write the fixed '0' for score [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
-	jbsr	check_p1_score_for_extra_life_2BAE	| [call check_p1_score_for_extra_life_2BAE]
+	jbsr	check_p1_score_for_extra_life_2BDE	| [call check_p1_score_for_extra_life_2BDE]
 	move.b	high_score_880C,d6    		      	| [ld   hl,(high_score_880C)]
 	move.b	high_score_880C+1,d5    		      	| [ld   hl,(high_score_880C)]
 	move.b	player_1_score_880E,d4    		  	| [ld   de,(player_1_score_880E)]
@@ -4366,7 +4368,7 @@ update_and_display_p1_score_2BAE:
 	jbsr	write_hiscore_to_screen_2B93      	| [call write_hiscore_to_screen_2B93]
 	rts                                    	| [ret]
 
-check_p1_score_for_extra_life_2BAE:
+check_p1_score_for_extra_life_2BDE:
 	lea	lives_counter_p1_8814,a0       	| [ld   hl,lives_counter_p1_8814]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	beq.b	0f
@@ -4391,7 +4393,7 @@ l_2bfa:
 	addq.b	#1,(a0)                         	| [inc  (hl)]
 	bset.b	#7,(a0)                         	| [set  7,(hl)]
 	jbsr	draw_lives_2D13                            	| [call $2D13]
-	move.b	#0x01,d1                        	| [ld   b,$01]
+	move.b	#0x01,d1                        	| [ld   b,$01] play extra life sound
 	jbsr	play_sfx_18AF                            	| [call $18AF]
 	rts                                    	| [ret]
 
@@ -4401,8 +4403,9 @@ check_p2_score_for_extra_life_2C06:
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
-	move.w	d6,-(sp)                        	| [push hl]
-	move.w	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
+	*move.w	d6,-(sp)                        	| [push hl]
+	move.b	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
+	move.b	player_2_score_8810+1,d5      	| [ld   hl,(player_2_score_8810)]
 	move.w	#0x0BB8,d3                      	| [ld   de,$0BB8]
 	jbsr	osd_read_dipswitches	           	| [ld   a,(dip_switches_9040)]
 	btst.b	#0,d0                           	| [bit  0,a]
@@ -4410,39 +4413,16 @@ check_p2_score_for_extra_life_2C06:
 	move.w	#0x1388,d3                      	| 5000 [ld   de,$1388]
 l_2c1d:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
-	movem.w	(sp)+,d6                        	| [pop  hl]
-	bcc.b	0f
+	*movem.w	(sp)+,d6                        	| [pop  hl]
+	bcc.b	l_2bfa
 	rts                                    	| [ret  c]
-0:
-	jra	l_2bfa                             	| [jr   $2BFA]
+
 
 update_and_display_p2_score_2C24:
 	move.w	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 											| [ld   h,$22]
 											| [ld   l,$15]
-	move.w	#0x1522,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
-	move.b	#0x10,d0                        	| [ld   a,$10]
-	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
-	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
-	move.b	#0x30,d0                        	| [ld   a,$30]
-	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
-	jbsr	check_p2_score_for_extra_life_2C06	| [call check_p2_score_for_extra_life_2C06]
-	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)] endian bug
-	move.w	player_2_score_8810,d3      	| [ld   de,(player_2_score_8810)]
-	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
-	bcs.b	0f
-	rts                                    	| [ret  nc]
-0:
-	move.w	d3,high_score_880C              	| [ld   (high_score_880C),de]
-	jbsr	write_hiscore_to_screen_2B93      	| [call write_hiscore_to_screen_2B93]
-	rts                                    	| [ret]
-
-update_and_display_p1_score_2C24:
-	move.w	player_2_score_8810,a0      	| [ld   hl,(player_2_score_8810)]
-	jbsr	convert_number_2B40               	| [call convert_number_2B40]
-												| [ld   h,$22]
-												| [ld   l,$15]
 	move.w	#0x1522,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x10,d0                        	| [ld   a,$10]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]

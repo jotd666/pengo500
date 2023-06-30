@@ -397,6 +397,7 @@ eye_catcher:
 * D0: return address (0: no change)
 osd_set_vblank_return_address:
 	move.l	d0,return_address
+	rts
 	
 get_hiscore_name:
     lea normal_hiscorename,a0
