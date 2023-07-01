@@ -5,20 +5,12 @@ General:
 - start game from ice bank screen => issue (blitz)
 - aligned diamonds: flashing ice blocks missing last row
 - crash when level 1 starts after level 16 (in crash)
-- test player extra life award score vs dipswitches and sound (diamond align)
-- regulation not correct should set flag then count loops then wait flag clear
+- highscore switches from 20000 to 2100 at some point, then stays there!
 
 Amiga:
 
 - moves using keyboard arrows + ctrl
 - time simulate 60Hz with ticks, clock how much time is really spent vs bonus screen time
-- sprite allocation is still wrong (red ice cube/yellow pengo...)  break when wrong colors, get sprite state to investigate!
-first level completed green pengo
->m $118FF4 1
-00118FF4 8401 8001 8001 0000 160B 7009 0000 FF00  ..........p.....
->m $119002 1
-00119002 FF00 FF00 FF00 FF00 4410 FF00 0000 0000  ........D.......
->m $200 1
 
 - complete sound
 - log used cluts to filter out unused clut/char combination

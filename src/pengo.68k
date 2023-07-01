@@ -427,6 +427,10 @@ pengo_irq:
 	lea		sprite_ram_9022,a1		| X,Y
 	jbsr	osd_update_sprites
 	
+
+	move.b	vb_ticks_count,d0
+pengo_tick:	
+	move.w	d0,-(sp)
 	move.w	cursor_x_8800,-(sp)
 	move.w	cursor_color_8802,-(sp)
 	move.b	delay_timer_8820,d0             	| [ld   a,(delay_timer_8820)]
@@ -457,14 +461,14 @@ l_0061:
 	move.b	#0x3D,d0                        	|  61 "microsecs" [ld   a,0x3D]
 	cmp.b	(a0),d0                          	| [cp   (hl)]
 	jcc	l_009e                             	| [jr   nc,0x009E]
-	clr.b	(a0)                             	| [ld   (hl),0x00]
-	addq.w	#1,a0                           	| [inc  hl]
+	clr.b	(a0)+                             	| [ld   (hl),0x00]
+											| [inc  hl]
 	addq.b	#1,(a0)                         	|  1 more second [inc  (hl)]
 	move.b	#0x3B,d0                        	|  59 seconds [ld   a,0x3B]
 	cmp.b	(a0),d0                          	| [cp   (hl)]
 	jcc	l_009e                             	| [jr   nc,0x009E]
-	clr.b	(a0)                             	| [ld   (hl),0x00]
-	addq.w	#1,a0                           	| [inc  hl]
+	clr.b	(a0)+                             	| [ld   (hl),0x00]
+											| [inc  hl]
 	addq.b	#1,(a0)                         	|  1 more minute [inc  (hl)]
 	cmp.b	(a0),d0                          	| [cp   (hl)]
 	jcc	l_009e                             	| [jr   nc,0x009E]
@@ -483,6 +487,9 @@ l_013f:
 
 	jbsr	l_015b                            	| [call 0x015B]
 	**jbsr	l_0179                            	| [call 0x0179]
+	move.w	(sp)+,d0
+	subq.b	#1,d0
+	bne.b	pengo_tick
 	rts
 	
 
@@ -1384,6 +1391,8 @@ l_09cb:
 
 * game mainloop
 main_game_loop_09E7:
+	* wait for vbl sync
+	st.b	vbl_sync_flag
 	* added to regulate speed, else it's really too fast
 	* each nth loop, we sync on vertical blank
 	jbsr	osd_get_sync_period
@@ -1391,8 +1400,6 @@ main_game_loop_09E7:
 	addq.b	#1,d1
 	cmp.b	d1,d0
 	bne.b	1f
-	* wait for vbl sync
-	st.b	vbl_sync_flag
 0:
 	tst.b	vbl_sync_flag
 	bne.b	0b
