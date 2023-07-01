@@ -48,6 +48,28 @@ with open(os.path.join(this_dir,"..","pengo_gfx.c")) as f:
         block_dict[block_name] = {"size":size,"data":ast.literal_eval(txt)}
 
 
+def dump_rgb_cluts(rgb_cluts,name):
+    out = os.path.join(dump_dir,f"{name}_cluts.png")
+    w = 16
+    nb_clut_per_row = 4
+    img = Image.new("RGB",(w*(nb_clut_per_row+1)*4,w*len(rgb_cluts)//nb_clut_per_row))
+    x = 0
+    y = 0
+    row_count = 0
+    for clut in rgb_cluts:
+        # undo the clut correction so it's the same as MAME
+        for color in [clut[0],clut[2],clut[1],clut[3]]:
+            for dx in range(w):
+                for dy in range(w):
+                    img.putpixel((x+dx,y+dy),color)
+            x += dx
+        row_count += 1
+        if row_count == 4:
+            x = 0
+            y += dy
+            row_count = 0
+
+    img.save(out)
 
 NB_POSSIBLE_SPRITES = 128
 
@@ -73,13 +95,20 @@ cluts = bg_cluts[:32]
 character_codes_list = list()
 
 
-rgb_cluts = [[tuple(palette[pidx]) for pidx in clut] for clut in cluts]
+rgb_cluts_normal = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts[:32]]
+rgb_cluts_alt = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts[96:]]
+
+#dump_rgb_cluts(rgb_cluts_normal,"normal")
+#dump_rgb_cluts(rgb_cluts_alt,"alternate")
 
 with open(os.path.join(src_dir,"palette_cluts.68k"),"w") as f:
-    for clut in rgb_cluts:
-        rgb4 = [bitplanelib.to_rgb4_color(x) for x in clut]
-        bitplanelib.dump_asm_bytes(rgb4,f,mit_format=True,size=2)
+    for the_type,rgb_cluts in [("normal",rgb_cluts_normal),("alt",rgb_cluts_alt)]:
+        f.write(f"{the_type}_cluts:")
+        for clut in rgb_cluts:
+            rgb4 = [bitplanelib.to_rgb4_color(x) for x in clut]
+            bitplanelib.dump_asm_bytes(rgb4,f,mit_format=True,size=2)
 
+rgb_cluts = rgb_cluts_normal
 for k,chardat in enumerate(block_dict["tile"]["data"]):
     img = Image.new('RGB',(8,8))
 
@@ -176,15 +205,9 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_table\n")
     f.write("\t.global\tsprite_table\n")
 #    f.write("\t.global\thw_sprite_flag_table\n")
-    f.write("\t.global\tbg_cluts\n")
 #    f.write("hw_sprite_flag_table:")
 #    bitplanelib.dump_asm_bytes(bytes(hw_sprite_table),f,mit_format=True)
 
-    f.write("bg_cluts:")
-    amiga_cols = [bitplanelib.to_rgb4_color(x) for clut in bg_cluts_bank_0 for x in clut]
-    bitplanelib.dump_asm_bytes(amiga_cols,f,mit_format=True,size=2)
-    amiga_cols = [bitplanelib.to_rgb4_color(x) for clut in bg_cluts_bank_1 for x in clut]
-    bitplanelib.dump_asm_bytes(amiga_cols,f,mit_format=True,size=2)
 
     f.write("character_table:\n")
     for i,c in enumerate(character_codes_list):

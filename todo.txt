@@ -1,10 +1,11 @@
 General:
 
-- sounds
-- dipswitches easy/... test!
+- more sounds
 - aligned diamonds: flashing ice blocks missing last row
 - crash when level 1 starts after level 16 (in crash)
 - load/save highscores
+- demo level pengo seems to do weird things
+- if highscore obtained, hiscore screen doesn't seem to see it
 
 Amiga:
 
@@ -16,8 +17,7 @@ Amiga:
 - tile planar optimization
 - title: wrong color for snobee that erase "squash the snobees" message
 - also set all 3 colors at the copperlist Y (would fix title screen 4 snobees)
-- redundant bg_cluts / clut asm file
-- alternate tileset: wrong palette for both tiles & sprites
+- alternate tileset: wrong palette for tiles (sprites ok except for sprite color coupling)
 - ACT 1 + flags: draw vertically on the side? shift pengo lives 2 pixels up?
 
 	int code = m_videoram[tile_index] | (m_charbank << 8);

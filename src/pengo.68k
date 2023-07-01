@@ -3152,6 +3152,8 @@ l_22c0:
 pack_ice_screen_22CB:
 	jbsr	set_bank_selectors_2319           	| [call set_bank_selectors_2319]
 	jbsr	show_ice_pack_screen_2325       	| [call show_ice_pack_screen_2325]
+	lea		CHARACTER_RAM,a0
+	bsr		osd_break
 	jbsr	init_all_characters_states_1D60   	| [call init_all_characters_states_1D60]
 l_22d4:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]

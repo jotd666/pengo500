@@ -680,11 +680,11 @@ osd_update_sprites:
 	* set colors
 	moveq	#0,d3
 	move.b	(SPRITE_CLUT,a2),d3
-	lea		bg_cluts+2,a6
+	lea		normal_cluts+2,a6
 	lsl.w	#3,d3		| times 8
 	tst.b	alternate_bank_selectors
 	beq.b	23f
-	add.w	#32*8,d3
+	lea		alt_cluts+2,a6
 23:
 	add.w	d3,a6
 	* check if CLUT doesn't contain only color zero
@@ -1829,7 +1829,7 @@ _end_of_ng_code:
 palette:
 	.include "palette.68k"
 	* sprites "individual" 4-color palettes
-palette_cluts:
+
 	.include "palette_cluts.68k"
 	
 	
