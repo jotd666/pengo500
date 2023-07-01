@@ -98,9 +98,11 @@ character_codes_list = list()
 rgb_cluts_normal = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts[:32]]
 rgb_cluts_alt = [[tuple(palette[pidx]) for pidx in clut] for clut in bg_cluts[96:]]
 
+# dump cluts and the pics look very much like in MAME F4 menu
 #dump_rgb_cluts(rgb_cluts_normal,"normal")
 #dump_rgb_cluts(rgb_cluts_alt,"alternate")
 
+# dump cluts as RGB4 for sprites
 with open(os.path.join(src_dir,"palette_cluts.68k"),"w") as f:
     for the_type,rgb_cluts in [("normal",rgb_cluts_normal),("alt",rgb_cluts_alt)]:
         f.write(f"{the_type}_cluts:")
@@ -108,16 +110,22 @@ with open(os.path.join(src_dir,"palette_cluts.68k"),"w") as f:
             rgb4 = [bitplanelib.to_rgb4_color(x) for x in clut]
             bitplanelib.dump_asm_bytes(rgb4,f,mit_format=True,size=2)
 
-rgb_cluts = rgb_cluts_normal
+
 for k,chardat in enumerate(block_dict["tile"]["data"]):
+    # k < 0x100: normal tileset
+    # k >= 0x100: alternate pack ice tileset
     img = Image.new('RGB',(8,8))
+    if k < 0x100:
+        local_palette = palette[0:16]
+        rgb_cluts = rgb_cluts_normal
+    else:
+        local_palette = palette[16:]
+        rgb_cluts = rgb_cluts_alt
 
     character_codes = list()
+
     for cidx,colors in enumerate(rgb_cluts):
-        if cidx < 32:
-            local_palette = palette[0:16]
-        else:
-            local_palette = palette[16:]
+
         d = iter(chardat)
         for i in range(8):
             for j in range(8):
@@ -204,9 +212,6 @@ for k,data in sprite_config.items():
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_table\n")
     f.write("\t.global\tsprite_table\n")
-#    f.write("\t.global\thw_sprite_flag_table\n")
-#    f.write("hw_sprite_flag_table:")
-#    bitplanelib.dump_asm_bytes(bytes(hw_sprite_table),f,mit_format=True)
 
 
     f.write("character_table:\n")
