@@ -238,6 +238,8 @@ backup_ai_mode_1D = 0x1D
 ai_mode_1E = 0x1E
 char_state_1F = 0x1F
 
+HIGH_SCORE = 20000
+
 	.include "pengo.inc"
 
  * snobee move routine is "02_snobee_moving_33A5"
@@ -319,6 +321,23 @@ cpir:
     cmp.b   #1,d1
 1:
     rts
+	
+regulate_speed:
+	st.b	vbl_sync_flag
+	* added to regulate speed, else it's really too fast
+	* each nth loop, we sync on vertical blank
+	jbsr	osd_get_sync_period
+	move.b	vbl_sync_counter,d1
+	addq.b	#1,d1
+	cmp.b	d1,d0
+	bne.b	1f
+0:
+	tst.b	vbl_sync_flag
+	bne.b	0b
+	moveq	#0,d1
+1:
+	move.b	d1,vbl_sync_counter
+	rts
 
 * pseudo macros for code repeating a lot
 
@@ -703,9 +722,12 @@ l_03d4:
 	clr.w	player_1_score_880E          	| [ld   (player_1_score_880E),hl]
 	clr.w	player_2_score_8810          	| [ld   (player_2_score_8810),hl]
 	                      	| [ld   hl,0x07D0]
-	move.w	#0x7D0,high_score_880C              	| [ld   (high_score_880C),hl]
+	move.w	#HIGH_SCORE/10,high_score_880C              	| [ld   (high_score_880C),hl]
 	jbsr	init_highscore_table_2540         	| [call init_highscore_table_2540]
 
+	* load highscores from disk
+	*jbsr	osd_load_highscores
+	
 	* no cocktail mode support!
 	clr.b	cocktail_mode_8818           	| [ld   (cocktail_mode_8818),a]
 	clr.b	d0                               	| [ld   a,0x00]
@@ -1193,8 +1215,9 @@ increase_counter_0875:
 
 
 play_one_game_087D:
-	clr.w	player_1_score_880E          	| [ld   (player_1_score_880E),hl]
-	clr.w	player_2_score_8810          	| [ld   (player_2_score_8810),hl]
+	move.w	#OPT_START_SCORE/10,d0
+	move.w	d0,player_1_score_880E          	| [ld   (player_1_score_880E),hl]
+	move.w	d0,player_2_score_8810          	| [ld   (player_2_score_8810),hl]
 	move.b	start_level,d0                        	| [ld   a,$01]
 	move.b	d0,level_number_player1_8812    	| [ld   (level_number_player1_8812),a]
 	move.b	d0,level_number_player2_8813    	| [ld   (level_number_player2_8813),a]
@@ -1348,7 +1371,7 @@ l_0985:
 	jbsr	draw_maze_2DA1                    	|  draw the maze [call draw_maze_2DA1]
 	move.b	#0x20,d0                        	| [ld   a,$20]
 	move.w	#0x8000,d6
-	bsr		osd_w_videoram		       	| [ld   (video_tile_memory_8000),a]
+	jbsr		osd_w_videoram		       	| [ld   (video_tile_memory_8000),a]
 	clr.b	d0                               	| [xor  a]
 * zero minutes and seconds for round completion time
 	move.b	d0,pengo_struct_8D80+0x12       	| [ld   (pengo_struct_8D80+$12),a]
@@ -1392,26 +1415,13 @@ l_09cb:
 * game mainloop
 main_game_loop_09E7:
 	* wait for vbl sync
-	st.b	vbl_sync_flag
-	* added to regulate speed, else it's really too fast
-	* each nth loop, we sync on vertical blank
-	jbsr	osd_get_sync_period
-	move.b	vbl_sync_counter,d1
-	addq.b	#1,d1
-	cmp.b	d1,d0
-	bne.b	1f
-0:
-	tst.b	vbl_sync_flag
-	bne.b	0b
-	moveq	#0,d1
-1:
-	move.b	d1,vbl_sync_counter
+	bsr		regulate_speed
 	
 	move.b	sound_channel_0_struct_8C60,d0  	| [ld   a,(sound_channel_0_struct_8C60)]
 	tst.b	d0                               	| [and  a]
 	jne	l_09f4                             	| [jr   nz,$09F4]
 
-	bsr		osd_disable_vblank_interrupt      | [di]
+	jbsr		osd_disable_vblank_interrupt      | [di]
 	move.b	#0x08,d1                        	| play in-game music [ld   b,$08]
 	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
 	jbsr		osd_enable_vblank_interrupt    | [ei]
@@ -1443,7 +1453,7 @@ level_completed_0A2B:
 	move.b	#0x04,d1                        	| level completed sound [ld   b,$04]
 	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
 
-	bsr		osd_disable_vblank_interrupt
+	jbsr		osd_disable_vblank_interrupt
 
 	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	move.b	elapsed_seconds_since_start_of_round_8C5C,d0	| [ld   a,(elapsed_seconds_since_start_of_round_8C5C)]
@@ -2280,14 +2290,14 @@ play_sfx_18c7:
 	clr		D0
 	move.b	d1,d0
 	add.b	#0x10,d0		| not the same indices
-	bsr		osd_sound_start
+	jbsr		osd_sound_start
 	move.w	(sp)+,d0
 	rts
 play_sfx_1889:
 	move.w	d0,-(sp)
 	clr		D0
 	move.b	d1,d0
-	bsr		osd_sound_start
+	jbsr		osd_sound_start
 	move.w	(sp)+,d0
 	rts
 	
@@ -2296,7 +2306,7 @@ play_sfx_18AF:
 	clr		D0
 	move.b	d1,d0
 	add.b	#0x18,d0		| not the same indices
-	bsr		osd_sound_start
+	jbsr		osd_sound_start
 	move.w	(sp)+,d0
 	rts
 
@@ -3146,14 +3156,13 @@ pack_ice_screen_22CB:
 l_22d4:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 * active wait
-	clr.b	d1									| [ld   b,$00]
-	jbsr	osd_small_wait						| [djnz $22D9]
-	jbsr	osd_small_wait						| [djnz $22D9]
+	bsr		regulate_speed
 							
 	move.b	counter_lsb_8825,d0             	| [ld   a,(counter_lsb_8824)]
-	tst.b	d0                               	| [and  a]
+											| [and  a]
 	jne	l_22e9                             	| [jr   nz,$22E9]
 	move.b	counter_msb_8824,d0             	| [ld   a,(counter_msb_8825)]
+	* change sky color from time to time
 	jbsr	set_sky_color_24FC                	| [call set_sky_color_24FC]
 * move 6 characters. For that, use the 6 sprites
 * (4 snobees, pengo, and ice block) to display 2 snobees
@@ -3492,7 +3501,7 @@ l_250a:
 	add.w  #0x15,d6
 	dbf	d2,l_2508                             	| [jr   nz,$2508]
 	move.w	#0x87C0,d6                      	| [ld   hl,$87C0]
-	move.b	#0x3F-1,d1                        	| [ld   b,$3F]
+	move.w	#0x3F-1,d1                        	| [ld   b,$3F]
 l_2517:
 	jbsr	osd_w_colorram                         	| [ld   (hl),a]
 	addq.w	#1,d6                           	| [inc  hl]
@@ -3503,7 +3512,7 @@ l_2517:
 * set default hiscores all to 20000
 * (would be a good location to load highscores)
 init_highscore_table_2540:
-	move.w	#0x7D0,d0                      	| 20000 [ld   hl,0x07D0]
+	move.w	#HIGH_SCORE/10,d0                      	| 20000 [ld   hl,0x07D0]
 	move.w	d0,hiscore_pos_5_8840+0x18      	| best score [ld   (hiscore_pos_5_8840+0x18),hl]
 	move.w	d0,hiscore_pos_5_8840+0x12      	| 2nd score [ld   (hiscore_pos_5_8840+0x12),hl]
 	move.w	d0,hiscore_pos_5_8840+0xC       	| ... [ld   (hiscore_pos_5_8840+0xC),hl]
@@ -4365,15 +4374,16 @@ update_and_display_p1_score_2BAE:
 	move.b	#0x30,d0                        	| write the fixed '0' for score [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p1_score_for_extra_life_2BDE	| [call check_p1_score_for_extra_life_2BDE]
-	move.b	high_score_880C,d6    		      	| [ld   hl,(high_score_880C)]
-	move.b	high_score_880C+1,d5    		      	| [ld   hl,(high_score_880C)]
-	move.b	player_1_score_880E,d4    		  	| [ld   de,(player_1_score_880E)]
-	move.b	player_1_score_880E+1,d3    		  	| [ld   de,(player_1_score_880E)]
+	move.b	high_score_880C,d5    		      	| [ld   hl,(high_score_880C)]
+	move.b	high_score_880C+1,d6    		      	| [ld   hl,(high_score_880C)]
+	move.b	player_1_score_880E,d3    		  	| [ld   de,(player_1_score_880E)]
+	move.b	player_1_score_880E+1,d4    		  	| [ld   de,(player_1_score_880E)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
-	bcs.b	0f
+	bcs.b	update_high_score_2BD6
 	rts                                    	| [ret  nc]
-0:
-	move.w	d3,high_score_880C              	| [ld   (high_score_880C),de]
+update_high_score_2BD6:
+	move.b	d3,high_score_880C              	| [ld   (high_score_880C),de]
+	move.b	d4,high_score_880C+1              	| [ld   (high_score_880C),de]
 	jbsr	write_hiscore_to_screen_2B93      	| [call write_hiscore_to_screen_2B93]
 	rts                                    	| [ret]
 
@@ -4415,11 +4425,13 @@ check_p2_score_for_extra_life_2C06:
 	*move.w	d6,-(sp)                        	| [push hl]
 	move.b	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
 	move.b	player_2_score_8810+1,d5      	| [ld   hl,(player_2_score_8810)]
-	move.w	#0x0BB8,d3                      	| [ld   de,$0BB8]
+	move.b	#0x0B,d3                      	| [ld   de,$0BB8] 30000 points
+	move.b	#0xB8,d4                      	| [ld   de,$0BB8]
 	jbsr	osd_read_dipswitches	           	| [ld   a,(dip_switches_9040)]
 	btst.b	#0,d0                           	| [bit  0,a]
 	jeq	l_2c1d                             	| [jr   z,$2C1D]
-	move.w	#0x1388,d3                      	| 5000 [ld   de,$1388]
+	move.b	#0x13,d3                      	| [ld   de,$1388] 50000 points 
+	move.w	#0x88,d4                      	| [ld   de,$1388] 50000 points 
 l_2c1d:
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	*movem.w	(sp)+,d6                        	| [pop  hl]
@@ -4439,15 +4451,14 @@ update_and_display_p2_score_2C24:
 	move.b	#0x30,d0                        	| [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p2_score_for_extra_life_2C06	| [call check_p2_score_for_extra_life_2C06]
-	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)] endian bug
-	move.w	player_2_score_8810,d3      	| [ld   de,(player_2_score_8810)]
+	move.b	high_score_880C,d5    		      	| [ld   hl,(high_score_880C)]
+	move.b	high_score_880C+1,d6    		      	| [ld   hl,(high_score_880C)]
+	move.b	player_2_score_8810,d3      	| [ld   de,(player_2_score_8810)]
+	move.b	player_2_score_8810+1,d4      	| [ld   de,(player_2_score_8810)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
-	bcs.b	0f
+	jcs		update_high_score_2BD6
 	rts                                    	| [ret  nc]
-0:
-	move.w	d3,high_score_880C              	| [ld   (high_score_880C),de]
-	jbsr	write_hiscore_to_screen_2B93      	| [call write_hiscore_to_screen_2B93]
-	rts                                    	| [ret]
+
 
 write_5_digits_to_screen_2C54:
 	move.b	#0x05,d1                        	| write 5 numbers [ld   b,$05]
@@ -8757,6 +8768,8 @@ l_45eb:
 
 	
 check_if_diamonds_are_aligned_4612:
+	tst.b	diamonds_are_aligned_flag
+	bne.b	diamonds_are_aligned_4658
 	bsr		get_diamond_block_1_xy_8DB0_to_bc  	| [ld   bc,(diamond_block_1_xy_8DB0)]
 	bsr		get_diamond_block_2_xy_8DB2_to_de  	| [ld   de,(diamond_block_2_xy_8DB2)]
 	jbsr	l_462a                            	| [call $462A]
@@ -8807,6 +8820,7 @@ l_464a:
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:
+	* enabled by cheat key for instance
 	jbsr	test_diamonds_aligned_horizontally_4896                            	| [call $4896]
 	jeq	diamonds_are_aligned_4658                             	| [jr   z,$4658]
 	jbsr	test_diamonds_aligned_vertically_4863                           	| [call $4863]
@@ -8814,6 +8828,7 @@ l_464a:
 	rts                                    	| [ret  nz]
 * diamonds are aligned
 diamonds_are_aligned_4658:
+	clr.b	diamonds_are_aligned_flag
 	clr.b	(0x17,a2)                        	| [ld   (ix+$17),$00]
 	move.b	#0x03,d1                        	| [ld   b,$03]
 	jbsr	play_sfx_1889                     	| diamond align music bonus [call play_sfx_1889]

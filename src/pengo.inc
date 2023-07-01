@@ -9,8 +9,8 @@
     OPT_DISABLE_SPRITES=0
    
 	* cheats to test game
-    * score is BCD format, only 6 digits
-    OPT_START_SCORE=0x000000
+    * score is decimal format
+    OPT_START_SCORE=0
 	OPT_SKIP_THANKS_SCREEN=0
 	OPT_SKIP_TITLE_SCREEN=0
 	OPT_SKIP_ICE_PACK_SCREEN=0

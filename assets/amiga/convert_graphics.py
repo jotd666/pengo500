@@ -51,10 +51,10 @@ with open(os.path.join(this_dir,"..","pengo_gfx.c")) as f:
 
 NB_POSSIBLE_SPRITES = 128
 
-
+# 32 colors 16+16 (alternate)
 palette = block_dict["palette"]["data"]
-# 19 unique colors
-##print(palette)
+
+
 ##print(len({tuple(x) for x in palette}))
 # looks that there are only 32 cluts for 16 colors totol
 
@@ -87,10 +87,8 @@ for k,chardat in enumerate(block_dict["tile"]["data"]):
     for cidx,colors in enumerate(rgb_cluts):
         if cidx < 32:
             local_palette = palette[0:16]
-            pshift = 0
         else:
             local_palette = palette[16:]
-            pshift = 16
         d = iter(chardat)
         for i in range(8):
             for j in range(8):

@@ -5,10 +5,10 @@
 ;CHIP_ONLY
 	IFD	CHIP_ONLY
 CHIPMEMSIZE = $200000
-EXPMEMSIZE = 0
+EXPMEMSIZE = $00000
 	ELSE
-CHIPMEMSIZE = $80000
-EXPMEMSIZE = $80000
+CHIPMEMSIZE = $200000
+EXPMEMSIZE = $200000
 	ENDC
 	
 _base	SLAVE_HEADER					; ws_security + ws_id
@@ -36,7 +36,7 @@ _expmem
 _config
 	dc.b    "C1:X:invincibility:0;"    
 	dc.b    "C1:X:infinite lives:1;"       
-	dc.b    "C1:X:help skips levels:2;"       
+	dc.b    "C1:X:cheat function keys:2;"       
 	dc.b    "C2:L:start level:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16;"
 	dc.b    "C3:L:DSW bonus life:30000,50000;"
 	dc.b    "C4:L:DSW difficulty:easy,medium,hard,hardest;"
@@ -63,6 +63,8 @@ _name	dc.b	'Pengo',0
 _copy	dc.b	'1982 Sega',0
 _info
     dc.b	"Amiga version by JOTD",10,10
+	dc.b	"Cheat: F1: align diamonds (push diamond)",10
+	dc.b	"Cheat: F2: complete level",10
 	dc.b	0
 _kickname   dc.b    0
 ;--- version id

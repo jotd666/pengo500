@@ -14,6 +14,7 @@
 	.global	unknown_87FF
 	.global stack_top
 	.global	start_level
+	.global	diamonds_are_aligned_flag
 	.ifdef	__amiga__
 	
 	.ifndef	RELEASE
@@ -69,6 +70,8 @@ stack_top:
 invincible_flag:
 	.byte	0
 infinite_lives_flag:
+	.byte	0
+diamonds_are_aligned_flag:
 	.byte	0
 vb_ticks_count:
 	.byte	0
