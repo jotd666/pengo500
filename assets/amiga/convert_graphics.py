@@ -11,6 +11,18 @@ src_dir = os.path.join(this_dir,"../../src/amiga")
 ripped_tiles_dir = os.path.join(this_dir,"../tiles")
 dump_dir = os.path.join(this_dir,"dumps")
 
+NB_POSSIBLE_SPRITES = 128  #64+64 alternate
+
+rw_json = os.path.join(this_dir,"used_cluts.json")
+if os.path.exists(rw_json):
+    with open(rw_json) as f:
+        used_cluts = json.load(f)
+    # key as integer, list as set for faster lookup (not that it matters...)
+    used_cluts = {int(k):set(v) for k,v in used_cluts.items()}
+else:
+    print("Warning: no {} file, no tile/clut filter, expect BIG graphics.68k file")
+    used_cluts = None
+
 dump_it = True
 
 def dump_asm_bytes(*args,**kwargs):
@@ -71,7 +83,6 @@ def dump_rgb_cluts(rgb_cluts,name):
 
     img.save(out)
 
-NB_POSSIBLE_SPRITES = 128
 
 # 32 colors 16+16 (alternate)
 palette = block_dict["palette"]["data"]
@@ -125,13 +136,15 @@ for k,chardat in enumerate(block_dict["tile"]["data"]):
     character_codes = list()
 
     for cidx,colors in enumerate(rgb_cluts):
-
-        d = iter(chardat)
-        for i in range(8):
-            for j in range(8):
-                v = next(d)
-                img.putpixel((j,i),colors[v])
-        character_codes.append(bitplanelib.palette_image2raw(img,None,local_palette))
+        if not used_cluts or (k in used_cluts and cidx in used_cluts[k]):
+            d = iter(chardat)
+            for i in range(8):
+                for j in range(8):
+                    v = next(d)
+                    img.putpixel((j,i),colors[v])
+            character_codes.append(bitplanelib.palette_image2raw(img,None,local_palette))
+        else:
+            character_codes.append(None)
     character_codes_list.append(character_codes)
 
 ##    if dump_it:
@@ -226,11 +239,15 @@ with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
             f.write(f"char_{i}:\n")
             # this is a table
             for j,cc in enumerate(c):
-                f.write(f"\t.word\tchar_{i}_{j}-char_{i}\n")
+                if cc is None:
+                    f.write(f"\t.word\t0\n")
+                else:
+                    f.write(f"\t.word\tchar_{i}_{j}-char_{i}\n")
 
             for j,cc in enumerate(c):
-                f.write(f"char_{i}_{j}:")
-                bitplanelib.dump_asm_bytes(cc,f,mit_format=True)
+                if cc is not None:
+                    f.write(f"char_{i}_{j}:")
+                    bitplanelib.dump_asm_bytes(cc,f,mit_format=True)
     f.write("sprite_table:\n")
 
     sprite_names = [None]*NB_POSSIBLE_SPRITES

@@ -5,10 +5,11 @@ joystick or joypad in port 1 or keyboard
 - 5 key or fire button to insert a coin
 - 1 key or up to start a 1P game
 - 2 key or down to start a 2P game
-- ctrl or fire/red to fire
+- ctrl or fire/red to push block/shake wall
 - P key or 3rd button to pause the game
 - ESC key to quit & save high-scores (when run from amigaDOS)
-- joystick or left/right arrows: move left/right
+- joystick or direction arrows to move
+
 
 Command line arguments (no whdload)
 

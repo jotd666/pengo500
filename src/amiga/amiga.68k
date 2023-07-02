@@ -1311,6 +1311,11 @@ update_bg_tile:
 	bset	#8,d0
 0:
 	.ifne	OPT_ENABLE_LOGGING
+	* when logging is enabled, play a while
+	* and break. Get the address in 0x100 then do
+	* S used_cluts <address at $100> $10000
+	* then run the compute_used_cluts.py program again
+	
 	lea		tile_log_table,a0
 	move.l	a0,0x100
 	movem.w	d0-d1,-(a7)
@@ -1400,7 +1405,8 @@ update_bg_tile:
 2:
 	rts
 11:
-	blitz
+	* clut/tile combo not declared as used
+	**blitz
 	rts
 
 
@@ -1521,6 +1527,26 @@ osd_read_inputs:
 	beq.b	0f
 	bclr	#6+16,d0
 0:	
+	tst.b	(0x4F,a0)		| "<-" key
+	beq.b	0f
+	bclr	#26,d0
+0:
+	tst.b	(0x4E,a0)		| "->" key
+	beq.b	0f
+	bclr	#27,d0
+0:
+	tst.b	(0x4C,a0)		| "up" key
+	beq.b	0f
+	bclr	#24,d0
+0:
+	tst.b	(0x4D,a0)		| "down" key
+	beq.b	0f
+	bclr	#25,d0
+0:
+	tst.b	(0x63,a0)		| "ctrl" key
+	beq.b	0f
+	bclr	#31,d0
+0:
 	* directions + fire
 	move.l	_joypad_state(pc),d1
 	btst	#JPB_BTN_UP,d1
@@ -1543,6 +1569,35 @@ osd_read_inputs:
 	beq.b	0f
 	bclr	#31,d0
 0:
+	tst.b	game_playing_8817
+	bne.b	3f
+	move.l	d2,-(a7)
+	move.l	_previous_joypad_state(pc),d2
+	* save prev state as game loops within vblank
+	* pushing fire would either lockup the game
+	* or insert a lot of credits simulatenously
+	move.l	_joypad_state,_previous_joypad_state
+	
+	* game not in play, accept start 1P game with "up"
+	btst	#JPB_BTN_UP,d1
+	beq.b	0f
+	bclr	#5+16,d0
+0:
+	* game not in play, accept start 2P game with "down"
+	btst	#JPB_BTN_DOWN,d1
+	beq.b	0f
+	bclr	#6+16,d0
+0:
+	btst	#JPB_BTN_RED,d1
+	beq.b	0f
+	btst	#JPB_BTN_RED,d2
+	bne.b	0f
+	* game not in play, accept insert coin with fire
+	bclr	#6,d0
+0:
+	move.l	(a7)+,d2
+3:
+
 	movem.l	(a7)+,a0/d1
 	rts
 	

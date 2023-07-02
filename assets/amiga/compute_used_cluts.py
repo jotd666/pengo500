@@ -15,14 +15,17 @@ if os.path.exists(rw_json):
 
 used_cluts = collections.defaultdict(list)
 for k,v in used_cluts_.items():
-    used_cluts[k] = v
+    used_cluts[int(k)] = set(v)
 
-for tile_index in range(256):
+
+for tile_index in range(512):
+    offset = tile_index*128
     for clut_index in range(128):
-        offset = tile_index*128
-        offset+=clut_index
-        if dump[offset]:
-            used_cluts[tile_index].append(clut_index)
+        if dump[offset+clut_index]:
+            used_cluts[tile_index].add(clut_index)
+
+used_cluts = {k:sorted(v) for k,v in sorted(used_cluts.items())}
+
 
 with open(rw_json,"w") as f:
     json.dump(used_cluts,f,indent=2)
