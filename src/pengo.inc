@@ -11,8 +11,8 @@
 	* cheats to test game
     * score is decimal format
     OPT_START_SCORE=0
-	OPT_SKIP_THANKS_SCREEN=1
-	OPT_SKIP_TITLE_SCREEN=1
+	OPT_SKIP_THANKS_SCREEN=0
+	OPT_SKIP_TITLE_SCREEN=0
 	OPT_SKIP_ICE_PACK_SCREEN=0
 	OPT_SKIP_GAME_DEMO=0
 	* test mode: only first snobee is active
@@ -31,7 +31,11 @@
 * sound ordinals
 
     .equ  CREDIT_SND,         0x00
+    .equ  DRAW_MAZE_SND,         0x01
+    .equ  START_SND,         0x02
     .equ  DIAMONDS_ALIGNED_SND,         0x03
+    .equ  IN_GAME_MUSIC_SND,         0x08
+    .equ  IN_GAME_MUSIC_FAST_SND,         0x09
     .equ  SNOBEE_EATEN_SND,         0x12
     .equ  SNOBEE_HATCHING_SND,         0x13
     .equ  SNOBEE_STUNNED_SND,         0x16

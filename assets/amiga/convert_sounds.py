@@ -24,7 +24,11 @@ EMPTY_SND = "EMPTY_SND"
 sound_dict = {
 #"EXTRA_SOLVALOU_SND"     :{"index":0x04,"channel":3,"sample_rate":hq_sample_rate,"priority":10},
 "CREDIT_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate},
+"DRAW_MAZE_SND"             :{"index":1,"pattern":1,"loops":True,"volume":32},
+"START_SND"              :{"index":2,"pattern":0,"ticks":100,"loops":False,"volume":32},
 "DIAMONDS_ALIGNED_SND"               :{"index":3,"channel":0,"sample_rate":hq_sample_rate},
+"IN_GAME_MUSIC_SND"             :{"index":8,"pattern":3,"loops":True,"volume":32},
+"IN_GAME_MUSIC_FAST_SND"             :{"index":9,"pattern":5,"loops":True,"volume":32},
 
 
 # second channel (called by 18C7)
@@ -78,12 +82,14 @@ def write_asm(contents,fw):
         n += 1
     fw.write("\n")
 
+music_module_label = "pengo_tunes"
 
 raw_file = os.path.join(tempfile.gettempdir(),"out.raw")
 with open(sndfile,"w") as fst,open(outfile,"w") as fw:
     fst.write(snd_header)
 
     fw.write("\t.section\t.datachip\n")
+    fw.write("\t.global\t{}\n".format(music_module_label))
 
     for wav_file,details in sound_dict.items():
         wav_name = os.path.basename(wav_file).lower()[:-4]
@@ -152,6 +158,14 @@ with open(sndfile,"w") as fst,open(outfile,"w") as fw:
         if len(contents)>65530:
             raise Exception(f"Sound {wav_entry} is too long")
         write_asm(contents,fw)
+
+    # make sure next section will be aligned
+    with open(os.path.join(sound_dir,"pengo_conv_003.mod"),"rb") as f:
+        contents = f.read()
+    fw.write("{}:".format(music_module_label))
+    write_asm(contents,fw)
+    fw.write("\t.align\t8\n")
+
 
     fst.writelines(sound_table)
     fst.write("\n\t.global\t{0}\n\n{0}:\n".format("sound_table"))

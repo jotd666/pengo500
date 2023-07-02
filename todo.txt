@@ -9,17 +9,12 @@ General:
 
 Amiga:
 
+- log used cluts to filter out unused clut/char combination
 - moves using keyboard arrows + ctrl
 - clock how much time is really spent vs bonus screen time
 - complete sound
 - add "trainer" player killed/game over
-- log used cluts to filter out unused clut/char combination
 - tile planar optimization
 - title: wrong color for snobee that erase "squash the snobees" message
 - also set all 3 colors at the copperlist Y (would fix title screen 4 snobees)
-- alternate tileset: wrong palette for tiles (sprites ok except for sprite color coupling)
 - ACT 1 + flags: draw vertically on the side? shift pengo lives 2 pixels up?
-
-	int code = m_videoram[tile_index] | (m_charbank << 8);
-	int attr = (m_colorram[tile_index] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6);
-

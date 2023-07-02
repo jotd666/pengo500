@@ -861,7 +861,12 @@ osd_sound_start:
 	tst.b	d0
 	bmi.b	1f		| should stop the sound
 	
+	move.b	#1,0x200
 	lea		_custom,a6
+	
+	cmp.w	#IN_GAME_MUSIC_SND,d0
+	beq.b	5f		| ATM stop music
+	
 	lsl.w	#3,d0
 	lea		sound_table,a0
 	move.w	(a0,d0.w),d1	| sound type
@@ -897,6 +902,11 @@ osd_sound_start:
 4:
 	bra.b	1b
 
+5:
+	tst.w	music_playing
+	beq.b	1b
+	bsr		osd_sound_stop
+	bra.b	1b
 	
 
 osd_sound_stop:
@@ -909,11 +919,25 @@ osd_sound_stop:
 	movem.l	(a7)+,d0/a6
 	rts
 	
+
 * < D0: track start number
 play_music:
-	rts
-	
-	
+	bsr		osd_sound_stop
+    movem.l d0-a6,-(a7)
+    lea _custom,a6
+    lea	pengo_tunes,a0
+	move.w	d0,music_track_start_number
+    sub.l   a1,a1		| samples are in the module
+    jsr _mt_init
+    * set master volume a little less loud if needed
+    moveq	#0,d0
+	move.b	music_volume(pc),d0
+    jsr	_mt_mastervol
+	st.b	music_playing
+0:
+    jsr _mt_start
+    movem.l (a7)+,d0-a6
+    rts
 
 switch_screen_buffers:	
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING_BG
@@ -1284,6 +1308,7 @@ update_bg_tile:
 	and.w	#0xFF,d1	| mask up to 255
 	tst.b	alternate_bank_selectors
 	beq.b	0f
+	* tile 0x100->0x1FF
 	bset	#8,d0
 0:
 	.ifne	OPT_ENABLE_LOGGING
@@ -1340,8 +1365,8 @@ update_bg_tile:
 	moveq	#NB_PLAYFIELD_PLANES-1,d3
 
 	* optimization when a well-known
-	* empty character is passed
-	cmp.b	#0x20,d0	| empty character
+	* empty character is passed (standard charset)
+	cmp.w	#0x20,d0	| empty character
 	jeq	1f
 
 	lea		character_table,a0
@@ -1844,6 +1869,8 @@ palette:
 	.ifne	OPT_ENABLE_LOGGING
 	.section	.bss
 tile_log_table:
+	* 128 cluts, 256 tiles
+	* a lot of combinations aren't used (fortunately!)
 	ds.w	0x10000
 	.endif
 
