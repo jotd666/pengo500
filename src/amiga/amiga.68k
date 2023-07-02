@@ -24,8 +24,8 @@ BOB_16X16_PLANE_SIZE = 4*16
 
 
 	.ifdef	RELEASE
-OPT_ENABLE_PROFILING = 0
-OPT_ENABLE_LOGGING = 0
+OPT_ENABLE_PROFILING = 0         | DO NOT CHANGE THIS
+OPT_ENABLE_LOGGING = 0           | DO NOT CHANGE THIS
 ONE_TICK = 1
 	* check most used options in release mode
 	* to avoid creating a version with cheats on!
@@ -42,7 +42,7 @@ ONE_TICK = 1
 	.error	"one snobee option in release mode"
 	.endif
 	.else
-OPT_ENABLE_LOGGING = 0
+OPT_ENABLE_LOGGING = 1
 OPT_ENABLE_PROFILING = 0
 * set to higher values than 1 to speed game up
 ONE_TICK = 1
@@ -861,7 +861,6 @@ osd_sound_start:
 	tst.b	d0
 	bmi.b	1f		| should stop the sound
 	
-	move.b	#1,0x200
 	lea		_custom,a6
 	
 	cmp.w	#IN_GAME_MUSIC_SND,d0
@@ -1316,7 +1315,7 @@ update_bg_tile:
 	move.l	a0,0x100
 	movem.w	d0-d1,-(a7)
 	and.l	#0xFFFF,d0
-	lsl.l	#8,d0
+	lsl.l	#7,d0
 	add.w	d1,d0
 	st.b	(a0,d0.l)
 	movem.w	(a7)+,d0-d1
