@@ -25,9 +25,9 @@ sound_dict = {
 #"EXTRA_SOLVALOU_SND"     :{"index":0x04,"channel":3,"sample_rate":hq_sample_rate,"priority":10},
 "CREDIT_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate},
 "DRAW_MAZE_SND"             :{"index":1,"pattern":1,"loops":True,"volume":32},
-"START_SND"              :{"index":2,"pattern":0,"ticks":100,"loops":False,"volume":32},
+"START_SND"              :{"index":2,"pattern":0,"ticks":200,"loops":False,"volume":32},
 "DIAMONDS_ALIGNED_SND"               :{"index":3,"channel":0,"sample_rate":hq_sample_rate},
-"IN_GAME_MUSIC_SND"             :{"index":8,"pattern":3,"loops":True,"volume":32},
+"IN_GAME_MUSIC_SND"             :{"index":8,"pattern":2,"loops":True,"volume":32},
 "IN_GAME_MUSIC_FAST_SND"             :{"index":9,"pattern":5,"loops":True,"volume":32},
 
 
@@ -160,7 +160,7 @@ with open(sndfile,"w") as fst,open(outfile,"w") as fw:
         write_asm(contents,fw)
 
     # make sure next section will be aligned
-    with open(os.path.join(sound_dir,"pengo_conv_003.mod"),"rb") as f:
+    with open(os.path.join(sound_dir,"pengo_conv.mod"),"rb") as f:
         contents = f.read()
     fw.write("{}:".format(music_module_label))
     write_asm(contents,fw)

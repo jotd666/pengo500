@@ -9,10 +9,9 @@ General:
 
 Amiga:
 
+- no more sound when popcorn should play
 - 2 lives default is bad!!
 - log used cluts to filter out unused clut/char combination: check missing
-- moves using keyboard arrows + ctrl
-- start game up/down fire credits
 - clock how much time is really spent vs bonus screen time
 - complete sound
 - add "trainer" player killed/game over

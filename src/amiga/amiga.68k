@@ -498,7 +498,14 @@ _vblank:
 	bne.b	0f
 	bsr		toggle_pause
 0:
-
+	* here music doesn't loop. We have to stop it when it ends
+	move.w	music_tick(pc),d1
+	beq.b	13f
+	subq.w	#1,d1
+	move.w	d1,music_tick
+	bne.b	13f
+	bsr		osd_sound_stop
+13:
 	* ack vbl twice (040/pistorm bug)
 	move.w	#0x20,(intreq,a5)
 	move.w	#0x20,(intreq,a5)	
@@ -859,12 +866,10 @@ osd_sound_disable:
 osd_sound_start:
 	movem.l	d0/d1/a0/a6,-(a7)
 	tst.b	d0
-	bmi.b	1f		| should stop the sound
+	bmi.b	7f		| should stop the sound
 	
 	lea		_custom,a6
 	
-	cmp.w	#IN_GAME_MUSIC_SND,d0
-	beq.b	5f		| ATM stop music
 	
 	lsl.w	#3,d0
 	lea		sound_table,a0
@@ -885,7 +890,7 @@ osd_sound_start:
 	* (music_tick value is not important for looped tunes
 	* as long as it's not zero)
 	tst.w	music_tick
-	bne.b	4f
+	bne.b	6f
 	* play the proper module pattern
 	* load up the countdown if loop
 	move.w	(2,a0,d0.w),d1	| pattern number in .mod file
@@ -898,11 +903,11 @@ osd_sound_start:
 	move.w	d2,music_tick
 	move.w	d1,d0
 	bsr		play_music
-4:
+6:
 	bra.b	1b
 
-5:
-	tst.w	music_playing
+7:
+	tst.b	music_playing
 	beq.b	1b
 	bsr		osd_sound_stop
 	bra.b	1b
@@ -911,6 +916,7 @@ osd_sound_start:
 osd_sound_stop:
 	movem.l	d0/a6,-(a7)
 	lea		_custom,a6
+	move.w	#-1,music_track_start_number
     clr.w   music_tick   | not playing anymore
 	clr.b	music_playing
     jsr		_mt_end
@@ -921,6 +927,10 @@ osd_sound_stop:
 
 * < D0: track start number
 play_music:
+	cmp.w	music_track_start_number(pc),d0
+	bne.b	0f
+	rts
+0:
 	bsr		osd_sound_stop
     movem.l d0-a6,-(a7)
     lea _custom,a6
@@ -2008,9 +2018,17 @@ sprites:
     * #7
     .word    sprpt+28,0
     .word    sprpt+30,0
-end_color_copper:
+
 	.set    beampos,0x1C01
+color_line_copper:
+	.rept	228
 	.word	beampos,0xFFFE
+	.word	0x1FE,0
+	.word	0x1FE,0
+	.word	0x1FE,0
+	.set    beampos,beampos+0x100
+	.endr
+
 
 	* pal limit
     .word  0xFFDF,0xFFFE       | PAL wait

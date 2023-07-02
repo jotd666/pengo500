@@ -975,6 +975,8 @@ display_demo_and_top_scores_6E1:
 												| [rrca]
 												| [rrca]
 	addq.b	#0x02,d0                        	| [add  a,$02]
+	
+	
 	move.b	d0,lives_counter_p1_8814        	| [ld   (lives_counter_p1_8814),a]
 	move.b	d0,lives_counter_p2_8815        	| [ld   (lives_counter_p2_8815),a]
 	clr.b	d0                               	| [xor  a]
@@ -1227,8 +1229,13 @@ play_one_game_087D:
 	ror.b	#3,d0                            	| [rrca]
 												| [rrca]
 												| [rrca]
- * gives 1,2,3 depending on lives settings
+ * gives 2,3,4,5 depending on lives settings
 	addq.b	#0x02,d0                        	| [add  a,$02]
+
+	.ifne	OPT_ONLY_ONE_LIFE
+	move.b	#0x81,d0		| one life, no extra life
+	.endif
+
 	move.b	d0,lives_counter_p1_8814        	| [ld   (lives_counter_p1_8814),a]
 	move.b	d0,lives_counter_p2_8815      	| [ld   ($lives_counter_p2_8815),a]
  * game loop (lives)
