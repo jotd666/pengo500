@@ -5,16 +5,15 @@ General:
 - crash when level 1 starts after level 16 (in crash)
 - load/save highscores
 - demo level pengo seems to do weird things
-- if highscore obtained, hiscore screen doesn't seem to see it
 
 Amiga:
 
-- no more sound when popcorn should play
+- no more sound when popcorn should play / music replay to rework completely
 - 2 lives default is bad!!
+- highscore screen garbled & too fast (no speed regulation)
 - log used cluts to filter out unused clut/char combination: check missing
 - clock how much time is really spent vs bonus screen time
 - complete sound
-- add "trainer" player killed/game over
 - tile planar optimization to save memory?
 - title: wrong color for snobee that erase "squash the snobees" message
 - also set all 3 colors at the copperlist Y (would fix title screen 4 snobees)

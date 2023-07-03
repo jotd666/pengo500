@@ -294,7 +294,12 @@ HIGH_SCORE = 20000
 	.align	2
 	.endif
 	
-	
+	.macro	SWAP_ENDIAN_16	r
+	move.w	\r,d7
+	lsr.w	#8,d7
+	lsl.w	#8,\r
+	move.b	d7,\r
+	.endm
 * < A0: source (HL)
 * < A1: destination (DE)
 * < D1: length (16 bit)
@@ -722,7 +727,9 @@ l_03d4:
 	clr.w	player_1_score_880E          	| [ld   (player_1_score_880E),hl]
 	clr.w	player_2_score_8810          	| [ld   (player_2_score_8810),hl]
 	                      	| [ld   hl,0x07D0]
-	move.w	#HIGH_SCORE/10,high_score_880C              	| [ld   (high_score_880C),hl]
+	move.w	#HIGH_SCORE/10,d0
+	SWAP_ENDIAN_16	d0
+	move.w	d0,high_score_880C              	| [ld   (high_score_880C),hl]
 	jbsr	init_highscore_table_2540         	| [call init_highscore_table_2540]
 
 	* load highscores from disk
@@ -1218,6 +1225,7 @@ increase_counter_0875:
 
 play_one_game_087D:
 	move.w	#OPT_START_SCORE/10,d0
+	SWAP_ENDIAN_16	d0
 	move.w	d0,player_1_score_880E          	| [ld   (player_1_score_880E),hl]
 	move.w	d0,player_2_score_8810          	| [ld   (player_2_score_8810),hl]
 	move.b	start_level,d0                        	| [ld   a,$01]
@@ -3521,6 +3529,7 @@ l_2517:
 * (would be a good location to load highscores)
 init_highscore_table_2540:
 	move.w	#HIGH_SCORE/10,d0                      	| 20000 [ld   hl,0x07D0]
+	SWAP_ENDIAN_16	d0
 	move.w	d0,hiscore_pos_5_8840+0x18      	| best score [ld   (hiscore_pos_5_8840+0x18),hl]
 	move.w	d0,hiscore_pos_5_8840+0x12      	| 2nd score [ld   (hiscore_pos_5_8840+0x12),hl]
 	move.w	d0,hiscore_pos_5_8840+0xC       	| ... [ld   (hiscore_pos_5_8840+0xC),hl]
@@ -3610,10 +3619,9 @@ l_25e4:
 	move.b	d0,d3                           	| [ld   d,a]
 	lsl.w	#8,d3
 	move.b	#0x16,d3                        	| [ld   e,$16]
-	movem.w	d3/d4,-(sp)                    	| [push de]
-	move.w	d3,-(sp)                        	| [push de]
-	move.w	(sp)+,a3                        	| [pop  iy]
-	lea	0x0616,a2                      	| [ld   ix,$0616]  this is a value
+	move.w	d3,a3                        	| [push de]
+											| [pop  iy]
+	lea	0x0616.W,a2                      	| [ld   ix,$0616]  this is a value
 	move.b	#0x02,d4                        	| [ld   e,$02]
 	move.w	d3,cursor_x_8800                	| [ld   (cursor_x_8800),de]
 	move.b	#0x18,d0                        	| [ld   a,$18]
@@ -3663,7 +3671,6 @@ l_2606:
 	rts                                    	| [ret]
 
 compute_score_insertion_position_2648:
-	bsr		osd_break
 	move.b	#0x06,d0                        	| [ld   a,$06]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
 	jbsr	get_current_player_score_ptr_in_de_268D	| [call get_current_player_score_ptr_in_de_268D]
@@ -3730,12 +3737,13 @@ create_highscore_entry_269E:
 	move.b	#0x05,d0                        	| [ld   a,$05]
 	sub.b	d1,d0                            	| [sub  b]
 	jeq	l_26b6                             	| [jr   z,$26B6]
+	* times 6
 	add.b	d0,d0                            	| [add  a,a]
 	move.b	d0,d1                           	| [ld   b,a]
 	add.b	d0,d0                            	| [add  a,a]
 	add.b	d1,d0                            	| [add  a,b]
-	clr.b	d1                               	| [ld   b,$00]
-	move.b	d0,d2                           	| [ld   c,a]
+	clr.w	d1                               	| [ld   b,$00]
+	move.b	d0,d1                           	| [ld   c,a]
 	jbsr	ldir                              	| [ldir]
 l_26b6:
 	exg	a1,a0                              	| [ex   de,hl]
@@ -3992,7 +4000,9 @@ add_to_current_player_score_28AF:
 	btst.b	#0,d0                           	| [bit  0,a]
 	jeq	l_28c6                             	| [jr   z,$28C6]
 	move.w	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
+	SWAP_ENDIAN_16	d6
 	add.w	d3,d6							| [add  hl,de]
+	SWAP_ENDIAN_16	d6
 	move.w	d6,player_2_score_8810          	| [ld   (player_2_score_8810),hl]
 	jbsr	update_and_display_p2_score_2C24  	| [call update_and_display_p2_score_2C24]
 	rts                                    	| [ret]
@@ -4000,7 +4010,9 @@ add_to_current_player_score_28AF:
 * add de to player 1 score
 l_28c6:
 	move.w	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
+	SWAP_ENDIAN_16	d6
 	add.w	d3,d6							| [add  hl,de]
+	SWAP_ENDIAN_16	d6
 	move.w	d6,player_1_score_880E          	| [ld   (player_1_score_880E),hl]
 	jbsr	update_and_display_p1_score_2BAE  	| [call update_and_display_p1_score_2BAE]
 	rts                                    	| [ret]
@@ -4358,7 +4370,9 @@ display_number_of_credits_2B7A:
 
 
 write_hiscore_to_screen_2B93:
-	move.w	high_score_880C,d6          	| [ld   hl,(high_score_880C)]
+	move.b	high_score_880C+1,d6          	| [ld   hl,(high_score_880C)]
+	lsl.w	#8,d6
+	move.b	high_score_880C,d6          	| [ld   hl,(high_score_880C)]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 												| [ld   h,$22]
 												| [ld   l,$0C]
@@ -4372,7 +4386,9 @@ write_hiscore_to_screen_2B93:
 	rts                                    	| [ret]
 
 update_and_display_p1_score_2BAE:
-	move.w	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
+	move.b	player_1_score_880E+1,d6      	| [ld   hl,(player_1_score_880E)]
+	lsl.w	#8,d6
+	move.b	player_1_score_880E,d6      	| [ld   hl,(player_1_score_880E)]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 												| [ld   h,$22]
 												| [ld   l,$03]
@@ -4383,16 +4399,16 @@ update_and_display_p1_score_2BAE:
 	move.b	#0x30,d0                        	| write the fixed '0' for score [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p1_score_for_extra_life_2BDE	| [call check_p1_score_for_extra_life_2BDE]
-	move.b	high_score_880C,d5    		      	| [ld   hl,(high_score_880C)]
-	move.b	high_score_880C+1,d6    		      	| [ld   hl,(high_score_880C)]
-	move.b	player_1_score_880E,d3    		  	| [ld   de,(player_1_score_880E)]
-	move.b	player_1_score_880E+1,d4    		  	| [ld   de,(player_1_score_880E)]
+	move.b	high_score_880C,d6    		      	| [ld   hl,(high_score_880C)]
+	move.b	high_score_880C+1,d5    		      	| [ld   hl,(high_score_880C)]
+	move.b	player_1_score_880E,d4    		  	| [ld   de,(player_1_score_880E)]
+	move.b	player_1_score_880E+1,d3    		  	| [ld   de,(player_1_score_880E)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	bcs.b	update_high_score_2BD6
 	rts                                    	| [ret  nc]
 update_high_score_2BD6:
-	move.b	d3,high_score_880C              	| [ld   (high_score_880C),de]
-	move.b	d4,high_score_880C+1              	| [ld   (high_score_880C),de]
+	move.b	d4,high_score_880C              	| [ld   (high_score_880C),de]
+	move.b	d3,high_score_880C+1              	| [ld   (high_score_880C),de]
 	jbsr	write_hiscore_to_screen_2B93      	| [call write_hiscore_to_screen_2B93]
 	rts                                    	| [ret]
 
@@ -4449,7 +4465,9 @@ l_2c1d:
 
 
 update_and_display_p2_score_2C24:
-	move.w	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
+	move.b	player_2_score_8810+1,d6      	| [ld   hl,(player_2_score_8810)]
+	lsl.w	#8,d6
+	move.b	player_2_score_8810,d6      	| [ld   hl,(player_2_score_8810)]
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 											| [ld   h,$22]
 											| [ld   l,$15]
@@ -4460,10 +4478,10 @@ update_and_display_p2_score_2C24:
 	move.b	#0x30,d0                        	| [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	jbsr	check_p2_score_for_extra_life_2C06	| [call check_p2_score_for_extra_life_2C06]
-	move.b	high_score_880C,d5    		      	| [ld   hl,(high_score_880C)]
-	move.b	high_score_880C+1,d6    		      	| [ld   hl,(high_score_880C)]
-	move.b	player_2_score_8810,d3      	| [ld   de,(player_2_score_8810)]
-	move.b	player_2_score_8810+1,d4      	| [ld   de,(player_2_score_8810)]
+	move.b	high_score_880C,d6    		      	| [ld   hl,(high_score_880C)]
+	move.b	high_score_880C+1,d5    		      	| [ld   hl,(high_score_880C)]
+	move.b	player_2_score_8810,d4      	| [ld   de,(player_2_score_8810)]
+	move.b	player_2_score_8810+1,d3      	| [ld   de,(player_2_score_8810)]
 	jbsr	compare_hl_to_de_2D99             	| [call compare_hl_to_de_2D99]
 	jcs		update_high_score_2BD6
 	rts                                    	| [ret  nc]
