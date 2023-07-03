@@ -907,6 +907,7 @@ osd_sound_start:
 	bra.b	1b
 
 7:
+	bra.b	1b
 	tst.b	music_playing
 	beq.b	1b
 	bsr		osd_sound_stop
@@ -916,7 +917,7 @@ osd_sound_start:
 osd_sound_stop:
 	movem.l	d0/a6,-(a7)
 	lea		_custom,a6
-	move.w	#-1,music_track_start_number
+	move.b	#-1,music_track_start_number
     clr.w   music_tick   | not playing anymore
 	clr.b	music_playing
     jsr		_mt_end
@@ -927,7 +928,8 @@ osd_sound_stop:
 
 * < D0: track start number
 play_music:
-	cmp.w	music_track_start_number(pc),d0
+	move.w	#1,0x200
+	cmp.b	music_track_start_number(pc),d0
 	bne.b	0f
 	rts
 0:
@@ -935,7 +937,7 @@ play_music:
     movem.l d0-a6,-(a7)
     lea _custom,a6
     lea	pengo_tunes,a0
-	move.w	d0,music_track_start_number
+	move.b	d0,music_track_start_number
     sub.l   a1,a1		| samples are in the module
     jsr _mt_init
     * set master volume a little less loud if needed

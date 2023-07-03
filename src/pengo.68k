@@ -1808,7 +1808,7 @@ l_0d05:
 	subq.b	#1,d0                           	| [dec  a]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	and.b	#0x7F,d0                         	| [and  $7F]
-	jeq	l_0ed7                             	| [jp   z,$0ED7]
+	jeq	display_game_over_0ed7                             	| [jp   z,$0ED7]
 	tst.b	currently_playing_8819       	| [ld   a,(currently_playing_8819)]
 	bne.b	0f
 	rts                                    	| [ret  z]
@@ -2119,7 +2119,7 @@ l_0ecc:
 	jne	l_0ecc                             	| [djnz $0ECC]
 	rts                                    	| [ret]
 
-l_0ed7:
+display_game_over_0ed7:
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
 	move.b	#0x06,d1                        	| [ld   b,$06]
 	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
@@ -2136,7 +2136,7 @@ l_0ef2:
 	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
 	move.b	#0x80,d0                        	| [ld   a,$80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	jbsr	l_258f                            	| [call $258F]
+	jbsr	enter_high_score_258f                            	| [call $258F]
 	lea	player_number_8816,a0          	| [ld   hl,player_number_8816]
 	btst.b	#7,(a0)                         	| [bit  7,(hl)]
 	jeq	l_0f11                             	| [jr   z,$0F11]
@@ -3561,7 +3561,7 @@ set_3_chars_2589:
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	rts                                    	| [ret]
 
-l_258f:
+enter_high_score_258f:
 	jbsr	compute_score_insertion_position_2648	| [call compute_score_insertion_position_2648]
 	move.b	score_insertion_position_885F,d0	| [ld   a,(score_insertion_position_885F)]
 	cmp.b	#0x06,d0                         	| [cp   $06]
@@ -3663,6 +3663,7 @@ l_2606:
 	rts                                    	| [ret]
 
 compute_score_insertion_position_2648:
+	bsr		osd_break
 	move.b	#0x06,d0                        	| [ld   a,$06]
 	move.b	d0,score_insertion_position_885F	| [ld   (score_insertion_position_885F),a]
 	jbsr	get_current_player_score_ptr_in_de_268D	| [call get_current_player_score_ptr_in_de_268D]

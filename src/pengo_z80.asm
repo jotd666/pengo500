@@ -1675,7 +1675,7 @@ player_dies_0CD2:
 0D1C: 3D            dec  a
 0D1D: 77            ld   (hl),a
 0D1E: E6 57         and  $7F
-0D20: CA 57 8E      jp   z,$0ED7
+0D20: CA 57 8E      jp   z,display_game_over_0ed7
 0D23: 3A 99 20      ld   a,(currently_playing_8819)
 0D26: A7            and  a
 0D27: C8            ret  z
@@ -1939,6 +1939,7 @@ swap_players_0EC4:
 0ED4: 10 5E         djnz $0ECC
 0ED6: C9            ret
 
+display_game_over_0ed7:
 0ED7: CD B7 11      call clear_sprites_31B7
 0EDA: 06 26         ld   b,$06
 0EDC: CD A9 18      call play_tune_1889
@@ -1954,7 +1955,7 @@ swap_players_0EC4:
 0EF8: CD 5C 29      call print_line_typewriter_style_29F4
 0EFB: 3E 80         ld   a,$80
 0EFD: CD D1 80      call delay_28D1
-0F00: CD 27 2D      call $258F
+0F00: CD 27 2D      call enter_high_score_258f
 0F03: 21 BE 20      ld   hl,player_number_8816
 0F06: CB 7E         bit  7,(hl)
 0F08: 28 87         jr   z,$0F11
@@ -4605,6 +4606,7 @@ set_3_chars_2589:
 258D: 77            ld   (hl),a
 258E: C9            ret
 
+enter_high_score_258f:
 258F: CD 48 26      call compute_score_insertion_position_2648
 2592: 3A D7 88      ld   a,(score_insertion_position_885F)
 2595: FE 06         cp   $06

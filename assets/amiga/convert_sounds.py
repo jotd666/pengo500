@@ -22,13 +22,15 @@ lq_sample_rate = hq_sample_rate//2
 
 EMPTY_SND = "EMPTY_SND"
 sound_dict = {
-#"EXTRA_SOLVALOU_SND"     :{"index":0x04,"channel":3,"sample_rate":hq_sample_rate,"priority":10},
 "CREDIT_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate},
 "DRAW_MAZE_SND"             :{"index":1,"pattern":1,"loops":True,"volume":32},
 "START_SND"              :{"index":2,"pattern":0,"ticks":200,"loops":False,"volume":32},
 "DIAMONDS_ALIGNED_SND"               :{"index":3,"channel":0,"sample_rate":hq_sample_rate},
+"LEVEL_COMPLETED_SND"             :{"index":4,"pattern":10,"loops":False,"volume":32},
+"PLAYER_DIES_SND"             :{"index":5,"pattern":9,"loops":False,"volume":32},
 "IN_GAME_MUSIC_SND"             :{"index":8,"pattern":2,"loops":True,"volume":32},
-"IN_GAME_MUSIC_FAST_SND"             :{"index":9,"pattern":5,"loops":True,"volume":32},
+#"IN_GAME_MUSIC_FAST_SND"             :{"index":9,"pattern":5,"loops":True,"volume":32},
+"HISCORE_MUSIC_SND"             :{"index":9,"pattern":7,"loops":True,"volume":32},
 
 
 # second channel (called by 18C7)
