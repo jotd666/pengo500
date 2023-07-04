@@ -15,6 +15,7 @@ AFB_68010 = 0
 AFB_68020 = 1
 NO68020 = 1
 
+DYNAMIC_COPPER_ROWS = 228
 
 SCREEN_ADDRESS = 0x8000
 
@@ -607,7 +608,8 @@ osd_small_wait:
 osd_update_sprites:
 	*lea		test_sprites_xy,a1
 	*lea		test_sprites_code,a0
-	
+	move.l	a0,0x110
+	move.l	a1,0x114
 	* clear host sprites
 	move.w	#NB_HOST_SPRITES-1,d0
 
@@ -715,6 +717,24 @@ osd_update_sprites:
 	* copy 3 colors from cached registers
 	move.l	d3,(a5)+
 	move.w	d7,(a5)+
+	tst.b	dynamic_color_mode
+	beq.b	25f
+	cmp.w	#DYNAMIC_COPPER_ROWS,d1
+	bcc.b	25f		| too low: not doing it
+	* dynamic color mode: we need to update copperlist row 3 colors
+	lea		color_line_copper,a0
+	sub.w	#16,d1
+	lsl.w	#4,d1		| times 16
+	add.w	d1,a0		| get relevant row
+	lea		(-6,a5),a5
+	sub.l	#_custom,a5
+	
+	lea		(-6,a6),a6
+	.rept	3
+	move.w	a5,(a0)+
+	addq.w	#2,a5
+	move.w	(a6)+,(a0)+
+	.endr
 25:
 	* set sprite in copperlist
 	move.w	d4,(6,a3)
@@ -1199,11 +1219,36 @@ osd_disable_vblank_interrupt:
 	rts
 
 
+
 	
-draw_sprites:
+reset_dynamic_colors:
+	lea	color_line_copper,a0
+	move.w	#DYNAMIC_COPPER_ROWS-1,d3
+	move.w	#0x1FE,d2
+0:
+	move.w	d2,(a0)
+	addq.w	#4,a0
+	move.w	d2,(a0)
+	addq.w	#4,a0
+	move.w	d2,(a0)
+	addq.w	#8,a0
+	dbf		d3,0b
 	rts
 
-
+	
+* < D6: video ram offset
+* < D0: data to write
+update_dynamic_color_mode:
+	cmp.w	#0x19B,d6
+	beq.b	0f
+	rts
+0:
+	bsr		reset_dynamic_colors
+	* see if we disable or enable dyn color mode
+	* because (R) is there (title screen)
+	cmp.b	#0x22,d0
+	seq.b	dynamic_color_mode
+	rts
 	
 * < D4: sprite properties
 *     Y code+attrs clut X
@@ -1264,6 +1309,10 @@ osd_w_videoram:
 1:
 	lea		bg_videoram,a1
 	add.w	d6,a1
+	* detect (R) sega registered logo
+	* to enable sprite dynamic color mode
+	bsr		update_dynamic_color_mode
+2:
 	cmp.b	(a1),d0
 	beq.b	0f		| already the proper value
 	move.b	d0,(a1)	| update logical grid
@@ -1858,16 +1907,8 @@ sound_lock:
 	.word	0
 music_duration:
 	.word	0
-music_loops:
-	.byte	0
-music_volume:
-	.byte	0
 music_track_start_number:
 	.word	0
-music_playing:
-	.byte	0
-music_muted:
-	.byte	0
 music_pattern:
 	.word	0
 music_tick:
@@ -1902,6 +1943,16 @@ bg_displayed_screen_ptr:
 
 	.include	"sound_entries.68k"
 
+music_loops:
+	.byte	0
+music_volume:
+	.byte	0
+music_playing:
+	.byte	0
+music_muted:
+	.byte	0
+dynamic_color_mode:
+	.byte	0
 	
 dosname:
 	.ascii	"dos.library"
@@ -2023,7 +2074,7 @@ sprites:
 
 	.set    beampos,0x1C01
 color_line_copper:
-	.rept	228
+	.rept	DYNAMIC_COPPER_ROWS
 	.word	beampos,0xFFFE
 	.word	0x1FE,0
 	.word	0x1FE,0

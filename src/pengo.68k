@@ -3582,20 +3582,26 @@ enter_high_score_258f:
 	move.b	#0x09,d1                        	| 0xA in MAME menu [ld   b,$09]
 	jbsr	play_sfx_1889                     	| play highscore entry music [call play_sfx_1889]
 	jbsr	create_highscore_entry_269E       	| [call create_highscore_entry_269E]
+	* print "enter your initials"
 	lea	todays_best_text_27F7+0x81A-0x7F7(pc),a0	| [ld   hl,todays_best_text_27F7+$81A-$7F7]
 	move.b	#0x08,d1                        	| [ld   b,$08]
 	jbsr	print_b_lines_277B                	| [call print_b_lines_277B]
+	* write player score
 												| [ld   hl,$0606]
 	move.w	#0x0606,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x10,d0                        	| [ld   a,$10]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	jbsr	get_current_player_score_ptr_in_de_268D	| [call get_current_player_score_ptr_in_de_268D]
-	exg	d3,d6                             	| [ex   de,hl]
+	*exg	d3,d6                             	| [ex   de,hl]
+	move.b	d3,d6
+	lsl.w	#8,d6
+	move.b	d4,d6
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
 	move.b	#0x30,d0                        	| [ld   a,$30]
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 											| [ld   hl,$060F]
+	* writes act player reached
 	move.w	#0x0F06,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
 	clr.w	d6                               	| [ld   h,$00]
@@ -3643,17 +3649,18 @@ l_2606:
 	lea	high_score_names_8842+1,a0     	| [ld   hl,high_score_names_8842+1]
 	add.w	d3,a0					| [add  hl,de]
 
+	
 	move.l	a0,-(sp)                        	| [push hl]
-	jbsr	l_26cf                            	| [call $26CF]
+	jbsr	highscore_enter_letter_26CF                            	| [call $26CF]
 	move.l	(sp)+,a0                        	| [pop  hl]
 	move.b	currently_active_letter_885E,d0 	| [ld   a,(currently_active_letter_885E)]
-	move.b	d0,(a0)                         	| [ld   (hl),a]
-	addq.w	#1,a0                           	| [inc  hl]
+	move.b	d0,(a0)+                         	| [ld   (hl),a]
+												| [inc  hl]
 	addq.w	#1,a2                           	| [inc  ix]
 	addq.w	#1,a3                           	| [inc  iy]
 
 	move.l	a0,-(sp)                        	| [push hl]
-	jbsr	l_26cf                            	| [call $26CF]
+	jbsr	highscore_enter_letter_26CF                            	| [call $26CF]
 	move.l	(sp)+,a0                        	| [pop  hl]
 	move.b	currently_active_letter_885E,d0 	| [ld   a,(currently_active_letter_885E)]
 	move.b	d0,(a0)+                         	| [ld   (hl),a]
@@ -3662,7 +3669,7 @@ l_2606:
 	addq.w	#1,a3                           	| [inc  iy]
 
 	move.l	a0,-(sp)                        	| [push hl]
-	jbsr	l_26cf                            	| [call $26CF]
+	jbsr	highscore_enter_letter_26CF                            	| [call $26CF]
 	move.l	(sp)+,a0                        	| [pop  hl]
 	move.b	currently_active_letter_885E,d0 	| [ld   a,(currently_active_letter_885E)]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
@@ -3771,7 +3778,7 @@ l_26b6:
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	rts                                    	| [ret]
 
-l_26cf:
+highscore_enter_letter_26CF:
 	move.b	#0x10,d0                        	| [ld   a,$10]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]
 	lea	currently_active_letter_885E,a0	| [ld   hl,currently_active_letter_885E]
@@ -3874,6 +3881,7 @@ l_2771:
 	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2771                             	| [djnz $2771]
+	* print score / act / name plus positions 1ST, 2ND...
 	lea	score_act_text_2845(pc),a0         	| [ld   hl,score_act_text_2845]
 	move.b	#0x06,d1                        	| [ld   b,$06]
 print_b_lines_277B:
@@ -3914,9 +3922,9 @@ write_best_score_27B3:
 	                           	| [inc  hl]
 	move.l	a0,-(sp)                        	| [push hl]
 												| [ex   de,hl]
-	move.b	d4,d6
-	lsl.w	#8,d6
 	move.b	d3,d6
+	lsl.w	#8,d6
+	move.b	d4,d6
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 	jbsr	write_5_digits_to_screen_2C54     	| [call write_5_digits_to_screen_2C54]
 	move.b	#0x30,d0                        	| [ld   a,$30]
@@ -4224,10 +4232,11 @@ l_2a03:
 	move.b	(a0)+,d0                         	| get character [ld   a,(hl)]
 	btst.b	#7,d0                           	| [bit  7,a]
 	jne	l_2a1a                             	| [jr   nz,0x2A1A]
+	
 	jbsr	set_tile_at_current_pos_293C      	| [call set_tile_at_current_pos_293C]
 	                           	| [inc  hl]
 	move.b	cursor_color_8802,d0            	| [ld   a,(cursor_color_8802)]
-	btst.b	#7,d0                           	| stop when last bit is set [bit  7,a]
+	btst.b	#7,d0                           	| [bit  7,a] delay if color high bit is set
 	jeq	l_2a03                             	| [jr   z,0x2A03]
 	move.b	#0x04,d0                        	| [ld   a,0x04]
 	jbsr	delay_28D1                        	| [call delay_28D1]

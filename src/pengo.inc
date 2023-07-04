@@ -10,16 +10,16 @@
    
 	* cheats to test game
     * score is decimal format
-    OPT_START_SCORE=0
-	OPT_SKIP_THANKS_SCREEN=0
+    OPT_START_SCORE=30000
+	OPT_SKIP_THANKS_SCREEN=1
 	OPT_SKIP_TITLE_SCREEN=0
 	OPT_SKIP_ICE_PACK_SCREEN=0
 	OPT_SKIP_GAME_DEMO=0
-	OPT_ONLY_ONE_LIFE=0
+	OPT_ONLY_ONE_LIFE=1
 	* test mode: only first snobee is active
 	OPT_ONLY_ONE_SNOBEE=0
 	* draw maze quicky, like set 2, quick game start!
-	OPT_QUICK_MAZE_DRAW=0
+	OPT_QUICK_MAZE_DRAW=1
 	* make diamonds almost grouped
 	OPT_ALMOST_GROUP_DIAMONDS=0
 ***

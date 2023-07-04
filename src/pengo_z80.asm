@@ -4672,7 +4672,7 @@ enter_high_score_258f:
 2619: 21 43 A8      ld   hl,high_score_names_8842+1
 261C: 19            add  hl,de
 261D: E5            push hl
-261E: CD EF 26      call $26CF
+261E: CD EF 26      call highscore_enter_letter_26CF
 2621: E1            pop  hl
 2622: 3A D6 88      ld   a,(currently_active_letter_885E)
 2625: 77            ld   (hl),a
@@ -4680,7 +4680,7 @@ enter_high_score_258f:
 2627: DD 23         inc  ix
 2629: FD 23         inc  iy
 262B: E5            push hl
-262C: CD CF 26      call $26CF
+262C: CD CF 26      call highscore_enter_letter_26CF
 262F: E1            pop  hl
 2630: 3A F6 88      ld   a,(currently_active_letter_885E)
 2633: 77            ld   (hl),a
@@ -4688,7 +4688,7 @@ enter_high_score_258f:
 2635: DD 23         inc  ix
 2637: FD 23         inc  iy
 2639: E5            push hl
-263A: CD EF 26      call $26CF
+263A: CD EF 26      call highscore_enter_letter_26CF
 263D: E1            pop  hl
 263E: 3A F6 88      ld   a,(currently_active_letter_885E)
 2641: 77            ld   (hl),a
@@ -4775,6 +4775,7 @@ create_highscore_entry_269E:
 26CD: 77            ld   (hl),a
 26CE: C9            ret
 
+highscore_enter_letter_26CF:
 26CF: 3E 10         ld   a,$10
 26D1: 32 02 A8      ld   (cursor_color_8802),a
 26D4: 21 F6 88      ld   hl,currently_active_letter_885E

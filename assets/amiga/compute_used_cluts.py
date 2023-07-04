@@ -13,10 +13,24 @@ if os.path.exists(rw_json):
     with open(rw_json) as f:
         used_cluts_ = json.load(f)
 
-used_cluts = collections.defaultdict(list)
+used_cluts = collections.defaultdict(set)
 for k,v in used_cluts_.items():
     used_cluts[int(k)] = set(v)
 
+# force letters & digits
+alpha_clut = {0,
+    11,
+    16,
+    17,
+    23,
+    24,
+    25
+  }
+
+for k in range(ord('A'),ord('Z')+1):
+    used_cluts[k].update(alpha_clut)
+for k in range(ord('0'),ord('9')+1):
+    used_cluts[k].update(alpha_clut)
 
 for tile_index in range(512):
     offset = tile_index*128
