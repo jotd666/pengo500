@@ -1,11 +1,11 @@
 General:
 
+- highscore screen too fast (no speed regulation l_26d9 doesn't work)
+- load/save highscores
 - more sounds
 - aligned diamonds: flashing ice blocks missing last row
 - crash when level 1 starts after level 16 (in crash)
-- load/save highscores
 - demo level pengo seems to do weird things
-- highscore screen too fast (no speed regulation, timeouts for some reason irq takes control)
 
 Amiga:
 
@@ -14,8 +14,4 @@ Amiga:
 - log used cluts to filter out unused clut/char combination: check missing
 - clock how much time is really spent vs bonus screen time
 - complete sound
-- tile planar optimization to save memory?
-- title: wrong color for snobee that erase "squash the snobees" message:
-  debugging dynamic color sprite copper shit in progress
-  (also set all 3 colors at the copperlist Y (would fix title screen 4 snobees))
 - ACT 1 + flags: draw vertically on the side? shift pengo lives 2 pixels up?

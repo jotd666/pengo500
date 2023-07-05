@@ -976,7 +976,7 @@ display_demo_and_top_scores_6E1:
 	clr.w	counter_msb_8824             	| [ld   (counter_lsb_8824),hl]
  * init number of lives
 	jbsr	osd_read_dipswitches            	| [ld   a,(dip_switches_9040)]
-	not.b	d0                               	| [cpl] FUCK
+	not.b	d0                               	| [cpl]
 	and.b	#0x18,d0                         	| [and  $18]
 	ror.b	#3,d0                            	| [rrca]
 												| [rrca]
@@ -3609,6 +3609,7 @@ enter_high_score_258f:
 	jbsr	convert_number_2B40               	| [call convert_number_2B40]
 	jbsr	write_2_digits_to_screen_2C6F     	| [call write_2_digits_to_screen_2C6F]
 									| [ld   hl,$0616]
+	* write "AAA" as start name on the top
 	move.w	#0x1606,cursor_x_8800                	| [ld   (cursor_x_8800),hl]
 	move.b	#0x41,d0                        	| [ld   a,$41]
 	move.b	#0x03,d1                        	| [ld   b,$03]
@@ -3621,15 +3622,16 @@ l_25e4:
 	move.b	d0,d1                           	| [ld   b,a]
 	add.b	d0,d0                            	| [add  a,a]
 	add.b	d1,d0                            	| [add  a,b]
+	* compute X,Y for name on top-5 board
 	add.b	#0x0E,d0                         	| [add  a,$0E]
+	move.w	#0x1600,d3                        	| [ld   e,$16]
 	move.b	d0,d3                           	| [ld   d,a]
-	lsl.w	#8,d3
-	move.b	#0x16,d3                        	| [ld   e,$16]
 	move.w	d3,a3                        	| [push de]
 											| [pop  iy]
-	lea	0x0616.W,a2                      	| [ld   ix,$0616]  this is a value
+	lea	0x1606.W,a2                      	| [ld   ix,$0616]  this is a value
 	move.b	#0x02,d4                        	| [ld   e,$02]
-	move.w	d3,cursor_x_8800                	| [ld   (cursor_x_8800),de]
+	move.b	d4,cursor_x_8800                	| [ld   (cursor_x_8800),de]
+	move.b	d3,cursor_x_8800+1                	| [ld   (cursor_x_8800),de]
 	move.b	#0x18,d0                        	| [ld   a,$18]
 	move.b	#0x17,d1                        	| [ld   b,$17]
 l_2606:
@@ -3649,15 +3651,16 @@ l_2606:
 	lea	high_score_names_8842+1,a0     	| [ld   hl,high_score_names_8842+1]
 	add.w	d3,a0					| [add  hl,de]
 
-	
 	move.l	a0,-(sp)                        	| [push hl]
 	jbsr	highscore_enter_letter_26CF                            	| [call $26CF]
 	move.l	(sp)+,a0                        	| [pop  hl]
 	move.b	currently_active_letter_885E,d0 	| [ld   a,(currently_active_letter_885E)]
 	move.b	d0,(a0)+                         	| [ld   (hl),a]
 												| [inc  hl]
-	addq.w	#1,a2                           	| [inc  ix]
-	addq.w	#1,a3                           	| [inc  iy]
+	* because of endianness, to add 1 to X coords we have
+	* to add 0x100
+	add.w	#0x100,a2                           	| [inc  ix] upper name
+	add.w	#0x100,a3                           	| [inc  iy] name on board
 
 	move.l	a0,-(sp)                        	| [push hl]
 	jbsr	highscore_enter_letter_26CF                            	| [call $26CF]
@@ -3665,8 +3668,8 @@ l_2606:
 	move.b	currently_active_letter_885E,d0 	| [ld   a,(currently_active_letter_885E)]
 	move.b	d0,(a0)+                         	| [ld   (hl),a]
 	                           	| [inc  hl]
-	addq.w	#1,a2                           	| [inc  ix]
-	addq.w	#1,a3                           	| [inc  iy]
+	add.w	#0x100,a2                           	| [inc  ix]
+	add.w	#0x100,a3                           	| [inc  iy]
 
 	move.l	a0,-(sp)                        	| [push hl]
 	jbsr	highscore_enter_letter_26CF                            	| [call $26CF]
@@ -3675,6 +3678,7 @@ l_2606:
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 	move.b	#0x80,d0                        	| [ld   a,$80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
+	* now is a good time to save highscores
 	rts                                    	| [ret]
 
 compute_score_insertion_position_2648:
@@ -3784,7 +3788,13 @@ highscore_enter_letter_26CF:
 	lea	currently_active_letter_885E,a0	| [ld   hl,currently_active_letter_885E]
 	move.b	#0x41,(a0)                      	| [ld   (hl),$41]
 * loop to select current letter in name
+* strictly no speed regulation here, so we have to add some
 l_26d9:
+	st.b	vbl_sync_flag
+0:
+	tst.b	vbl_sync_flag
+	bne.b	0b
+
 	jbsr	write_active_letter_to_screen_2756	| [call write_active_letter_to_screen_2756]
 	move.b	#0x0A,d0                        	| [ld   a,$0A]
 	jbsr	delay_28D1                        	| [call delay_28D1]
@@ -3809,24 +3819,28 @@ l_26f4:
 	jne	l_2730                             	| [jr   nz,$2730]
 	btst.b	#3,d0                           	| [bit  3,a]
 	jne	l_273d                             	| [jr   nz,$273D]
-	move.b	sound_channel_0_struct_8C60,d0  	| [ld   a,(sound_channel_0_struct_8C60)]
-	tst.b	d0                               	| [and  a]
-	jne	l_2712                             	| [jr   nz,$2712]
-	move.l	(sp)+,a0                        	| [pop  hl]
-	move.l	(sp)+,a0                        	| [pop  hl]
-	move.b	#0x40,d0                        	| [ld   a,$40]
-	jbsr	delay_28D1                        	| [call delay_28D1]
-	rts                                    	| [ret]
-l_2712:
+		
+	* this code probably waits until some end of music or something
+	* if some timeout is reached, pops up the stack and return from "enter_high_score_258f"
+	
+*	move.b	sound_channel_0_struct_8C60,d0  	| [ld   a,(sound_channel_0_struct_8C60)]
+*	tst.b	d0                               	| [and  a]
+*	jne	l_2712                             	| [jr   nz,$2712]
+*	move.l	(sp)+,a0                        	| [pop  hl]
+*	move.l	(sp)+,a0                        	| [pop  hl]
+*	move.b	#0x40,d0                        	| [ld   a,$40]
+*	jbsr	delay_28D1                        	| [call delay_28D1]
+*	rts                                    	| [ret]
+*l_2712:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 	move.b	counter_msb_8824,d0             	| [ld   a,(counter_msb_8825)]
 	and.b	#0x07,d0                         	| [and  $07]
 	jne	l_26f4                             	| [jr   nz,$26F4]
-	move.b	#0x10,d1                        	| [ld   b,$10]
+	move.b	#0x10,d1                        	| [ld   b,$10] white letters
 	move.b	counter_msb_8824,d0             	| [ld   a,(counter_msb_8825)]
 	btst.b	#3,d0                           	| [bit  3,a]
 	jne	l_2727                             	| [jr   nz,$2727]
-	move.b	#0x16,d1                        	| [ld   b,$16]
+	move.b	#0x16,d1                        	| [ld   b,$16] red letters
 l_2727:
 	move.b	d1,d0                           	| [ld   a,b]
 	move.b	d0,cursor_color_8802            	| [ld   (cursor_color_8802),a]

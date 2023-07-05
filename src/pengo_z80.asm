@@ -4802,6 +4802,8 @@ highscore_enter_letter_26CF:
 26FE: 20 10         jr   nz,$2730
 2700: CB 5F         bit  3,a
 2702: 20 B9         jr   nz,$273D
+	; this code probably waits until some end of music or something
+	; if some timeout is reached, pops up the stack and return from "enter_high_score_258f"
 2704: 3A C8 84      ld   a,(sound_channel_0_struct_8C60)
 2707: A7            and  a
 2708: 20 A0         jr   nz,$2712
@@ -4809,7 +4811,7 @@ highscore_enter_letter_26CF:
 270B: E1            pop  hl
 270C: 3E C0         ld   a,$40
 270E: CD 51 28      call delay_28D1
-2711: C9            ret
+2711: C9            ret		; return to "enter_high_score_258f" caller directly
 2712: CD 75 08      call increase_counter_0875
 2715: 3A 25 88      ld   a,(counter_msb_8825)
 2718: E6 A7         and  $07
