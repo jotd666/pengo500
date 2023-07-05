@@ -722,10 +722,10 @@ osd_update_sprites:
 	cmp.w	#DYNAMIC_COPPER_ROWS,d1
 	bcc.b	25f		| too low: not doing it
 	* dynamic color mode: we need to update copperlist row 3 colors
-	lea		color_line_copper,a0
-	sub.w	#16,d1
+	lea		color_line_copper+4,a0
 	lsl.w	#4,d1		| times 16
 	add.w	d1,a0		| get relevant row
+
 	lea		(-6,a5),a5
 	sub.l	#_custom,a5
 	
@@ -1222,7 +1222,7 @@ osd_disable_vblank_interrupt:
 
 	
 reset_dynamic_colors:
-	lea	color_line_copper,a0
+	lea	color_line_copper+4,a0
 	move.w	#DYNAMIC_COPPER_ROWS-1,d3
 	move.w	#0x1FE,d2
 0:
@@ -2038,6 +2038,7 @@ blank_sprite:
 	
 	* main copperlist
 copperlist:
+	.word	0x0180,0xF00
     *.word   0x1801,0xFFFE	
 
 bg_bitplanes:
