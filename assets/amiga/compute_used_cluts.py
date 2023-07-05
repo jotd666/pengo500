@@ -40,6 +40,5 @@ for tile_index in range(512):
 
 used_cluts = {k:sorted(v) for k,v in sorted(used_cluts.items())}
 
-
 with open(rw_json,"w") as f:
-    json.dump(used_cluts,f,indent=2)
+   json.dump(used_cluts,f,indent=2)

@@ -43,7 +43,7 @@ ONE_TICK = 1
 	.error	"one snobee option in release mode"
 	.endif
 	.else
-OPT_ENABLE_LOGGING = 1
+OPT_ENABLE_LOGGING = 0
 OPT_ENABLE_PROFILING = 0
 * set to higher values than 1 to speed game up
 ONE_TICK = 1
@@ -712,11 +712,15 @@ osd_update_sprites:
 	move.w	d6,d5
 	bclr	#0,d5
 	lsl.w	#2,d5	| times 4*2
-	lea		_custom+color+34,a5	| sprite palette + 2 (first color skipped)
-	add.w	d5,a5
-	* copy 3 colors from cached registers
-	move.l	d3,(a5)+
-	move.w	d7,(a5)+
+	move.w	d5,d2
+	add.w	d2,d2
+	lea		sprite_cols+6,a5	| sprite palette + 2 (first color skipped)
+	add.w	d2,a5
+	* copy 3 colors from cached registers into sprite color copperlist
+	move.w	d3,(4,a5)
+	swap	d3
+	move.w	d3,(a5)
+	move.w	d7,(8,a5)
 	tst.b	dynamic_color_mode
 	beq.b	25f
 	cmp.w	#DYNAMIC_COPPER_ROWS,d1
@@ -726,13 +730,12 @@ osd_update_sprites:
 	lsl.w	#4,d1		| times 16
 	add.w	d1,a0		| get relevant row
 
-	lea		(-6,a5),a5
-	sub.l	#_custom,a5
+	add.w	#color+34,d5	| color register
 	
 	lea		(-6,a6),a6
 	.rept	3
-	move.w	a5,(a0)+
-	addq.w	#2,a5
+	move.w	d5,(a0)+
+	addq.w	#2,d5
 	move.w	(a6)+,(a0)+
 	.endr
 25:
@@ -875,7 +878,10 @@ alloc_sprite:
 * (only for ice-pack screen)
 
 osd_set_bank_selectors:
+	bsr		reset_dynamic_colors
 	move.b	d0,alternate_bank_selectors
+	* alternate bank: enable dynamic sprites
+	sne		dynamic_color_mode
 	bsr		load_palette_in_copperlist
 	rts
 	
@@ -1222,6 +1228,7 @@ osd_disable_vblank_interrupt:
 
 	
 reset_dynamic_colors:
+	movem.l	a0/d2-d3,-(a7)
 	lea	color_line_copper+4,a0
 	move.w	#DYNAMIC_COPPER_ROWS-1,d3
 	move.w	#0x1FE,d2
@@ -1233,14 +1240,18 @@ reset_dynamic_colors:
 	move.w	d2,(a0)
 	addq.w	#8,a0
 	dbf		d3,0b
+	movem.l	(a7)+,a0/d2-d3
 	rts
 
 	
 * < D6: video ram offset
 * < D0: data to write
 update_dynamic_color_mode:
+	tst.b	alternate_bank_selectors
+	bne.b	1f		| alternate bank selectors: don't change, stay dynamic
 	cmp.w	#0x19B,d6
 	beq.b	0f
+1:
 	rts
 0:
 	bsr		reset_dynamic_colors
@@ -1312,7 +1323,7 @@ osd_w_videoram:
 	* detect (R) sega registered logo
 	* to enable sprite dynamic color mode
 	bsr		update_dynamic_color_mode
-2:
+
 	cmp.b	(a1),d0
 	beq.b	0f		| already the proper value
 	move.b	d0,(a1)	| update logical grid
@@ -2038,15 +2049,14 @@ blank_sprite:
 	
 	* main copperlist
 copperlist:
-	.word	0x0180,0xF00
     *.word   0x1801,0xFFFE	
 
 bg_bitplanes:
 	DECL_4_BITPLANES	0
 copperlist_colors:
 	DECL_16_COLORS	0
-*sprite_cols:
-*	DECL_16_COLORS	16
+sprite_cols:
+	DECL_16_COLORS	16
 sprites:
     * #0
     .word    sprpt+0,0
