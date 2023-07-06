@@ -2129,7 +2129,7 @@ l_0ecc:
 
 display_game_over_0ed7:
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
-	move.b	#0x06,d1                        	| [ld   b,$06]
+	move.b	#0x06,d1                        	| [ld   b,$06] ??? no sound ???
 	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
 	lea	table_0F4C(pc),a0                  	| [ld   hl,table_0F4C]
 	jbsr	erase_rectangular_char_zone_0F2E  	| [call erase_rectangular_char_zone_0F2E]
@@ -2302,26 +2302,35 @@ str_ready_FF9:
 	
 play_sfx_18c7:
 	move.w	d0,-(sp)
+	tst.b	d1
+	bmi.b	0f
 	clr		D0
 	move.b	d1,d0
 	add.b	#0x10,d0		| not the same indices
 	jbsr		osd_sound_start
+0:
 	move.w	(sp)+,d0
 	rts
 play_sfx_1889:
 	move.w	d0,-(sp)
+	tst.b	d1
+	bmi.b	0f
 	clr		D0
 	move.b	d1,d0
 	jbsr		osd_sound_start
+0:
 	move.w	(sp)+,d0
 	rts
 	
 play_sfx_18AF:
 	move.w	d0,-(sp)
+	tst.b	d1
+	bmi.b	0f
 	clr		D0
 	move.b	d1,d0
 	add.b	#0x18,d0		| not the same indices
 	jbsr		osd_sound_start
+0:
 	move.w	(sp)+,d0
 	rts
 
@@ -8188,7 +8197,7 @@ l_424f:
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	addq.b	#1,(char_state_1F,a2)              	| [inc  (ix+char_state_1F)]
-	move.b	#0x05,d1                        	| [ld   b,$05]
+	move.b	#0x05,d1                        	| [ld   b,$05]   play pengo block push sound
 	jbsr	play_sfx_18AF                            	| [call $18AF]
 	rts                                    	| [ret]
 
@@ -8730,12 +8739,11 @@ l_455a:
 	move.b	#0x04,d1                        	| [ld   b,$04]
 	jbsr	play_sfx_18AF                            	| [call $18AF]
 	move.b	(0x0f,a2),d0                    	| [ld   a,(ix+$0f)]
-	tst.b	d0                               	| [and  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
 	move.b	#0x05,d1                        	| [ld   b,$05]
-	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7] snobee crushed
 	move.w	#0x20,d3                      	| [ld   de,$0020]
 	move.b	#0x0A,d0                        	| [ld   a,$0A]
 	lea	snobee_1_struct_8D00,a3        	| [ld   iy,snobee_1_struct_8D00]
@@ -8880,6 +8888,7 @@ l_464a:
 diamonds_are_aligned_4658:
 	clr.b	diamonds_are_aligned_flag
 	clr.b	(0x17,a2)                        	| [ld   (ix+$17),$00]
+	jbsr	osd_sound_stop			| added to stop in-game tune
 	move.b	#0x03,d1                        	| [ld   b,$03]
 	jbsr	play_sfx_1889                     	| diamond align music bonus [call play_sfx_1889]
 	move.b	#0x21,d4                        	| stars [ld   e,$21]

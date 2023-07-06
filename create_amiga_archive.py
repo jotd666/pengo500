@@ -11,8 +11,8 @@ subprocess.check_call(cmd_prefix+["clean"],cwd=os.path.join(progdir,"src"))
 
 subprocess.check_call(cmd_prefix+["RELEASE_BUILD=1"],cwd=os.path.join(progdir,"src"))
 # create archive
-with zipfile.ZipFile(os.path.join(progdir,"Galaxian500_HD.zip"),"w",compression=zipfile.ZIP_DEFLATED) as zf:
-    for file in ["readme.md","instructions.txt","galaxian","galaxian.slave"]:
+with zipfile.ZipFile(os.path.join(progdir,"Pengo500_HD.zip"),"w",compression=zipfile.ZIP_DEFLATED) as zf:
+    for file in ["readme.md","instructions.txt","pengo","pengo.slave"]:
         zf.write(os.path.join(progdir,file),arcname=file)
 
     zf.write(os.path.join(progdir,"assets","amiga","Galaxian.info"),"Galaxian.info")

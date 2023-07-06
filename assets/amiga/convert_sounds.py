@@ -24,29 +24,34 @@ EMPTY_SND = "EMPTY_SND"
 sound_dict = {
 "CREDIT_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate},
 "DRAW_MAZE_SND"             :{"index":1,"pattern":1,"loops":True,"volume":32},
-"START_SND"              :{"index":2,"pattern":0,"ticks":200,"loops":False,"volume":32},
+"START_SND"              :{"index":2,"pattern":0,"ticks":140,"loops":False,"volume":32},
 "DIAMONDS_ALIGNED_SND"               :{"index":3,"channel":0,"sample_rate":hq_sample_rate},
-"LEVEL_COMPLETED_SND"             :{"index":4,"pattern":10,"loops":False,"volume":32},
-"PLAYER_DIES_SND"             :{"index":5,"pattern":9,"loops":False,"volume":32},
+"LEVEL_COMPLETED_SND"             :{"index":4,"pattern":8,"ticks":190,"loops":False,"volume":32},
+"PLAYER_DIES_SND"             :{"index":5,"pattern":9,"ticks":150,"loops":False,"volume":32},
+"INTERMISSION_MUSIC_SND"             :{"index":7,"pattern":10,"loops":False,"volume":32},
 "IN_GAME_MUSIC_SND"             :{"index":8,"pattern":2,"loops":True,"volume":32},
 #"IN_GAME_MUSIC_FAST_SND"             :{"index":9,"pattern":5,"loops":True,"volume":32},
-"HISCORE_MUSIC_SND"             :{"index":9,"pattern":7,"loops":True,"volume":32},
+"HISCORE_MUSIC_SND"             :{"index":9,"pattern":14,"loops":True,"volume":32},
 
 
 # second channel (called by 18C7)
+"SNOBEE_CHICKEN_SND"               :{"index":0x11,"channel":1,"sample_rate":hq_sample_rate},
 "SNOBEE_EATEN_SND"               :{"index":0x12,"channel":1,"sample_rate":hq_sample_rate},
 "SNOBEE_HATCHING_SND"               :{"index":0x13,"channel":1,"sample_rate":hq_sample_rate},
 "SNOBEE_STUNNED_SND"               :{"index":0x16,"channel":1,"sample_rate":hq_sample_rate},
+"SNOBEE_CRUSHED_SND"               :{"index":0x15,"channel":1,"sample_rate":hq_sample_rate},
 "DIAMONDS_BONUS_SND"               :{"index":0x17,"channel":1,"sample_rate":hq_sample_rate},
 
 # third channel
 "EXTRA_LIFE_SND"               :{"index":0x19,"channel":2,"sample_rate":hq_sample_rate},
 "BLOCK_BROKEN_SND"               :{"index":0x1A,"channel":2,"sample_rate":hq_sample_rate},
 "SHAKE_WALL_SND"               :{"index":0x1B,"channel":2,"sample_rate":hq_sample_rate},
+"BLOCK_HITS_WALL_SND"               :{"index":0x1C,"channel":2,"sample_rate":hq_sample_rate},
+"BLOCK_SLIDES_SND"               :{"index":0x1D,"channel":2,"sample_rate":hq_sample_rate},
 
 }
 
-max_sound = max(x["index"] for x in sound_dict.values())+1
+max_sound = 0x30  # max(x["index"] for x in sound_dict.values())+1
 sound_table = [""]*max_sound
 sound_table_simple = ["\t.long\t0,0"]*max_sound
 
@@ -104,7 +109,8 @@ with open(sndfile,"w") as fst,open(outfile,"w") as fw:
         channel = details.get("channel")
         if channel is None:
             # if music loops, ticks are set to 1 so sound orders only can happen once (else music is started 50 times per second!!)
-            sound_table_simple[sound_index] = "\t.word\t{},{},{}\n\t.byte\t{},{}".format(2,details["pattern"],details.get("ticks",1),details["volume"],int(details["loops"]))
+
+            sound_table_simple[sound_index] = "\t.word\t{},{},{}\n\t.byte\t{},{}".format(2,details["pattern"],details.get("ticks",0),details["volume"],int(details["loops"]))
             continue
         wav_name = os.path.basename(wav_entry).lower()[:-4]
         wav_file = os.path.join(sound_dir,wav_name+".wav")
@@ -173,6 +179,6 @@ with open(sndfile,"w") as fst,open(outfile,"w") as fw:
     fst.write("\n\t.global\t{0}\n\n{0}:\n".format("sound_table"))
     for i,st in enumerate(sound_table_simple):
         fst.write(st)
-        fst.write(" | {}\n".format(i))
+        fst.write(" | {}\n\n".format(i))
 
 
