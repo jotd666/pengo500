@@ -36,9 +36,11 @@ _expmem
 _config
 	dc.b    "C1:X:invincibility:0;"    
 	dc.b    "C1:X:infinite lives:1;"       
-	dc.b    "C1:X:cheat function keys:2;"       
+	dc.b    "C1:X:cheat function keys:2;"
 	dc.b    "C2:L:start level:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16;"
-	dc.b    "C3:L:DSW bonus life:30000,50000;"
+	dc.b    "C3:X:DSW bonus life at 50000:0;"
+	dc.b    "C3:X:quick maze draw:1;"
+	dc.b    "C3:X:no intermissions:2;"
 	dc.b    "C4:L:DSW difficulty:easy,medium,hard,hardest;"
 	dc.b    "C5:L:DSW lives:default,2,3,4,5;"  
 	dc.b	0

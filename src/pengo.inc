@@ -19,8 +19,6 @@
 	OPT_ONLY_ONE_LIFE=0
 	* test mode: only first snobee is active
 	OPT_ONLY_ONE_SNOBEE=0
-	* draw maze quicky, like set 2, quick game start!
-	OPT_QUICK_MAZE_DRAW=0
 	* make diamonds almost grouped
 	OPT_ALMOST_GROUP_DIAMONDS=0
 ***

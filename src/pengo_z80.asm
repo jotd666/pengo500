@@ -278,7 +278,7 @@ check_coin_inserted_0010:
 ; by monsters fleeing the scene
 009D: 34            inc  (hl)
 009E: 3E 20         ld   a,$00
-00A0: DD 21 60 8C   ld   ix,sound_channel_0_struct_8C60
+00A0: DD 21 60 8C   ld   ix,sound_channel_0_music_playing_8C60
 00A4: CD 99 BA      call update_sound_channel_1A99
 00A7: 3E 29         ld   a,$01
 00A9: DD 21 70 8C   ld   ix,sound_channel_1_struct_8C70
@@ -652,8 +652,8 @@ register_coin_inserted_038B:
 0401: 32 AB 88      ld   (unknown_880B),a
 0404: 22 94 88      ld   (unknown_881C),hl
 0407: 22 BE 88      ld   (unknown_881E),hl
-040A: 21 60 8C      ld   hl,sound_channel_0_struct_8C60
-040D: 11 61 8C      ld   de,sound_channel_0_struct_8C60+1
+040A: 21 60 8C      ld   hl,sound_channel_0_music_playing_8C60
+040D: 11 61 8C      ld   de,sound_channel_0_music_playing_8C60+1
 0410: 01 F7 00      ld   bc,$005F
 0413: 36 00         ld   (hl),$00
 0415: ED B0         ldir
@@ -1330,7 +1330,7 @@ run_one_life_092D:
 09C3: C2 0B A2      jp   nz,level_completed_0A2B ; end of level
 09C6: 3E C0         ld   a,$40
 09C8: CD 51 08      call delay_28D1	;  intro music?
-09CB: 3A 68 24      ld   a,(sound_channel_0_struct_8C60)
+09CB: 3A 68 24      ld   a,(sound_channel_0_music_playing_8C60)
 09CE: A7            and  a
 09CF: 20 FA         jr   nz,$09CB
 ; set state to 6 (start, normal mode)
@@ -1351,7 +1351,7 @@ run_one_life_092D:
 09E5: 36 A0         ld   (hl),$80
 	
 main_game_loop_09E7: 
-09E7: 3A 68 24      ld   a,(sound_channel_0_struct_8C60)
+09E7: 3A 68 24      ld   a,(sound_channel_0_music_playing_8C60)
 09EA: A7            and  a
 09EB: 20 AF         jr   nz,$09F4
 09ED: F3            di
@@ -2927,7 +2927,7 @@ string_17D9:
 1888: C9            ret
 	
 play_tune_1889: F3            di
-188A: 21 48 A4      ld   hl,sound_channel_0_struct_8C60
+188A: 21 48 A4      ld   hl,sound_channel_0_music_playing_8C60
 188D: 04            inc  b
 188E: 28 9C         jr   z,$18A4
 1890: 05            dec  b
@@ -4804,7 +4804,7 @@ highscore_enter_letter_26CF:
 2702: 20 B9         jr   nz,$273D
 	; this code probably waits until some end of music or something
 	; if some timeout is reached, pops up the stack and return from "enter_high_score_258f"
-2704: 3A C8 84      ld   a,(sound_channel_0_struct_8C60)
+2704: 3A C8 84      ld   a,(sound_channel_0_music_playing_8C60)
 2707: A7            and  a
 2708: 20 A0         jr   nz,$2712
 270A: E1            pop  hl

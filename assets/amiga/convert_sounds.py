@@ -24,7 +24,7 @@ EMPTY_SND = "EMPTY_SND"
 sound_dict = {
 "CREDIT_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate},
 "DRAW_MAZE_SND"             :{"index":1,"pattern":1,"loops":True,"volume":32},
-"START_SND"              :{"index":2,"pattern":0,"ticks":140,"loops":False,"volume":32},
+"START_SND"              :{"index":2,"pattern":0,"loops":False,"volume":32},
 "DIAMONDS_ALIGNED_SND"               :{"index":3,"channel":0,"sample_rate":hq_sample_rate},
 "LEVEL_COMPLETED_SND"             :{"index":4,"pattern":8,"ticks":190,"loops":False,"volume":32},
 "PLAYER_DIES_SND"             :{"index":5,"pattern":9,"ticks":150,"loops":False,"volume":32},

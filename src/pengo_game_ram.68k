@@ -45,7 +45,7 @@
 	.global	time_counter_8C5B
 	.global	elapsed_seconds_since_start_of_round_8C5C
 	.global	elapsed_minutes_since_start_of_round_8C5D
-	.global	sound_channel_0_struct_8C60
+	.global	sound_channel_0_music_playing_8C60
 	.global	sound_channel_1_struct_8C70
 	.global	sound_channel_2_struct_8C80
 	.global	sound_channel_3_struct_8C90
@@ -189,7 +189,7 @@ elapsed_seconds_since_start_of_round_8C5C:
 	ds.b	0x01
 elapsed_minutes_since_start_of_round_8C5D:
 	ds.b	0x03
-sound_channel_0_struct_8C60:
+sound_channel_0_music_playing_8C60:
 	ds.b	0x10
 sound_channel_1_struct_8C70:
 	ds.b	0x10

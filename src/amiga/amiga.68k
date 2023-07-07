@@ -349,13 +349,19 @@ _user:
 *	bset	#3,d0	| upright
 *	bset	#2,d0	| demo sounds on
 
-	tst.l	dip_switch_bonus_life
+	move.l	misc_options,d1
+	btst	#0,d1
 	bne.b	0f
 	bset	#0,d0
 0:
 	not.b	d0		| active low
 	move.b	d0,dip_switches+1
 
+	btst	#1,d1
+	sne.b	quick_maze_draw_flag
+	btst	#2,d1
+	sne.b	no_intermissions_flag
+	
 osd_get_start_level:
 	move.l	start_level_option(pc),d0
 	and.l	#0x0F,d0
@@ -1887,7 +1893,7 @@ cheat_flags:
 start_level_option:
 		.long	0
 		.long	WHDLTAG_CUSTOM3_GET
-dip_switch_bonus_life:
+misc_options:
 		.long	0
 		.long	WHDLTAG_CUSTOM4_GET
 dip_switch_difficulty:

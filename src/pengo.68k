@@ -752,6 +752,8 @@ l_03d4:
 loop_0478:
 	                               	| [ld   a,0x00]
 	clr.b	currently_playing_8819       	| [ld   (currently_playing_8819),a]
+	* added: remove highscore music that could stick around
+	jbsr	osd_sound_stop
 	.ifeq	OPT_SKIP_THANKS_SCREEN
 	jbsr	display_thanks_for_playing_04A0   	| [call display_thanks_for_playing_04A0]
 	.endif
@@ -1433,12 +1435,16 @@ l_09a0:
 	move.b	#0x02,d1                        	| start music [ld   b,$02]
 	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
 
-	move.b	#0x40,d0                        	| [ld   a,$40]
-	jbsr	delay_28D1                        	|  intro music? [call delay_28D1]
-l_09cb:
-	move.b	sound_channel_0_struct_8C60,d0  	| [ld   a,(sound_channel_0_struct_8C60)]
-	tst.b	d0                               	| [and  a]
-	jne	l_09cb                             	| [jr   nz,$09CB]
+	*move.b	#0x40,d0                        	| [ld   a,$40]
+	move.b	#0xA0,d0                        	| wait some more
+	jbsr	delay_28D1                        	| [call delay_28D1] wait until intro music ends
+	* this code waited until music is finished to start round
+	* problem is that we don't have that feedback loop
+	* so we just have to increase the delay above and it will be the same!
+*l_09cb:
+*	move.b	sound_channel_0_music_playing_8C60,d0  	| [ld   a,(sound_channel_0_music_playing_8C60)]
+*	tst.b	d0                               	| [and  a]
+*	jne	l_09cb                             	| [jr   nz,$09CB]
 * set state to 6 (start, normal mode)
 * others modes: 4: fast music, 3: fast music, enemies giving up
 	move.b	#0x06,d0                        	| [ld   a,$06]
@@ -1461,7 +1467,7 @@ main_game_loop_09E7:
 	* wait for vbl sync
 	bsr		regulate_speed
 	
-	move.b	sound_channel_0_struct_8C60,d0  	| [ld   a,(sound_channel_0_struct_8C60)]
+	move.b	sound_channel_0_music_playing_8C60,d0  	| [ld   a,(sound_channel_0_music_playing_8C60)]
 	tst.b	d0                               	| [and  a]
 	jne	l_09f4                             	| [jr   nz,$09F4]
 
@@ -1596,6 +1602,8 @@ l_0b03:
 	jbsr	add_to_current_player_score_28AF                            	| [call $28AF]
 	move.b	#0x80,d0                        	| [ld   a,$80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
+	tst.b	no_intermissions_flag
+	bne.b	0f
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
 	and.b	#0x01,d0                         	| [and  $01]
 	bne.b	0f
@@ -3863,7 +3871,7 @@ l_26f4:
 	* this code probably waits until some end of music or something
 	* if some timeout is reached, pops up the stack and return from "enter_high_score_258f"
 	
-*	move.b	sound_channel_0_struct_8C60,d0  	| [ld   a,(sound_channel_0_struct_8C60)]
+*	move.b	sound_channel_0_music_playing_8C60,d0  	| [ld   a,(sound_channel_0_music_playing_8C60)]
 *	tst.b	d0                               	| [and  a]
 *	jne	l_2712                             	| [jr   nz,$2712]
 *	move.l	(sp)+,a0                        	| [pop  hl]
@@ -5090,9 +5098,10 @@ l_2f1b:
 	bsr		set_current_cursor_from_bc         	| [ld   (cursor_x_8800),bc]
 	jbsr	draw_attribute_9_line_2F2E        	| [call draw_attribute_9_line_2F2E]
 	move.b	#0x01,d0                        	| [ld   a,$01]
-	.ifeq	OPT_QUICK_MAZE_DRAW
+	tst.b	quick_maze_draw_flag
+	bne.b	0f
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	.endif
+0:
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2f1b                             	| [djnz $2F1B]
@@ -5543,10 +5552,11 @@ draw_one_hole_311D:
 0:
 	rts                                    	| [ret]
 l_314e:
-	.ifeq	OPT_QUICK_MAZE_DRAW
+	tst.b	quick_maze_draw_flag
+	bne.b	0f
 	move.b	#0x02,d0                        	| [ld   a,$02]
 	jbsr	delay_28D1                        	| [call delay_28D1]
-	.endif
+0:
 	rts                                    	| [ret]
 
 

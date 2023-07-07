@@ -15,6 +15,8 @@
 	.global stack_top
 	.global	start_level
 	.global	diamonds_are_aligned_flag
+	.global	quick_maze_draw_flag
+	.global no_intermissions_flag
 	.ifdef	__amiga__
 	
 	.ascii	"RAM_STRT"
@@ -74,6 +76,10 @@ invincible_flag:
 infinite_lives_flag:
 	.byte	0
 diamonds_are_aligned_flag:
+	.byte	0
+quick_maze_draw_flag:
+	.byte	0
+no_intermissions_flag:
 	.byte	0
 vb_ticks_count:
 	.byte	0

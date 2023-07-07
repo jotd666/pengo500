@@ -1,18 +1,15 @@
 General:
 
-- highscore screen letter flashing too fast (no speed regulation l_26d9 doesn't work)
-- load/save highscores
 - aligned diamonds: flashing ice blocks missing last row
-- crash when level 1 starts after level 16 (in crash)
-- demo level pengo seems to do weird things
-- game starts before start music ends: check that
+- demo level pengo seems to do weird things always the same move pattern
 
 Amiga:
 
+- cheat key for chicken
 - diamond countdown sound too short, should loop
-- when snobee chickens out no sound?
-- log used cluts to filter out unused clut/char combination: check missing
+- when snobee chickens out no sound? music restarts!
+- fast music when?
 - clock how much time is really spent vs bonus screen time
-- complete sound
 - highscore music seems too slow
 - ACT 1 + flags: draw vertically on the side? shift pengo lives 2 pixels up?
+- highscore screen letter flashing too fast (no speed regulation, sounds good on A1260...)
