@@ -20,8 +20,8 @@ DYNAMIC_COPPER_ROWS = 228
 SCREEN_ADDRESS = 0x8000
 
 
-SCORE_FILE_SIZE = 3
-BOB_16X16_PLANE_SIZE = 4*16
+SCORE_FILE_SIZE = 0x1E
+
 
 
 	.ifdef	RELEASE
@@ -340,6 +340,10 @@ _user:
 	lsl.b	#6,d0
 	
 	move.b	dip_switch_start_lives+3(pc),d1
+	sub.b	#1,d1
+	bpl.b	1f
+	move.w	#1,d1	| 3 lives
+1:
 	lsl.b	#3,d1
 	or.b	d1,d0
 *	bset	#3,d0	| upright
@@ -1717,9 +1721,10 @@ osd_read_high_scores:
 	* from DOS: just copy buffer
 	lea		high_score_buffer(pc),a1
 	* set highest score entry
+	move.w	#SCORE_FILE_SIZE-1,d0
+0:
     move.b    (a1)+,(a4)+
-    move.b    (a1)+,(a4)+
-    move.b    (a1)+,(a4)+	
+	dbf		d0,0b
 1:
 	movem.l	(a7)+,d0-d7/a0-a6
 	rts
@@ -1739,10 +1744,11 @@ osd_write_high_scores:
 0:
 	* from DOS: just copy buffer
 	lea		high_score_buffer(pc),a1
+	move.w	#SCORE_FILE_SIZE-1,d0
+0:
+	move.b	(a0)+,(a1)+
+	dbf		d0,0b
 
-	move.b	(a0)+,(a1)+
-	move.b	(a0)+,(a1)+
-	move.b	(a0)+,(a1)+
 	st.b	highscore_needs_saving
 1:
 	movem.l	(a7)+,d0-d7/a0-a6
@@ -1843,9 +1849,6 @@ read_args_string:
 	.byte	0
 	.align	2
 
-intro_sound_lock:
-	.word	0
-
 
 * 8 slots (indexed with the target sprite index, not
 * the amiga sprite index) with
@@ -1858,12 +1861,6 @@ hw_sprite_slots:
 amiga_sprite_slots:
 	ds.b	8
 
-alien_attack_loop_playing:
-	.word	0
-alien_swarm_loop_playing:
-	.word	0
-alien_swarm_loop_frequency:
-	.word	0
 old_intena:
 	.long	0
 old_dmacon:
@@ -1930,8 +1927,6 @@ pause_flag:
 alternate_bank_selectors:
 	.word	0
 	* sound variables
-sound_lock:
-	.word	0
 music_duration:
 	.word	0
 music_track_start_number:
@@ -1939,8 +1934,6 @@ music_track_start_number:
 music_pattern:
 	.word	0
 music_tick:
-	.word	0
-sound_muted:
 	.word	0
 intro_music_counter:
 	.word	0
@@ -1951,8 +1944,6 @@ _resload:
 _joypad_state:
 	.long	0
 _previous_joypad_state:
-	.long	0
-_previous_joypad_state_2:
 	.long	0
 _gfxbase:
 	.long	0
@@ -2008,7 +1999,6 @@ palette:
 	.ifndef	RELEASE
 	* easier to debug game to have memory aligned on 0x10000
 	.align	0x10000
-	.endif
 
 	.ifne	OPT_ENABLE_LOGGING
 	.section	.bss
@@ -2017,17 +2007,9 @@ tile_log_table:
 	* a lot of combinations aren't used (fortunately!)
 	ds.w	0x10000
 	.endif
-
-		.section .bsschip
-
-bg_screen_data_1:
-	ds.b	BG_SCREEN_SIZE
-	ds.b	NB_BYTES_PER_ROW*12*3
-	.ifne  OPT_ENABLE_DOUBLE_BUFFERING_BG
-bg_screen_data_2:
-	ds.b	BG_SCREEN_SIZE
-	ds.b	NB_BYTES_PER_ROW*12*3
 	.endif
+	.ascii	"CODE_END"
+
 
 	.section	.datachip
 	
@@ -2130,5 +2112,16 @@ color_row_29:
 	* in the next datachip sections
 	.align	8
 	
-_end_of_ng_data:
+		.section .bsschip
+
+bg_screen_data_1:
+	ds.b	BG_SCREEN_SIZE
+	ds.b	NB_BYTES_PER_ROW*12*3
+	.ifne  OPT_ENABLE_DOUBLE_BUFFERING_BG
+bg_screen_data_2:
+	ds.b	BG_SCREEN_SIZE
+	ds.b	NB_BYTES_PER_ROW*12*3
+	.endif
+	.align	8
+
 		

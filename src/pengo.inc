@@ -10,6 +10,7 @@
    
 	* cheats to test game
     * score is decimal format
+	* all options must be zeroed for release
     OPT_START_SCORE=0
 	OPT_SKIP_THANKS_SCREEN=0
 	OPT_SKIP_TITLE_SCREEN=0

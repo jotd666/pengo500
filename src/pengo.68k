@@ -733,7 +733,10 @@ l_03d4:
 	jbsr	init_highscore_table_2540         	| [call init_highscore_table_2540]
 
 	* load highscores from disk
-	*jbsr	osd_load_highscores
+	lea		hiscore_pos_5_8840,a0
+	jbsr	osd_read_high_scores
+	* copy first scrore to high score copy
+	move.w	hiscore_pos_5_8840+0x18,high_score_880C
 	
 	* no cocktail mode support!
 	clr.b	cocktail_mode_8818           	| [ld   (cocktail_mode_8818),a]
@@ -3714,6 +3717,8 @@ l_2606:
 	move.b	#0x80,d0                        	| [ld   a,$80]
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	* now is a good time to save highscores
+	lea		hiscore_pos_5_8840,a0
+	jbsr	osd_write_high_scores
 	rts                                    	| [ret]
 
 compute_score_insertion_position_2648:
