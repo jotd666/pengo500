@@ -787,6 +787,15 @@ display_thanks_for_playing_04A0:
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
 	jbsr	update_all_scores_2B10            	| [call update_all_scores_2B10]
 
+	.ifdef	__amiga__
+	lea		amiga_credits(pc),a0
+	jbsr	print_line_typewriter_style_29F4
+	lea		amiga_text_1(pc),a0
+	jbsr	print_line_typewriter_style_29F4
+	jbsr	print_line_typewriter_style_29F4
+	jbsr	print_line_typewriter_style_29F4
+	.endif
+	
 	lea	str_thanks_for_playing_try_once_more_4D0(pc),a0                      	| [ld   hl,0x04D0]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
 	jbsr	print_line_typewriter_style_29F4                   	| [call print_line_typewriter_style_29F4]
@@ -802,7 +811,24 @@ str_thanks_for_playing_try_once_more_4D0:
      dc.b	0x47,0x3A,0x20,0xA0,0x02,0x10,0x90,0x20,0x20,0x20,0x20,0x20,0x54,0x52,0x59,0x20   | G:...     TRY
      dc.b	0x4F,0x4E,0x43,0x45,0x20,0x4D,0x4F,0x52,0x45,0x20,0x3D,0x20,0x20,0x20,0x20,0xA0   | ONCE MORE =
 
-
+	.ifdef	__amiga__
+amiga_credits:
+	dc.b	0x02,0x1A,25+0x80
+	.ascii	"      A JOTD PORT     "
+	dc.b	0xA0
+amiga_text_1:
+	dc.b	0x02,0x1C,0x11
+	.ascii	"PRESS FIRE TO INSERT COI"
+	dc.b	0XCE
+	dc.b	0x04,0x1E,0x11
+	.ascii	"PRESS UP FOR 1P GAM"
+	dc.b	0XC5
+	dc.b	0x03,0x1F,0x11
+	.ascii	"PRESS DOWN FOR 2P GAM"
+	dc.b	0XC5
+	.endif
+	.align	2
+	
 display_title_screen_0521:
 	clr.b	d0                               	| [ld   a,$00]
 	move.b	d0,player_number_8816           	| [ld   (player_number_8816),a]

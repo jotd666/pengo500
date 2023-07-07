@@ -35,19 +35,19 @@ sound_dict = {
 
 
 # second channel (called by 18C7)
-"SNOBEE_CHICKEN_SND"               :{"index":0x11,"channel":1,"sample_rate":hq_sample_rate},
-"SNOBEE_EATEN_SND"               :{"index":0x12,"channel":1,"sample_rate":hq_sample_rate},
-"SNOBEE_HATCHING_SND"               :{"index":0x13,"channel":1,"sample_rate":hq_sample_rate},
-"SNOBEE_STUNNED_SND"               :{"index":0x16,"channel":1,"sample_rate":hq_sample_rate},
-"SNOBEE_CRUSHED_SND"               :{"index":0x15,"channel":1,"sample_rate":hq_sample_rate},
-"DIAMONDS_BONUS_SND"               :{"index":0x17,"channel":1,"sample_rate":hq_sample_rate},
+"SNOBEE_CHICKEN_SND"               :{"index":0x11,"channel":2,"sample_rate":hq_sample_rate},
+"SNOBEE_EATEN_SND"               :{"index":0x12,"channel":2,"sample_rate":hq_sample_rate},
+"SNOBEE_HATCHING_SND"               :{"index":0x13,"channel":2,"sample_rate":hq_sample_rate},
+"SNOBEE_STUNNED_SND"               :{"index":0x16,"channel":2,"sample_rate":hq_sample_rate},
+"SNOBEE_CRUSHED_SND"               :{"index":0x15,"channel":2,"sample_rate":hq_sample_rate},
+"DIAMONDS_BONUS_SND"               :{"index":0x17,"channel":2,"sample_rate":hq_sample_rate},
 
 # third channel
-"EXTRA_LIFE_SND"               :{"index":0x19,"channel":2,"sample_rate":hq_sample_rate},
-"BLOCK_BROKEN_SND"               :{"index":0x1A,"channel":2,"sample_rate":hq_sample_rate},
-"SHAKE_WALL_SND"               :{"index":0x1B,"channel":2,"sample_rate":hq_sample_rate},
-"BLOCK_HITS_WALL_SND"               :{"index":0x1C,"channel":2,"sample_rate":hq_sample_rate},
-"BLOCK_SLIDES_SND"               :{"index":0x1D,"channel":2,"sample_rate":hq_sample_rate},
+"EXTRA_LIFE_SND"               :{"index":0x19,"channel":3,"sample_rate":hq_sample_rate},
+"BLOCK_BROKEN_SND"               :{"index":0x1A,"channel":3,"sample_rate":hq_sample_rate},
+"SHAKE_WALL_SND"               :{"index":0x1B,"channel":3,"sample_rate":hq_sample_rate},
+"BLOCK_HITS_WALL_SND"               :{"index":0x1C,"channel":3,"sample_rate":hq_sample_rate},
+"BLOCK_SLIDES_SND"               :{"index":0x1D,"channel":3,"sample_rate":hq_sample_rate},
 
 }
 

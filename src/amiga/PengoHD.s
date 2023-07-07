@@ -7,8 +7,8 @@
 CHIPMEMSIZE = $200000
 EXPMEMSIZE = $00000
 	ELSE
-CHIPMEMSIZE = $200000
-EXPMEMSIZE = $200000
+CHIPMEMSIZE = $80000
+EXPMEMSIZE = $A0000
 	ENDC
 	
 _base	SLAVE_HEADER					; ws_security + ws_id
@@ -63,6 +63,7 @@ _name	dc.b	'Pengo',0
 _copy	dc.b	'1982 Sega',0
 _info
     dc.b	"Amiga version by JOTD",10,10
+	dc.b	"Music by no9",10,10
 	dc.b	"Cheat: F1: fake align diamonds",10
 	dc.b	"Cheat: F2: complete level",10
 	dc.b	0

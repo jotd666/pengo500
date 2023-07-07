@@ -922,6 +922,13 @@ osd_sound_start:
 	bra.b	1b
 	* music
 3:
+	* don't play if game not in play
+	* could have been handled at generic pengo.68k level
+	* but it's way simpler here. I suppose than the real game
+	* just turns music volume off to get away with it
+	tst.b	game_playing_8817
+	beq.b	1b
+	
 	* don't play if already playing
 	* (music_tick value is not important for looped tunes
 	* as long as it's not zero)

@@ -6,6 +6,7 @@ General:
 - crash when level 1 starts after level 16 (in crash)
 - demo level pengo seems to do weird things
 - game starts before start music ends: check that
+- music triggering during demo
 
 Amiga:
 
