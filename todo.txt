@@ -1,14 +1,9 @@
 General:
 
-- aligned diamonds: flashing ice blocks missing last row
-- demo level pengo seems to do weird things always the same move pattern
+- demo level pengo moves out of sync. That's a tricky one to solve...
 
 Amiga:
 
-- diamond countdown sound too short, should loop
-- test fast music when
-- fast music, faster music to integrate
-- clock how much time is really spent vs bonus screen time
-- highscore music seems too slow
-- ACT 1 + flagsshift pengo lives 2 pixels up?
+- faster music to integrate
+- highscore music is too slow
 - highscore screen letter flashing too fast (no speed regulation, sounds good on A1260...)

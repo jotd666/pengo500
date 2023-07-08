@@ -38,8 +38,9 @@
     .equ  PLAYER_DIES_SND,         0x05
     .equ  INTERMISSION_MUSIC_SND,         0x07
     .equ  IN_GAME_MUSIC_SND,         0x08
-    .equ  IN_GAME_MUSIC_FAST_SND,         0x09
     .equ  HISCORE_MUSIC_SND,         0x09
+    .equ  IN_GAME_MUSIC_FAST_SND,         0x0A
+    .equ  IN_GAME_MUSIC_FASTER_SND,         0x0B
     .equ  SNOBEE_CHICKEN_SND,         0x11
     .equ  SNOBEE_EATEN_SND,         0x12
     .equ  SNOBEE_HATCHING_SND,         0x13

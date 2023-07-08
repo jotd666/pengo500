@@ -18,7 +18,7 @@ outfile = os.path.join(src_dir,"sounds.68k")
 sndfile = os.path.join(src_dir,"sound_entries.68k")
 
 hq_sample_rate = 18000
-lq_sample_rate = hq_sample_rate//2
+vhq_sample_rate = 22050
 
 EMPTY_SND = "EMPTY_SND"
 sound_dict = {
@@ -31,6 +31,7 @@ sound_dict = {
 "INTERMISSION_MUSIC_SND"             :{"index":7,"pattern":10,"loops":False,"volume":32},
 "IN_GAME_MUSIC_SND"             :{"index":8,"pattern":2,"loops":True,"volume":32},
 "IN_GAME_MUSIC_FAST_SND"             :{"index":10,"pattern":5,"loops":True,"volume":32},
+"IN_GAME_MUSIC_FASTER_SND"             :{"index":11,"pattern":5,"loops":True,"volume":32},  # not ready yet
 "HISCORE_MUSIC_SND"             :{"index":9,"pattern":14,"loops":True,"volume":32},
 
 
@@ -40,7 +41,7 @@ sound_dict = {
 "SNOBEE_HATCHING_SND"               :{"index":0x13,"channel":2,"sample_rate":hq_sample_rate},
 "SNOBEE_STUNNED_SND"               :{"index":0x16,"channel":2,"sample_rate":hq_sample_rate},
 "SNOBEE_CRUSHED_SND"               :{"index":0x15,"channel":2,"sample_rate":hq_sample_rate},
-"DIAMONDS_BONUS_SND"               :{"index":0x17,"channel":2,"sample_rate":hq_sample_rate},
+"DIAMONDS_BONUS_SND"               :{"index":0x17,"channel":2,"loops":True,"sample_rate":vhq_sample_rate},
 
 # third channel
 "EXTRA_LIFE_SND"               :{"index":0x19,"channel":3,"sample_rate":hq_sample_rate},
@@ -111,61 +112,61 @@ with open(sndfile,"w") as fst,open(outfile,"w") as fw:
             # if music loops, ticks are set to 1 so sound orders only can happen once (else music is started 50 times per second!!)
 
             sound_table_simple[sound_index] = "\t.word\t{},{},{}\n\t.byte\t{},{}".format(2,details["pattern"],details.get("ticks",0),details["volume"],int(details["loops"]))
-            continue
-        wav_name = os.path.basename(wav_entry).lower()[:-4]
-        wav_file = os.path.join(sound_dir,wav_name+".wav")
-
-        def get_sox_cmd(sr,output):
-            return [sox,"--volume","1.0",wav_file,"--channels","1","--bits","8","-r",str(sr),"--encoding","signed-integer",output]
-
-
-        used_sampling_rate = details["sample_rate"]
-        used_priority = details.get("priority",1)
-
-        cmd = get_sox_cmd(used_sampling_rate,raw_file)
-
-        subprocess.check_call(cmd)
-        with open(raw_file,"rb") as f:
-            contents = f.read()
-
-        # compute max amplitude so we can feed the sound chip with an amped sound sample
-        # and reduce the replay volume. this gives better sound quality than replaying at max volume
-        # (thanks no9 for the tip!)
-        signed_data = [x if x < 128 else x-256 for x in contents]
-        maxsigned = max(signed_data)
-        minsigned = min(signed_data)
-
-        amp_ratio = max(maxsigned,abs(minsigned))/128
-
-        wav = os.path.splitext(wav_name)[0]
-        sound_table[sound_index] = "    SOUND_ENTRY {},{},{},{},{},{}\n".format(wav,len(signed_data)//2,channel,used_sampling_rate,int(64*amp_ratio),used_priority)
-        sound_table_simple[sound_index] = f"\t.long\t0x00010000,{wav}_sound"
-
-        if amp_ratio > 0:
-            maxed_contents = [int(x/amp_ratio) for x in signed_data]
         else:
-            maxed_contents = signed_data
+            wav_name = os.path.basename(wav_entry).lower()[:-4]
+            wav_file = os.path.join(sound_dir,wav_name+".wav")
 
-        signed_contents = bytes([x if x >= 0 else 256+x for x in maxed_contents])
-        # pre-pad with 0W, used by ptplayer for idling
-        if signed_contents[0] != b'\x00' and signed_contents[1] != b'\x00':
-            # add zeroes
-            signed_contents = struct.pack(">H",0) + signed_contents
+            def get_sox_cmd(sr,output):
+                return [sox,"--volume","1.0",wav_file,"--channels","1","--bits","8","-r",str(sr),"--encoding","signed-integer",output]
 
-        contents = signed_contents
-        # align on 16-bit
-        if len(contents)%2:
-            contents += b'\x00'
-        # pre-pad with 0W, used by ptplayer for idling
-        if contents[0] != b'\x00' and contents[1] != b'\x00':
-            # add zeroes
-            contents = b'\x00\x00' + contents
 
-        fw.write("{}_raw:   | {} bytes".format(wav,len(contents)))
+            used_sampling_rate = details["sample_rate"]
+            used_priority = details.get("priority",1)
 
-        if len(contents)>65530:
-            raise Exception(f"Sound {wav_entry} is too long")
-        write_asm(contents,fw)
+            cmd = get_sox_cmd(used_sampling_rate,raw_file)
+
+            subprocess.check_call(cmd)
+            with open(raw_file,"rb") as f:
+                contents = f.read()
+
+            # compute max amplitude so we can feed the sound chip with an amped sound sample
+            # and reduce the replay volume. this gives better sound quality than replaying at max volume
+            # (thanks no9 for the tip!)
+            signed_data = [x if x < 128 else x-256 for x in contents]
+            maxsigned = max(signed_data)
+            minsigned = min(signed_data)
+
+            amp_ratio = max(maxsigned,abs(minsigned))/128
+
+            wav = os.path.splitext(wav_name)[0]
+            sound_table[sound_index] = "    SOUND_ENTRY {},{},{},{},{},{}\n".format(wav,len(signed_data)//2,channel,used_sampling_rate,int(64*amp_ratio),used_priority)
+            sound_table_simple[sound_index] = f"\t.word\t1,{int(details.get('loops',0))}\n\t.long\t{wav}_sound"
+
+            if amp_ratio > 0:
+                maxed_contents = [int(x/amp_ratio) for x in signed_data]
+            else:
+                maxed_contents = signed_data
+
+            signed_contents = bytes([x if x >= 0 else 256+x for x in maxed_contents])
+            # pre-pad with 0W, used by ptplayer for idling
+            if signed_contents[0] != b'\x00' and signed_contents[1] != b'\x00':
+                # add zeroes
+                signed_contents = struct.pack(">H",0) + signed_contents
+
+            contents = signed_contents
+            # align on 16-bit
+            if len(contents)%2:
+                contents += b'\x00'
+            # pre-pad with 0W, used by ptplayer for idling
+            if contents[0] != b'\x00' and contents[1] != b'\x00':
+                # add zeroes
+                contents = b'\x00\x00' + contents
+
+            fw.write("{}_raw:   | {} bytes".format(wav,len(contents)))
+
+            if len(contents)>65530:
+                raise Exception(f"Sound {wav_entry} is too long")
+            write_asm(contents,fw)
 
     # make sure next section will be aligned
     with open(os.path.join(sound_dir,"pengo_conv.mod"),"rb") as f:

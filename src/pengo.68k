@@ -1626,10 +1626,10 @@ music_tempo_tune_table:
 	dc.b	0
 	dc.b	0
 	dc.b	0
-	dc.b	10
-	dc.b	10
+	dc.b	IN_GAME_MUSIC_FASTER_SND
+	dc.b	IN_GAME_MUSIC_FAST_SND
 	dc.b	0
-	dc.b	8
+	dc.b	IN_GAME_MUSIC_SND
 	
 text_start_0B20:
 	.byte	0x02,0x03,0x18,0x47,0x41,0x4D,0x45,0x20,0x54,0x49,0x4D,0x45,0x20,0x20,0x20,0x20  	 |	...GAME TIME
@@ -7784,8 +7784,8 @@ l_3ef0:
 	rts                                    	| [ret]
 l_3ef4:
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
-	jeq	l_3f27                             	| [jr   z,$3F27]
+												| [and  a]
+	jeq	handle_demo_moves_3f27                             	| [jr   z,$3F27]
 l_3efa:
 	clr.b	d0                               	| [xor  a]
 	move.b	d0,pengo_moving_direction_8CF4  	| [ld   (pengo_moving_direction_8CF4),a]
@@ -7815,7 +7815,7 @@ l_3f1b:
 	rts                                    	| [ret]
 	
 * game in demo mode (no human player)
-l_3f27:
+handle_demo_moves_3f27:
 	move.l	demo_move_table_pointer_8CF2,a0	| [ld   hl,(demo_move_table_pointer_8CF2)]
 	lea	demo_mode_var_8CF5,a1          	| [ld   de,demo_mode_var_8CF5]
 	exg	a1,a0                              	| [ex   de,hl]
@@ -7833,11 +7833,11 @@ l_3f3c:
 	addq.b	#1,(a0)                         	| [inc  (hl)]
 	exg	a1,a0                              	| [ex   de,hl]
 	btst.b	#2,d0                           	| [bit  2,a]
+	jeq	0f
 	move.w	d0,-(sp)                        	| [push af]
-	beq	0f
 	jbsr	l_3f9b                            	| [call nz,$3F9B]
-0:
 	move.w	(sp)+,d0                        	| [pop  af]
+0:
 	clr.b	(0x08,a2)                        	| [ld   (ix+$08),$00]
 	btst.b	#3,d0                           	| [bit  3,a]
 	bne.b	0f
@@ -7845,12 +7845,11 @@ l_3f3c:
 0:
 	and.b	#0x03,d0                         	| [and  $03]
 	move.b	d0,(0x04,a2)                    	| [ld   (ix+$04),a]
-	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
+	st.b	(0x08,a2)                 	| [ld   (ix+$08),$FF]
 	rts                                    	| [ret]
 	
 l_3f80:
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
@@ -9068,8 +9067,9 @@ l_46d0:
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_46d0                             	| [djnz $46D0]
-	st.b	d1                                	| [ld   b,$FF]
-	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
+	jbsr	osd_sound_stop
+												| [ld   b,$FF]
+											| [call play_sfx_18c7]
 	move.b	#0x08,d1                        	| [ld   b,$08]
 	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
 	move.b	#0x40,d0                        	| [ld   a,$40]
@@ -9175,19 +9175,23 @@ l_47e8:
 	rts                                    	| [ret]
 
 * change colors when diamonds are aligned
+* < D0: color to set
 change_ice_block_color_47fe:
+	* starting on the right
 	move.w	#0x8462,d6                      	| [ld   hl,$8462]
 	move.b	#0x1A,d1                        	| [ld   b,$1A]
 	* for each column
 l_4806:
 	move.w	d1,-(sp)                    	| [push bc]
-	move.w	#0x001D-1,d1                      	| [ld   bc,$001D]
+	* values need adaptation because original uses overlapping ldir
+	* do it once more
+	move.w	#0x001D,d1                      	| [ld   bc,$001D]
 0:
 	jbsr	osd_w_colorram			      	| [ld   (hl),a]
 	addq.w	#1,d6
 	dbf		d1,0b
-
-	addq.w	#3,d6                           	| [inc  hl] * 3
+	* add one less
+	addq.w	#2,d6                           	| [inc  hl] * 3
 	move.w	(sp)+,d1                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_4806                             	| [djnz $4806]

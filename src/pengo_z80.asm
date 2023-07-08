@@ -8210,7 +8210,7 @@ get_div8_iy_coords_3E8F:
 3EF3: C9            ret
 3EF4: 3A 19 88      ld   a,(currently_playing_8819)
 3EF7: A7            and  a
-3EF8: 28 2D         jr   z,$3F27
+3EF8: 28 2D         jr   z,handle_demo_moves_3f27
 3EFA: AF            xor  a
 3EFB: 32 F4 04      ld   (pengo_moving_direction_8CF4),a
 3EFE: DD 36 88 28   ld   (ix+$08),$00
@@ -8233,6 +8233,7 @@ get_div8_iy_coords_3E8F:
 3F23: 32 74 04      ld   (pengo_moving_direction_8CF4),a
 3F26: C9            ret
 ; game in demo mode (no human player)
+handle_demo_moves_3f27:
 3F27: 2A 72 04      ld   hl,(demo_move_table_pointer_8CF2)
 3F2A: 11 DD 0C      ld   de,demo_mode_var_8CF5
 3F2D: EB            ex   de,hl
