@@ -19,6 +19,7 @@ DYNAMIC_COPPER_ROWS = 228
 
 SCREEN_ADDRESS = 0x8000
 
+ROW_Y_OFFSET = 2
 
 SCORE_FILE_SIZE = 0x1E
 
@@ -694,6 +695,10 @@ osd_update_sprites:
 	add.b	#8,d0
 	not.b	d1
 	add.b	#16,d1
+	tst.b	alternate_bank_selectors
+	bne.b	222f
+	subq.b	#ROW_Y_OFFSET,d1
+222:
 	bsr		store_sprite_pos_16
 	move.l	d0,(a5)
 	* set colors
@@ -1346,12 +1351,20 @@ osd_w_videoram:
 1:
 	lea		bg_videoram,a1
 	add.w	d6,a1
+	
+	* force write of digits (force score refresh because of 2 lines hack)
+	cmp.b	#48,d0
+	bcs.b	2f
+	cmp.b	#58,d0
+	bcs.b	3f
+2:
 	* detect (R) sega registered logo
 	* to enable sprite dynamic color mode
 	bsr		update_dynamic_color_mode
 
 	cmp.b	(a1),d0
 	beq.b	0f		| already the proper value
+3:
 	move.b	d0,(a1)	| update logical grid
 	lea		bg_colorram,a1
 	move.b	(a1,d6.W),d1
@@ -1454,11 +1467,22 @@ update_bg_tile:
 	and.w	#0x1F,d6	| this is X
 	neg.w	d6
 	add.w	#32,d6
-1:		
+1:
 	lea		mulNB_BYTES_PER_ROW_table(pc),a0
 
 	move.l	bg_drawed_screen_ptr(pc),a1
+	* D3 = Y
 	add.w	d3,d3
+	beq.b	3f
+	tst.b	alternate_bank_selectors
+	bne.b	3f
+	* no-first-line hack: first row displayed isn't shifted
+	* but other lines are. We get away with it because what's there
+	* is score then pengo lives which aren't too high (2 first rows are black)
+	* shifting that way allows to see most of the 'ACT' bottom status bar, still
+	* slightly truncated but good enough.
+	lea	(-NB_BYTES_PER_ROW*ROW_Y_OFFSET,a1),a1
+3:
 	move.w	(a0,d3.w),d3
 	lsl.w	#3,d3		| times 8
 	add.w	d3,a1

@@ -1424,7 +1424,7 @@ l_0985:
 	move.b	d0,pengo_struct_8D80+0x13       	| [ld   (pengo_struct_8D80+$13),a]
 
 l_09a0:
-	jbsr	l_0d44                            	| [call $0D44]
+	jbsr	erase_life_in_play_0d44                            	| [call $0D44]
 	lea	pengo_struct_8D80,a2           	| [ld   ix,pengo_struct_8D80]
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
@@ -1895,7 +1895,7 @@ l_0d41:
 												| [inc  (hl)]
 	rts                                    	| [ret]
 
-l_0d44:
+erase_life_in_play_0d44:
 	jbsr	get_nb_lives_289E                 	| [call get_nb_lives_289E]
 	cmp.b	#0x05,d0                         	| [cp   $05]
 	bcs.b	0f
@@ -1914,6 +1914,12 @@ l_0d44:
 	bsr		set_current_cursor_from_hl        	| [ld   (cursor_x_8800),hl]
 	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
 	jbsr	put_blank_at_current_pos_2900     	| [call put_blank_at_current_pos_2900]
+
+	.ifdef	__amiga__
+	* hack: since drawing/erasing lives can destroy 1P score because of screen shift, update score
+	jbsr	update_and_display_p1_score_2BAE
+	.endif
+
 	rts                                    	| [ret]
 
 * position pengo at more or less center
@@ -4606,6 +4612,17 @@ write_2_digits_to_screen_2C6F:
 * draws SEGA, ACT x, and flags
 draw_status_bar_2C76:
 	lea	sega_1982_string_2CF4(pc),a0       	| [ld   hl,sega_1982_string_2CF4]
+	.ifdef	__amiga__
+	* easter egg for level 4
+	movem.l	a0,-(sp)
+	jbsr	get_level_number_288F             	| [call get_level_number_288F]
+	movem.l	(sp)+,a0
+	cmp.b	#4,d0
+	bne.b	0f
+	lea		jotd_2023_string_2CF4(pc),a0
+0:
+	.endif
+	
 	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
 	lea	act_string_2D02(pc),a0             	| [ld   hl,act_string_2D02]
 	jbsr	print_line_typewriter_style_29F4  	| [call print_line_typewriter_style_29F4]
@@ -4680,6 +4697,12 @@ l_2cc4:
 	subq.b	#1,d1                           	| [...]
 	jne	l_2cc4                             	| draws flags as long as needed [djnz $2CC4]
 	rts                                    	| [ret]
+	.ifdef	__amiga__
+jotd_2023_string_2CF4:
+	dc.b	0x11,0x21,0x10,0x40	| attributes + copyright char
+	.ascii	"JOTD 202"
+	dc.b	48+3+0x80
+	.endif
 sega_1982_string_2CF4:
 	dc.b	0x11,0x21,0x10,0x40	| attributes + copyright char
 	.ascii	"SEGA 198"
@@ -4738,6 +4761,12 @@ draw_lives_loop_2d26:
 	movem.w	(sp)+,d1/d2                        	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	draw_lives_loop_2d26                             	| [djnz $2D26]
+	
+	.ifdef	__amiga__
+	* hack: since drawing lives can destroy 1P score because of screen shift, update score
+	jbsr	update_and_display_p1_score_2BAE
+	.endif
+	
 	rts                                    	| [ret]
 
 display_eggs_2D4B:

@@ -10,5 +10,5 @@ Amiga:
 - fast music, faster music to integrate
 - clock how much time is really spent vs bonus screen time
 - highscore music seems too slow
-- ACT 1 + flags: draw vertically on the side? shift pengo lives 2 pixels up?
+- ACT 1 + flagsshift pengo lives 2 pixels up?
 - highscore screen letter flashing too fast (no speed regulation, sounds good on A1260...)

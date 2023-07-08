@@ -1314,7 +1314,7 @@ run_one_life_092D:
 099A: 32 BA 8D      ld   (pengo_struct_8D80+$12),a
 099D: 32 93 8D      ld   (pengo_struct_8D80+$13),a
 	
-09A0: CD C4 8D      call $0D44
+09A0: CD C4 8D      call erase_life_in_play_0d44
 09A3: DD 21 00 85   ld   ix,pengo_struct_8D80
 09A7: CD C6 9B      call display_snobee_sprite_33CE
 09AA: CD 2B 19      call set_character_sprite_code_and_color_39AB
@@ -1695,6 +1695,7 @@ player_dies_0CD2:
 0D42: 34            inc  (hl)
 0D43: C9            ret
 	
+erase_life_in_play_0d44:
 0D44: CD 36 08      call get_nb_lives_289E
 0D47: FE AD         cp   $05
 0D49: D0            ret  nc
