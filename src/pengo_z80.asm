@@ -1333,10 +1333,10 @@ run_one_life_092D:
 09CB: 3A 68 24      ld   a,(sound_channel_0_music_playing_8C60)
 09CE: A7            and  a
 09CF: 20 FA         jr   nz,$09CB
-; set state to 6 (start, normal mode)
+; set tempo to 6 (start, normal mode)
 ; others modes: 4: fast music, 3: fast music, enemies giving up
 09D1: 3E 06         ld   a,$06
-09D3: 32 BB 8C      ld   (game_phase_8CBB),a
+09D3: 32 BB 8C      ld   (music_tempo_8CBB),a
 09D6: AF            xor  a
 09D7: 21 5B 8C      ld   hl,time_counter_8C5B
 09DA: 77            ld   (hl),a
@@ -3301,7 +3301,7 @@ jump_table_1B45
 1BAE: DD CB 07 FE   bit  7,(ix+$07)
 1BB2: CC 6E 1B      call z,$1BEE
 1BB5: CD F8 B3      call $1BF8
-1BB8: 3A 3B 8C      ld   a,(game_phase_8CBB)
+1BB8: 3A 3B 8C      ld   a,(music_tempo_8CBB)
 1BBB: DD 77 A2      ld   (ix+$0a),a
 1BBE: C9            ret
 1BBF: E1            pop  hl
@@ -3393,7 +3393,7 @@ jump_table_1B45
 1C4B: CD 68 94      call $1C68
 1C4E: DD 73 02      ld   (ix+$02),e
 1C51: DD 72 8B      ld   (ix+$03),d
-1C54: 3A 33 8C      ld   a,(game_phase_8CBB)
+1C54: 3A 33 8C      ld   a,(music_tempo_8CBB)
 1C57: DD 77 0A      ld   (ix+$0a),a
 1C5A: DD 77 0B      ld   (ix+$0b),a
 1C5D: AF            xor  a
@@ -6691,7 +6691,7 @@ snobees_play_chicken_3403:
 3415: DD 77 1E      ld   (ix+ai_mode_1E),a ; set A.I. "flee" mode
 
 3418: 3E 8B         ld   a,$03
-341A: 32 33 8C      ld   (game_phase_8CBB),a
+341A: 32 33 8C      ld   (music_tempo_8CBB),a
 341D: 06 FF         ld   b,$FF
 341F: CD A1 90      call play_tune_1889
 3422: 06 80         ld   b,$09			; super fast game music
@@ -7830,7 +7830,7 @@ spawn_snobee_if_remaining_eggs_3c4b:
 3C64: B8            cp   b
 3C65: D0            ret  nc
 3C66: 3E 8C         ld   a,$04
-3C68: 32 33 A4      ld   (game_phase_8CBB),a
+3C68: 32 33 A4      ld   (music_tempo_8CBB),a
 3C6B: C9            ret
 
 hatch_one_egg_3c6c:

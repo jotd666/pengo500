@@ -68,6 +68,7 @@ _info
 	dc.b	"Music by no9",10,10
 	dc.b	"Cheat: F1: fake align diamonds",10
 	dc.b	"Cheat: F2: complete level",10
+	dc.b	"Cheat: F3: snobee flees",10
 	dc.b	0
 _kickname   dc.b    0
 ;--- version id

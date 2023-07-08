@@ -30,7 +30,7 @@ sound_dict = {
 "PLAYER_DIES_SND"             :{"index":5,"pattern":9,"ticks":150,"loops":False,"volume":32},
 "INTERMISSION_MUSIC_SND"             :{"index":7,"pattern":10,"loops":False,"volume":32},
 "IN_GAME_MUSIC_SND"             :{"index":8,"pattern":2,"loops":True,"volume":32},
-#"IN_GAME_MUSIC_FAST_SND"             :{"index":9,"pattern":5,"loops":True,"volume":32},
+"IN_GAME_MUSIC_FAST_SND"             :{"index":10,"pattern":5,"loops":True,"volume":32},
 "HISCORE_MUSIC_SND"             :{"index":9,"pattern":14,"loops":True,"volume":32},
 
 

@@ -1771,7 +1771,7 @@ handle_keyboard:
 	LEA	0x00BFD000,A5
 	MOVEQ	#0x08,D0
 	AND.B	0x1D01(A5),D0
-	BEQ.b	1f
+	jeq		1f
 	MOVE.B	0x1C01(A5),D0
 	NOT.B	D0
 	ROR.B	#1,D0		| raw key code here
@@ -1800,6 +1800,11 @@ handle_keyboard:
 	bne.b	0f
 	* no snobees: level completed
 	clr.b	remaining_alive_snobees_8D98
+0:
+	cmp.b	#0x52,d0	| F3 key
+	bne.b	0f
+	* snobees play chicken
+	st.b	snobee_chicken_flag
 0:
 	tst.l	_resload
 	bne.b	0f

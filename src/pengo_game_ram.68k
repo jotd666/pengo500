@@ -50,7 +50,7 @@
 	.global	sound_channel_2_struct_8C80
 	.global	sound_channel_3_struct_8C90
 	.global	sound_channel_4_struct_8CA0
-	.global	game_phase_8CBB
+	.global	music_tempo_8CBB
 	.global	sound_related_8CBE
 	.global	sound_related_8CBF
 	.global	breaking_block_slots_8CC0
@@ -199,7 +199,7 @@ sound_channel_3_struct_8C90:
 	ds.b	0x10
 sound_channel_4_struct_8CA0:
 	ds.b	0x1b
-game_phase_8CBB:
+music_tempo_8CBB:
 	ds.b	0x03
 sound_related_8CBE:
 	ds.b	0x01

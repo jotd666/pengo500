@@ -1445,10 +1445,10 @@ l_09a0:
 *	move.b	sound_channel_0_music_playing_8C60,d0  	| [ld   a,(sound_channel_0_music_playing_8C60)]
 *	tst.b	d0                               	| [and  a]
 *	jne	l_09cb                             	| [jr   nz,$09CB]
-* set state to 6 (start, normal mode)
-* others modes: 4: fast music, 3: fast music, enemies giving up
+* set tempo to 6 (start, normal mode)
+* others modes: 4: fast music, 3: faster music, enemies giving up
 	move.b	#0x06,d0                        	| [ld   a,$06]
-	move.b	d0,game_phase_8CBB              	| [ld   (game_phase_8CBB),a]
+	move.b	d0,music_tempo_8CBB              	| [ld   (music_tempo_8CBB),a]
 	clr.b	d0                               	| [xor  a]
 	lea	time_counter_8C5B,a0           	| [ld   hl,time_counter_8C5B]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
@@ -1471,10 +1471,19 @@ main_game_loop_09E7:
 	tst.b	d0                               	| [and  a]
 	jne	l_09f4                             	| [jr   nz,$09F4]
 
-	jbsr		osd_disable_vblank_interrupt      | [di]
-	move.b	#0x08,d1                        	| play in-game music [ld   b,$08]
+	*jbsr		osd_disable_vblank_interrupt      | [di]
+	lea		music_tempo_tune_table(pc),a0
+	clr		d0
+	move.b	music_tempo_8CBB,d0
+	move.b	(a0,d0.w),d1
 	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
-	jbsr		osd_enable_vblank_interrupt    | [ei]
+	*jbsr		osd_enable_vblank_interrupt    | [ei]
+	tst.b	play_chicken_sfx_flag
+	beq.b	0f
+	move.b	#0x01,d1                        	| [ld   b,$01]
+	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7] "chicken" sound
+	clr.b	play_chicken_sfx_flag
+0:
 
 l_09f4:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
@@ -1613,6 +1622,15 @@ l_0b03:
 	addq.b	#1,(a0)                         	| [inc  (hl)]
 	jra	run_one_life_092D                  	| [jp   run_one_life_092D]
 
+music_tempo_tune_table:
+	dc.b	0
+	dc.b	0
+	dc.b	0
+	dc.b	10
+	dc.b	10
+	dc.b	0
+	dc.b	8
+	
 text_start_0B20:
 	.byte	0x02,0x03,0x18,0x47,0x41,0x4D,0x45,0x20,0x54,0x49,0x4D,0x45,0x20,0x20,0x20,0x20  	 |	...GAME TIME
 	.byte	0x4D,0x49,0x4E,0x3A,0x20,0x20,0x20,0x53,0x45,0x43,0xBA,0x02,0x06,0x11,0x46,0x52  	 |	MIN:   SECº...FR
@@ -5954,6 +5972,8 @@ handle_snobee_direction_change_33D8:
 	move.b	elapsed_minutes_since_start_of_round_8C5D,d0	| [ld   a,(elapsed_minutes_since_start_of_round_8C5D)]
 	cmp.b	#0x02,d0                         	| [cp   $02]
 	jcc	snobees_play_chicken_3403          	| after 2 minutes, snobees run to the corners and disappear [jr   nc,snobees_play_chicken_3403]
+	tst.b	snobee_chicken_flag
+	jne		snobees_play_chicken_3403	
 
 	move.b	remaining_alive_snobees_8D98,d0 	| [ld   a,(remaining_alive_snobees_8D98)]
 	cmp.b	#0x03,d0                         	| [cp   $03]
@@ -5970,6 +5990,7 @@ l_33fc:
 	jcs	snobee_normal_movement_342e                             	| [jr   c,$342E]
  * after 15 seconds, the last snobee runs and disappears
 snobees_play_chicken_3403:
+	clr.b	snobee_chicken_flag
 	move.b	(ai_mode_1E,a2),d0                 	| [ld   a,(ix+ai_mode_1E)]
 	cmp.b	#0x09,d0                         	| [cp   $09]
 	jcc	apply_snobee_behaviour_3461        	| already in one of the "chicken" states [jr   nc,apply_snobee_behaviour_3461]
@@ -5981,14 +6002,13 @@ snobees_play_chicken_3403:
 	add.b	#0x09,d0                         	| [add  a,$09]
 	move.b	d0,(ai_mode_1E,a2)                 	| set A.I. "flee" mode [ld   (ix+ai_mode_1E),a]
 
+	* accelerated music
 	move.b	#0x03,d0                        	| [ld   a,$03]
-	move.b	d0,game_phase_8CBB              	| [ld   (game_phase_8CBB),a]
-	st.b	d1                                	| [ld   b,$FF]
-	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
-	move.b	#0x09,d1                        	| super fast game music [ld   b,$09]
-	jbsr	play_sfx_1889                     	| [call play_sfx_1889]
-	move.b	#0x01,d1                        	| [ld   b,$01]
-	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7]
+	move.b	d0,music_tempo_8CBB              	| [ld   (music_tempo_8CBB),a]
+	* sound code removed altogether, we'll use music tempo in the main loop
+	* also we set a flag here to play chicken sound as we know that the music
+	* is going to play and possibly stop sounds (on amiga at least)
+	st.b	play_chicken_sfx_flag
 	jra	apply_snobee_behaviour_3461        	| [jr   apply_snobee_behaviour_3461]
 
  * normal movement
@@ -7279,9 +7299,9 @@ spawn_snobee_if_remaining_eggs_3c4b:
 	bcs.b	0f
 	rts                                    	| [ret  nc]
 0:
-	* change game phase. Maybe music accelerates?
+	* change game music tempo
 	move.b	#0x04,d0                        	| [ld   a,$04]
-	move.b	d0,game_phase_8CBB              	| [ld   (game_phase_8CBB),a]
+	move.b	d0,music_tempo_8CBB              	| [ld   (music_tempo_8CBB),a]
 	rts                                    	| [ret]
 
 hatch_one_egg_3c6c:
