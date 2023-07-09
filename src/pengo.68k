@@ -8931,7 +8931,7 @@ l_45eb:
 	
 check_if_diamonds_are_aligned_4612:
 	tst.b	diamonds_are_aligned_flag
-	bne.b	diamonds_are_aligned_4658
+	bne.b	diamonds_are_aligned_4658		| cheat key
 	bsr		get_diamond_block_1_xy_8DB0_to_bc  	| [ld   bc,(diamond_block_1_xy_8DB0)]
 	bsr		get_diamond_block_2_xy_8DB2_to_de  	| [ld   de,(diamond_block_2_xy_8DB2)]
 	jbsr	l_462a                            	| [call $462A]
@@ -9134,7 +9134,7 @@ l_4767:
 table_476C:
 	.byte	0x09,0x10,0x10,0x0A,0x05,0x0A,0x11,0x18,0x42,0x4F,0x4E,0x55,0xD3,0x0B,0x12,0x10   |  .......BONUÓ...
 	.byte	0x31,0x30,0x30,0x30,0xB0,0x0E,0x13,0x19,0x50,0x54,0x53,0xBA,0x0B,0x12,0x10,0x20   | 1000°...PTSº...
-	.byte	0x35,0x30,0x30
+	.byte	0x35,0x30,0x30,0xB0
 	.align	2
 stun_snobee_if_alive_4790:
 	jbsr	display_snobee_sprite_33CE        	| [call display_snobee_sprite_33CE]

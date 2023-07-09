@@ -153,31 +153,6 @@ w\@:
 	add.w	#32,d0	| mirror: X is computed
 .endm
 
-* < D0,D1 as amiga X,Y
-* > D0 as plane offset
-* > D1 recieves original D1*240 (can be tested against the limit
-* for post-processing)
-.macro	GET_PLANE_OFFSET_FROM_XY
-	* now multiply D1 by 240
-	lea		mulNB_BYTES_PER_ROW_table(pc),a1
-	.ifdef	NO68020
-	add.w	d1,d1
-	move.w	(a1,d1.w),d1
-	.else
-	move.w	(a1,d1.w*2),d1		| times 40
-	.endif
-	lsl.w	#3,d1		| times 8
-	* add y offset to screen data	
-	add.w	d1,d0	
-	.endm
-.macro GET_XY_ADDRESS  base_address
-	GET_XY_FROM_OFFSET
-	GET_PLANE_OFFSET_FROM_XY	
-	* add x offset to screen data
-	lea		(\base_address,d0.w),a1
-.endm
-
-
 
 * exports
 
@@ -247,25 +222,16 @@ _user:
     jsr _LVOOpenLibrary(a6)
     move.l  d0,_dosbase
 
-	bra		3f
-	* todo readargs if kick > 1.3
-	*move.l	$4,A6
-	*move.w	LIB_VERSION(A6),D1	; exec library version
-	*cmp.w	D0,D1
-	*bcc.s	knewer
-	*moveq.l	#-1,D0
+	lea	read_args_string(pc),a0
+	lea	program_args(pc),a1
+	move.l	#program_args_end-program_args,d0
+	lsr.l	#2,d0		| number of longs
 	
-	move.l	#read_args_string,d1
-	move.l	#program_args,d2
-	moveq.l	#0,d3
-	move.l	_dosbase,A6
-	jsr	_LVOReadArgs(a6)
+	bsr	get_args_BCPL
 
-	move.l	d0,rdargs_struct		| NULL is OK
-	bne	0f
-	jmp		_LVOExit(a6)
 0:	
 	lea		program_args,a0
+
 	move.l	(A0)+,D0	| INVINCIBLE/S
 	beq.b	1f
 	or.l	#1,cheat_flags
@@ -274,19 +240,64 @@ _user:
 	beq.b	2f
 	or.l	#2,cheat_flags
 2:
+	move.l	(A0)+,D0	| CHEATKEYS/S
+	beq.b	2f
+	or.l	#4,cheat_flags
+2:
+	move.l	(A0)+,D0	| STARTLEVEL/S
+	beq.b	2f
+	bsr		bcpl_string_to_int
+	subq	#1,d0
+	move.l	d0,start_level_option
+
+2:
+	moveq.l	#0,d7
 
 
+	move.l	(A0)+,D0	| BAT50000/S
+	beq.b	2f
+	bset	#0,d7
+2:
+	move.l	(A0)+,D0	| QUICKMAZEDRAW/S
+	beq.b	2f
+	bset	#1,d7
+2:
 
+	move.l	(A0)+,D0	| NOINTERMISSIONS/S
+	beq.b	2f
+	bset	#2,d7
+2:
 
-	move.l	rdargs_struct,d1
-	jsr		_LVOFreeArgs(a6)
+	move.l	(A0)+,D0	| ALTMUSIC/S
+	beq.b	2f
+	bset	#3,d7
+2:
+
+	move.l	(A0)+,D0	| SKILL/S
+	beq.b	2f
+	bsr		bcpl_string_to_int
+	move.l	d0,dip_switch_difficulty
+2:
+	move.l	(A0)+,D0	| STARTLIVES/S
+	beq.b	2f
+	bsr		bcpl_string_to_int
+	subq	#2,d0
+	bmi.b	2f
+	move.l	d0,dip_switch_start_lives
+	bra.b	3f
+2:
+	move.l	#2,dip_switch_start_lives		| 3 lives default
 3:
+	
+	move.l	d7,misc_options
+	
 	bsr		store_system
 	
 	lea		_custom,a5
 	lea		debug_copperlist,a0
 	move.l	a0,cop1lc(a5)
 
+	
 	move.l	4.W,A6
 	lea graphicsname,a1
     moveq.l #0,d0
@@ -404,7 +415,148 @@ eye_catcher:
 * we're not doing things the NeoGeo way
 		rts
 
+* < D0: bcpl string (with leading size byte)
+* < A1: dest C string
+bcpl_arg_string_copy:
+    movem.l D0-D2/A0-A1,-(a7)
+	lsl.l	#2,d0
+	moveq.l	#0,d2
+    move.l  d0,a0
+	move.b	(a0)+,d2	| size
+	beq.b	1f
+	subq	#1,d2
+0:
+	move.b	(a0)+,(a1)+
+	dbf		d2,0b
+1:
+    movem.l (a7)+,D0-D2/A0-A1
+    rts
 
+
+bcpl_string_to_int:
+    movem.l A0/A1,-(a7)
+    lea temp_filename_buffer(pc),a1
+    bsr bcpl_arg_string_copy
+    * convert to integer
+    move.l  a1,a0
+    * < A0: pointer on C string
+    * > D0: value
+    * > D1: -1 if ok, position of the string if error
+    bsr parse_integer
+    movem.l  (a7)+,a0/a1
+	rts
+	
+* parse integer from string
+* < A0: pointer on C string
+* > D0: value
+* > D1: -1 if ok, position of the string if error
+parse_integer:
+    movem.l  d2/d3,-(a7)
+    * go to end of string
+    moveq.l #-1,d1
+.loop1:
+    addq.l  #1,d1
+    tst.b   (a0,d1.w)
+    bne.b   .loop1
+    * d1 is the number of chars
+    moveq.l #0,d0
+    moveq.l #0,d2
+    subq.l  #2,d1   | 10th power minus 1
+.loop2:
+    move.b  (a0)+,d2
+    beq.b   .out
+    
+    cmp.b   #32,d2
+    beq.b   .skip
+    sub.b   #48,d2
+    bcs.b   .error
+    cmp.b   #10,d2
+    bcc.b   .error
+    move.w  d1,d3
+    bmi.b   .doadd
+.muloop:
+    mulu    #10,d2
+    dbf d3,.muloop
+.doadd:
+    add.l   d2,d0
+.skip:
+    subq.l  #1,d1
+    bra.b   .loop2
+.out:    
+    movem.l  (a7)+,d2/d3
+    rts
+.error:
+    moveq.l #0,d0
+    bra.b   .error
+	
+    * thanks Toni for this 1.3 read argument code
+BCPL_RdArgs = 78
+	
+	* a1 = pointer to result array. Must be LONG aligned!
+	* a0 = formatting string. BSTR!
+	* d0 = size of result array (number of LONGs)
+get_args_BCPL:
+	movem.l d2/d3/d4,-(sp)
+	move.l d0,d3
+	moveq #BCPL_RdArgs,d0
+	move.l a0,d1
+	lsr.l #2,d1
+	move.l a1,d2
+	lsr.l #2,d2
+	moveq #0,d4
+	bsr.s call_bcpl
+	movem.l (sp)+,d2/d3/d4
+	rts
+
+	* d0 = gv index
+	* d1-d4 = bcpl parms
+
+BCPL_STACK = 3000
+
+call_bcpl:
+	movem.l d2-d7/a2-a6,-(sp)
+
+	move.l d0,d6
+	move.l d1,d5
+
+	move.l 4.w,a6
+	move.l	_dosbase(pc),a5
+
+
+	sub.l a1,a1
+	jsr	_LVOFindTask(a6)
+	move.l d0,a4
+
+	* allocate BCPL stack
+	move.l #BCPL_STACK,d0
+	move.l #65536+1,d1
+	jsr	_LVOAllocMem(a6)
+	move.l d0,d7
+	beq.s 0f
+	
+	movem.l d7/a5/a6,-(sp)
+
+	moveq #0,d0
+	move.l d5,d1
+	sub.l a0,a0
+	move.l d7,a1
+	lea 3*4(a1),a1
+	move.l 136(a4),a2
+	lsl.w #2,d6
+	move.l 0(a2,d6.w),a4
+	movem.l 46(a5),a5/a6
+	jsr (a5) | call bcpl!
+	
+	movem.l (sp)+,d7/a5/a6
+
+0:
+	move.l d7,a1
+	move.l #BCPL_STACK,d0
+	jsr	_LVOFreeMem(a6)
+
+
+	movem.l (sp)+,d2-d7/a2-a6
+	rts
 
 * change return address from vblank
 * D0: return address (0: no change)
@@ -969,7 +1121,6 @@ osd_sound_start:
 	cmp.b	music_track_start_number(pc),d1
 	beq.b	1b		| same track, skip
 
-	move.w	#1,0x200
     movem.l d0-a6,-(a7)
 	bsr		osd_sound_stop
     lea _custom,a6
@@ -1886,15 +2037,16 @@ beamdelay:
 	
 	MUL_TABLE	NB_BYTES_PER_ROW,288
 
-
-rdargs_struct:
-	dc.l	0
-program_args:
-	ds.l	40,0	
+	.align	4		| leave this long word alignment
+program_args:	ds.l	256,0
+program_args_end:
+	
 read_args_string:
-	.ascii	"STARTLIVES/K/N,SKILL/K/N,STARTAREA/K/N,"
-	.ascii	"INVINCIBLE/S,INFLIVES/S"
-	.byte	0
+	.byte	read_args_string_end-read_args_string+1
+	.ascii	"INVINCIBLE/S,INFLIVES/S,CHEATKEYS/S,STARTLEVEL/K/N,"
+	.ascii	"BAT50000/S,QUICKMAZEDRAW/S,NOINTERMISSIONS/S,ALTMUSIC/S"
+	.ascii	",SKILL/K/N,STARTLIVES/K/N"
+read_args_string_end:
 	.align	2
 
 
@@ -2033,6 +2185,8 @@ normal_hiscorename:
 floppy_file:
 	.ascii	"floppy"
 	.byte	0
+temp_filename_buffer:
+	ds.b	255
 _end_of_ng_code:
 		
 	.align 2

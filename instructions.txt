@@ -15,16 +15,30 @@ Command line arguments (no whdload)
 
 Usage:
 
-pengo
-
+pengo INVINCIBLE/S,INFLIVES/S,CHEATKEYS/S,STARTLEVEL/K/N,
+BAT50000/S,QUICKMAZEDRAW/S,NOINTERMISSIONS/S,ALTMUSIC/S,
+SKILL/K/N,STARTLIVES/K/N
 
 Cheats:
 
-see whdload splash screen
+INVINCIBLE: invincible
+INFLIVES: infinite lives
+CHEATKEYS: function keys cheat: F1: diamond align, F2: complete level, F3: snobee chicken
+STARTLEVEL: from 1 to 16
+BAT50000: bonus life at 50000 instead of 30000
+
+Options/dipswitches:
+
+QUICKMAZEDRAW: fast maze path drawing
+NOINTERMISSIONS: no small acts every other level
+ALTMUSIC: for people allergic to popcorn, music of set 2 has been recreated
+SKILL: 0-3 (3: hardest)
+STARTLIVES: 2-5 (default 3)
+
 
 Hiscore save:
 
-* If any cheat is selected, highscores won't be saved.
+* If any cheat is selected, highscores won't be saved (except for startlevel)
 * whdload: quit whdload with quitkey to allow highscore save
 * floppy: quit game with "ESC" and unprotect the floppy to allow highscore save
 
