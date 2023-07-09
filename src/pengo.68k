@@ -224,6 +224,7 @@ facing_direction = 0x04
 char_id = 0x05
 instant_move_period = 0x06
 current_period_counter = 0x07
+is_moving_08 = 0x08
 unknown_09 = 0x09
 * stunned counter for snobees, push block counter for pengo
 stunned_push_block_counter = 0x0A
@@ -1037,7 +1038,7 @@ display_demo_and_top_scores_6E1:
 l_071e:
 	move.l	a1,demo_move_table_pointer_8CF2 	| [ld   (demo_move_table_pointer_8CF2),de]
 	clr.b	d0                               	| [xor  a]
-	move.b	d0,demo_mode_var_8CF5           	| [ld   (demo_mode_var_8CF5),a]
+	move.b	d0,demo_mode_even_counter_8CF5           	| [ld   (demo_mode_even_counter_8CF5),a]
 	jbsr	run_one_life_092D                 	| [call run_one_life_092D]
 	.endif
 	jbsr	display_top_scores_6C0            	| [call display_top_scores_6C0]
@@ -1368,7 +1369,8 @@ run_one_life_092D:
 	move.b	#0x01,d0                        	| [ld   a,$01]
 	move.b	d0,(a0)                         	| [ld   (hl),a]
 
-* compute number of eggs/enemies
+* compute number of eggs/enemies depending on level
+* (not depending on difficulty level)
 * levels 1-2 -> 6
 * levels 3-7 -> 8
 * levels 8-11 -> 10
@@ -1390,7 +1392,8 @@ l_094b:
 	move.b	d0,total_eggs_to_hatch_8DC0     	| [ld   (total_eggs_to_hatch_8DC0),a]
 	move.b	d0,current_nb_eggs_to_hatch_8DDD	| [ld   (current_nb_eggs_to_hatch_8DDD),a]
 	move.b	d0,remaining_alive_snobees_8D98 	| [ld   (remaining_alive_snobees_8D98),a]
-	lea	snobee_1_struct_8D00+5,a0      	| [ld   hl,snobee_1_struct_8D00+5]
+	* identify snobees/pengo & moving block
+	lea	snobee_1_struct_8D00+char_id,a0      	| [ld   hl,snobee_1_struct_8D00+5]
 	move.b	#0x01,(a0)                      	| [ld   (hl),$01]
 	add.w	#0x20,a0							| [add  hl,de]
 	move.b	#0x02,(a0)                      	| [ld   (hl),$02]
@@ -1398,9 +1401,9 @@ l_094b:
 	move.b	#0x03,(a0)                      	| [ld   (hl),$03]
 	add.w	#0x20,a0							| [add  hl,de]
 	move.b	#0x04,(a0)                      	| [ld   (hl),$04]
-	lea	pengo_struct_8D80+5,a0         	| [ld   hl,pengo_struct_8D80+5]
+	lea	pengo_struct_8D80+char_id,a0         	| [ld   hl,pengo_struct_8D80+5]
 	move.b	#0x05,(a0)                      	| [ld   (hl),$05]
-	lea	moving_block_struct_8DA0+5,a0  	| [ld   hl,moving_block_struct_8DA0+5]
+	lea	moving_block_struct_8DA0+char_id,a0  	| [ld   hl,moving_block_struct_8DA0+5]
 	move.b	#0x06,(a0)                      	| [ld   (hl),$06]
 	jbsr	clear_screen_and_colors_28E5      	| [call clear_screen_and_colors_28E5]
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
@@ -1767,7 +1770,7 @@ pengo_walks_out_the_screen_0C55:
 	move.b	#0x03,(facing_direction,a2)     	| facing direction: right [ld   (ix+facing_direction),$03]
 l_0c68:
 	move.b	#0x0F,(instant_move_period,a2)  	| [ld   (ix+instant_move_period),$0F]
-	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
+	move.b	#0xFF,(is_moving_08,a2)                 	| [ld   (ix+$08),$FF]
 l_0c70:
 	jbsr	increase_counter_0875             	| [call increase_counter_0875]
 * small cpu-dependent loop
@@ -2547,7 +2550,7 @@ init_character_for_auto_mode_1E26:
 	move.b	#0x03,(facing_direction,a2)     	| [ld   (ix+facing_direction),$03]
 	move.b	#0x0A,(instant_move_period,a2)  	| [ld   (ix+instant_move_period),$0A]
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
-	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
+	move.b	#0xFF,(is_moving_08,a2)                 	| [ld   (ix+$08),$FF]
 	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
 	clr.b	(stunned_push_block_counter,a2)  	| [ld   (ix+stunned_push_block_counter),$00]
 	clr.b	(0x0b,a2)                        	| [ld   (ix+$0b),$00]
@@ -3436,7 +3439,6 @@ l_242d:
 	jbsr	base_frame_selected_3985                            	| [call $3985]
 	rts                                    	| [ret]
 
-* this is wrong 0x10,0x11 is a 16-bit pointer on smth
 l_2435:
 	lea		misc_table_6800(pc),a0
 	add.w	(path_address_pointer_or_misc_flags,a2),a0                    	| [ld   l,(ix+$10)]
@@ -5689,7 +5691,7 @@ l_320c:
  * copy speed values
 	move.b	d0,(move_period,a2)             	| [ld   (ix+move_period),a]
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
-	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
+	move.b	#0xFF,(is_moving_08,a2)                 	| [ld   (ix+$08),$FF]
 	clr.b	(0x09,a2)                        	| [ld   (ix+$09),$00]
 	move.b	#0xFF,(0x15,a2)                 	| [ld   (ix+$15),$FF]
 	jbsr	enable_snobees_depending_on_level_326E                            	| [call $326E]
@@ -5718,18 +5720,23 @@ compute_snobee_speed_324E:
 	subq.b	#1,d0                           	| [dec  a]
 	lsr.b	#2,d0                            	| [srl  a]
 	move.b	d0,d1                           	| [ld   b,a]
+	* in demo mode, difficulty level is always the same
+	* (easy level 5) so demo pre-recorded moves match the current game
+	* (along with random seed generator which is preset too)
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
+												| [and  a]
 	jeq	l_3267                             	| [jr   z,$3267]
 	jbsr	osd_read_dipswitches            	| [ld   a,(dip_switches_9040)]
 	not.b	d0                               	| [cpl]
 	rol.b	#2,d0                            	| [rlca]
 											| [rlca]
 	and.b	#0x03,d0                         	| [and  $03]
- * a = 3 for hardest, 0 for easy
+ * difficulty level: a = 3 for hardest, 0 for easy
 	add.b	d1,d0                            	| [add  a,b]
 	move.b	d0,d1                           	| [ld   b,a]
 l_3267:
+	* level 1: easy: value is 12 (0xC)
+	* level 1: hardest: value is 9
 	move.b	#0x0C,d0                        	| [ld   a,$0C]
 	sub.b	d1,d0                            	| [sub  b]
 	move.b	d0,(instant_move_period,a2)     	| [ld   (ix+instant_move_period),a]
@@ -6362,7 +6369,7 @@ l_3648:
 _01_snobee_mode_roaming_3649:
 	move.b	block_moving_flag_8DBF,d0     	| [ld   a,($block_moving_flag_8DBF)]
 	cmp.b	#0x02,d0                         	| [cp   $02]
-	bne	0f
+	jne	0f
 	jbsr	avoids_moving_block_359F          	| [call z,avoids_moving_block_359F]
 0:
  * update speed
@@ -6692,7 +6699,7 @@ _05_snobee_mode_pengo_hunt_3_37FA:
 _02_snobee_mode_block_eat_3843:
 	move.b	block_moving_flag_8DBF,d0       	| [ld   a,(block_moving_flag_8DBF)]
 	cmp.b	#0x02,d0                         	| [cp   $02]
-	bne	0f
+	jne	0f
 	jbsr	avoids_moving_block_359F          	| block is moving [call z,avoids_moving_block_359F]
 0:
 
@@ -6861,7 +6868,7 @@ snobee_try_to_move_right_3940:
 	rts                                    	| [ret]
 
 animate_pengo_39A4:
-	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
+	move.b	(is_moving_08,a2),d0                    	| [ld   a,(ix+$08)]
 	bne.b	0f
 	rts                                    	| returns if a == 0 [ret  z]
 0:
@@ -6874,7 +6881,7 @@ animate_pengo_39A4:
 	jra	l_396b                             	| [jr   $396B]
 
 animate_snobee_3957:
-	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
+	move.b	(is_moving_08,a2),d0                    	| [ld   a,(ix+$08)]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
@@ -7165,7 +7172,7 @@ ice_block_hits_snobee_right_3B41:
 	rts                                    	| [ret]
 
 l_3b46:
-	move.b	(0x08,a2),d0                    	| [ld   a,(ix+$08)]
+	move.b	(is_moving_08,a2),d0                    	| [ld   a,(ix+$08)]
 	tst.b	d0                               	| [and  a]
 	jeq	l_3b5e                             	| [jr   z,$3B5E]
 	addq.b	#1,(current_period_counter,a2)  	| [inc  (ix+current_period_counter)]
@@ -7223,7 +7230,7 @@ l_3b98:
 	bset.b	#1,(animation_frame,a2)         	| [set  1,(ix+animation_frame)]
 l_3bac:
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
-	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
+	move.b	#0xFF,(is_moving_08,a2)                 	| [ld   (ix+$08),$FF]
 	rts                                    	| [ret]
 l_3bb4:
 	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
@@ -7554,8 +7561,7 @@ pengo_nominal_move_3DBF:
  * can move
 	clr.b	(current_period_counter,a2)      	| [ld   (ix+current_period_counter),$00]
 	jbsr	l_3e06            	
-move_character_according_to_direction_3DD7:
-												| [ld   hl,$3DE4]
+move_character_according_to_direction_3DD7:												| [ld   hl,$3DE4]
 	pea		l_3de4(pc)							| [push hl]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
 	lea	jump_table_3DEE(pc),a1             	| [ld   de,jump_table_3DEE]
@@ -7601,12 +7607,12 @@ l_3e06:
 	and.b	#0x0F,d0                         	| [and  $0F]
 	jeq	l_3e1a                             	| [jr   z,$3E1A]
 l_3e16:
-	jbsr	l_3ea6                            	| [call $3EA6]
+	jbsr	move_pengo_3ea6                            	| [call $3EA6]
 	rts                                    	| [ret]
 l_3e1a:
 	jbsr	l_3ef4                            	| [call $3EF4]
 	jbsr	l_3f80                            	| [call $3F80]
-	btst.b	#0,(0x08,a2)                    	| [bit  0,(ix+$08)]
+	btst.b	#0,(is_moving_08,a2)                    	| [bit  0,(ix+$08)]
 	jeq	l_3e5c                             	| [jp   z,$3E5C]
 	jbsr	get_div8_ix_coords_3E78           	| [call get_div8_ix_coords_3E78]
 	move.b	(facing_direction,a2),d0        	| [ld   a,(ix+facing_direction)]
@@ -7716,9 +7722,9 @@ get_div8_iy_coords_3E8F:
 	rts                                    	| [ret]
 
 * < ix: pengo structure
-l_3ea6:
+move_pengo_3ea6:
 	move.b	currently_playing_8819,d0       	| [ld   a,(currently_playing_8819)]
-	tst.b	d0                               	| [and  a]
+												| [and  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
@@ -7787,16 +7793,16 @@ l_3ef4:
 												| [and  a]
 	jeq	handle_demo_moves_3f27                             	| [jr   z,$3F27]
 l_3efa:
-	clr.b	d0                               	| [xor  a]
-	move.b	d0,pengo_moving_direction_8CF4  	| [ld   (pengo_moving_direction_8CF4),a]
-	clr.b	(0x08,a2)                        	| [ld   (ix+$08),$00]
+												| [xor  a]
+	clr.b	pengo_moving_direction_8CF4  	| [ld   (pengo_moving_direction_8CF4),a]
+	clr.b	(is_moving_08,a2)                        	| [ld   (ix+$08),$00]
 	jbsr	read_player_inputs_2AFB           	| [call read_player_inputs_2AFB]
 	not.b	d0                               	| [cpl]
 	and.b	#0x0F,d0                         	| [and  $0F]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
-	move.b	#0xFF,(0x08,a2)                 	| [ld   (ix+$08),$FF]
+	st.b	(is_moving_08,a2)                 	| [ld   (ix+$08),$FF]
 	move.b	(facing_direction,a2),d1        	| [ld   b,(ix+facing_direction)]
 	move.b	d1,(path_address_pointer_or_misc_flags,a2)	| [ld   (ix+path_address_pointer_or_misc_flags),b]
 	move.b	#0x04,d1                        	| [ld   b,$04]
@@ -7815,37 +7821,45 @@ l_3f1b:
 	rts                                    	| [ret]
 	
 * game in demo mode (no human player)
+* pengo moves following a 4-bit move table packed into 8 bits
+* for each 4-bit nibble:
+*
+* bit 3: move y/n
+* bit 2: push y/n
+* bits 0-1: move direction if bit 3 is set
+
 handle_demo_moves_3f27:
 	move.l	demo_move_table_pointer_8CF2,a0	| [ld   hl,(demo_move_table_pointer_8CF2)]
-	lea	demo_mode_var_8CF5,a1          	| [ld   de,demo_mode_var_8CF5]
+	lea	demo_mode_even_counter_8CF5,a1          	| [ld   de,demo_mode_even_counter_8CF5]
 	exg	a1,a0                              	| [ex   de,hl]
-	move.b	(a1),d0                         	| [ld   a,(de)]
+	move.b	(a1),d0                         	| [ld   a,(de)] get move value
 	btst.b	#0,(a0)                         	| [bit  0,(hl)]
-	jeq	l_3f3c                             	| [jr   z,$3F3C]
+	jeq	l_3f3c                             	| [jr   z,$3F3C] even: use value
+* odd: increment pointer and use shifted value of previous loaded address
 	addq.w	#1,a1                           	| [inc  de]
-* update pointer
+* update pointer: next move
 	move.l	a1,demo_move_table_pointer_8CF2 	| [ld   (demo_move_table_pointer_8CF2),de]
 	ror.b	#4,d0                            	| [rrca]
 												| [rrca]
 												| [rrca]
 												| [rrca]
 l_3f3c:
-	addq.b	#1,(a0)                         	| [inc  (hl)]
+	addq.b	#1,demo_mode_even_counter_8CF5             	| [inc  (hl)]
 	exg	a1,a0                              	| [ex   de,hl]
 	btst.b	#2,d0                           	| [bit  2,a]
 	jeq	0f
 	move.w	d0,-(sp)                        	| [push af]
-	jbsr	l_3f9b                            	| [call nz,$3F9B]
+	jbsr	push_block_3f9b                            	| [call nz,$3F9B]
 	move.w	(sp)+,d0                        	| [pop  af]
 0:
-	clr.b	(0x08,a2)                        	| [ld   (ix+$08),$00]
+	clr.b	(is_moving_08,a2)                        	| [ld   (ix+$08),$00]
 	btst.b	#3,d0                           	| [bit  3,a]
 	bne.b	0f
 	rts                                    	| [ret  z]
 0:
 	and.b	#0x03,d0                         	| [and  $03]
-	move.b	d0,(0x04,a2)                    	| [ld   (ix+$04),a]
-	st.b	(0x08,a2)                 	| [ld   (ix+$08),$FF]
+	move.b	d0,(facing_direction,a2)                    	| [ld   (ix+$04),a]
+	st.b	(is_moving_08,a2)                 	| [ld   (ix+$08),$FF]
 	rts                                    	| [ret]
 	
 l_3f80:
@@ -7864,18 +7878,19 @@ l_3f85:
 	* fire already pressed, skip
 	rts                                    	| [ret  z]
 0:
-	* set fire flag
-	move.b	#0xFF,(0x0f,a2)                 	| [ld   (ix+$0f),$FF]
+	* set fire pressed flag
+	st.b	(0x0f,a2)                 	| [ld   (ix+$0f),$FF]
 	lea	pengo_moving_direction_8CF4,a0 	| [ld   hl,pengo_moving_direction_8CF4]
 	bset.b	#2,(a0)                         	| [set  2,(hl)]
-l_3f9b:
-	move.b	block_moving_flag_8DBF,d0       	| [ld   a,(block_moving_flag_8DBF)]
+push_block_3f9b:
+	tst.b	block_moving_flag_8DBF       	| [ld   a,(block_moving_flag_8DBF)]
 												| [and  a]
 	beq.b	0f
+	* block is already moving, return
 	rts                                    	| [ret  nz]
 0:
-	move.b	#0x01,d0                        	| [ld   a,$01]
-	move.b	d0,block_moving_flag_8DBF       	| [ld   (block_moving_flag_8DBF),a]
+												| [ld   a,$01]
+	move.b	#1,block_moving_flag_8DBF       	| [ld   (block_moving_flag_8DBF),a]
 	move.b	#0x03,(char_state_1F,a2)           	| [ld   (ix+char_state_1F),$03]
 	clr.b	(intermission_dance_push_anim_counter,a2)	| [ld   (ix+intermission_dance_push_anim_counter),$00]
 	rts                                    	| [ret]
@@ -7931,7 +7946,7 @@ pengo_pushes_block_3FE9:
 
 table_3FF2:
 	.long	block_pushed_3FFA
-	.long	block_pushed_start_404E
+	.long	l_4023
 	.long	block_pushed_401F
 	.long	block_pushed_start_404E
 	
@@ -7963,7 +7978,7 @@ block_pushed_401F:
 	jra	l_3ffc                             	| [jr   $3FFC]
 l_4023:
 	btst.b	#0,(0x09,a2)                    	| [bit  0,(ix+$09)]
-	bne	0f
+	jne	0f
 	jbsr	l_402e                            	| [call z,$402E]
 0:
 	jbsr	l_4037                            	| [call $4037]
@@ -7975,7 +7990,7 @@ l_402e:
 	rts                                    	| [ret]
 l_4037:
 	move.b	counter_lsb_8825,d0             	| count mask [ld   a,(counter_lsb_8824)]
-	tst.b	d0                               	| [and  a]
+											| [and  a]
 	beq.b	0f
 	rts                                    	| [ret  nz]
 0:

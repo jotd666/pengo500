@@ -1,7 +1,5 @@
 General:
 
-- demo level pengo moves out of sync. That's a tricky one to solve...
-
 Amiga:
 
 - faster music to integrate

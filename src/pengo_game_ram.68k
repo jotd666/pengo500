@@ -57,7 +57,7 @@
 	.global	random_seed_backup_8CF0
 	.global	demo_move_table_pointer_8CF2
 	.global	pengo_moving_direction_8CF4
-	.global	demo_mode_var_8CF5
+	.global	demo_mode_even_counter_8CF5
 	.global	demo_run_counter_8CF6
 	.global	snobee_1_struct_8D00
 	.global	snobee_2_struct_8D20
@@ -213,7 +213,7 @@ demo_move_table_pointer_8CF2:
 	ds.b	0x04			| pointer => 32 bit
 pengo_moving_direction_8CF4:
 	ds.b	0x01
-demo_mode_var_8CF5:
+demo_mode_even_counter_8CF5:
 	ds.b	0x01
 demo_run_counter_8CF6:
 	ds.b	0x0a

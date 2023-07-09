@@ -111,6 +111,7 @@ facing_direction = $04
 char_id = $05
 instant_move_period = $06
 current_period_counter = $07
+is_moving_08 = $08
 unknown_09 = $09
 ; stunned counter for snobees, push block counter for pengo
 stunned_push_block_counter = $0A
@@ -983,7 +984,7 @@ display_demo_and_top_scores_6E1:
 071B: 11 00 66      ld   de,move_table_6600
 071E: ED 53 72 24   ld   (demo_move_table_pointer_8CF2),de
 0722: AF            xor  a
-0723: 32 75 24      ld   (demo_mode_var_8CF5),a
+0723: 32 75 24      ld   (demo_mode_even_counter_8CF5),a
 0726: CD AD 89      call run_one_life_092D
 0729: CD E0 86      call display_top_scores_6C0
 072C: C9            ret
@@ -1590,7 +1591,7 @@ pengo_walks_out_the_screen_0C55:
 0C62: 30 A4         jr   nc,$0C68			; > 128 keep right
 0C64: DD 36 2C A3   ld   (ix+facing_direction),$03		; facing direction: right
 0C68: DD 36 2E 87   ld   (ix+instant_move_period),$0F
-0C6C: DD 36 A8 5F   ld   (ix+$08),$FF
+0C6C: DD 36 A8 5F   ld   (ix+is_moving_08),$FF
 0C70: CD 55 08      call increase_counter_0875
 ; small cpu-dependent loop
 0C73: 06 80         ld   b,$80
@@ -3184,10 +3185,10 @@ update_sound_channel_1A99:
 1AC3: DD BE 80      cp   (ix+$08)
 1AC6: D8            ret  c
 1AC7: DD 36 81 00   ld   (ix+$09),$00
-1ACB: DD 7E 84      ld   a,(ix+alive_walk_counter)
+1ACB: DD 7E 84      ld   a,(ix+$0C)
 1ACE: CB 47         bit  0,a
 1AD0: 28 0C         jr   z,$1ADE
-1AD2: DD 36 0C 88   ld   (ix+alive_walk_counter),$00
+1AD2: DD 36 0C 88   ld   (ix+$0C),$00
 1AD6: CB 7F         bit  7,a
 1AD8: 28 8C         jr   z,$1ADE
 1ADA: DD 36 0E 77   ld   (ix+$0e),$FF
@@ -3207,7 +3208,7 @@ update_sound_channel_1A99:
 1AFA: DD CB 0E CE   bit  0,(ix+$0e)
 1AFE: 28 8A         jr   z,$1B02
 1B00: 3E D7         ld   a,$FF
-1B02: DD 77 8C      ld   (ix+alive_walk_counter),a
+1B02: DD 77 8C      ld   (ix+$0C),a
 1B05: DD 36 26 80   ld   (ix+$0e),$00
 1B09: 3E 80         ld   a,$00
 1B0B: CD 96 32      call $1A16
@@ -3667,8 +3668,8 @@ init_character_for_auto_mode_1E26:
 1E26: DD 36 04 8B   ld   (ix+facing_direction),$03
 1E2A: DD 36 06 82   ld   (ix+instant_move_period),$0A
 1E2E: DD 36 07 88   ld   (ix+current_period_counter),$00
-1E32: DD 36 08 77   ld   (ix+$08),$FF
-1E36: DD 36 09 88   ld   (ix+$09),$00
+1E32: DD 36 08 77   ld   (ix+is_moving_08),$FF
+1E36: DD 36 09 88   ld   (ix+unknown_09),$00
 1E3A: DD 36 0A 88   ld   (ix+stunned_push_block_counter),$00
 1E3E: DD 36 23 88   ld   (ix+intermission_dance_push_anim_counter),$00
 1E42: CD A7 28      call get_level_number_288F
@@ -6402,7 +6403,7 @@ init_snobee_positions_31EF:
 	;; copy speed values
 3218: DD 77 1C      ld   (ix+move_period),a
 321B: DD 36 8F 00   ld   (ix+current_period_counter),$00
-321F: DD 36 80 FF   ld   (ix+$08),$FF
+321F: DD 36 80 FF   ld   (ix+is_moving_08),$FF
 3223: DD 36 81 00   ld   (ix+$09),$00
 3227: DD 36 9D FF   ld   (ix+$15),$FF
 322B: CD 6E 1A      call enable_snobees_depending_on_level_326E
@@ -6431,9 +6432,12 @@ compute_snobee_speed_324E:
 3252: CB 3F         srl  a
 3254: CB 3F         srl  a
 3256: 47            ld   b,a
+; in demo mode, difficulty level is always the same
+; (easy level 5) so demo pre-recorded moves match the current game
+; (along with random seed generator which is preset too)
 3257: 3A 19 00      ld   a,(currently_playing_8819)
 325A: A7            and  a
-325B: 28 0A         jr   z,$3267
+325B: 28 0A         jr   z,$3267		; demo: don't set difficulty, assume easy
 325D: 3A 40 90      ld   a,(dip_switches_9040)
 3260: 2F            cpl
 3261: 07            rlca
@@ -7428,7 +7432,7 @@ snobee_try_to_move_right_3940:
 3949: C9            ret
 	
 animate_pengo_39A4: 
-39A4: DD 7E 88      ld   a,(ix+$08)
+39A4: DD 7E 88      ld   a,(ix+is_moving_08)
 394D: A7            and  a
 394E: C8            ret  z	; returns if a == 0
 394F: 3A 24 20      ld   a,(counter_lsb_8824)
@@ -7438,7 +7442,7 @@ animate_pengo_39A4:
 3955: 18 14         jr   $396B
 
 animate_snobee_3957:
-3957: DD 7E A0      ld   a,(ix+$08)
+3957: DD 7E A0      ld   a,(ix+is_moving_08)
 395A: A7            and  a
 395B: C8            ret  z
 395C: 3A 8C 88      ld   a,(counter_lsb_8824)
@@ -7690,7 +7694,7 @@ ice_block_hits_snobee_right_3B41:
 3B44: 4F            ld   c,a
 3B45: C9            ret
 
-3B46: DD 7E 88      ld   a,(ix+$08)
+3B46: DD 7E 88      ld   a,(ix+is_moving_08)
 3B49: A7            and  a
 3B4A: 28 3A         jr   z,$3B5E
 3B4C: DD 34 87      inc  (ix+current_period_counter)
@@ -7737,7 +7741,7 @@ ice_block_hits_snobee_right_3B41:
 3BA6: 20 2C         jr   nz,$3BAC
 3BA8: DD CB 82 46   set  1,(ix+animation_frame)
 3BAC: CD 83 B9      call set_character_sprite_code_and_color_39AB
-3BAF: DD 36 A0 FF   ld   (ix+$08),$FF
+3BAF: DD 36 A0 FF   ld   (ix+is_moving_08),$FF
 3BB3: C9            ret
 3BB4: DD CB 09 C6   bit  0,(ix+$09)
 3BB8: CC 3F 3B      call z,$3BBF
@@ -8064,11 +8068,11 @@ pengo_goes_right_3E02:
 3E0F: DD 7E 89      ld   a,(ix+y_pos)
 3E12: E6 0F         and  $0F
 3E14: 28 8C         jr   z,$3E1A
-3E16: CD A6 3E      call $3EA6
+3E16: CD A6 3E      call move_pengo_3ea6
 3E19: C9            ret
 3E1A: CD F4 3E      call $3EF4
 3E1D: CD 80 3F      call $3F80
-3E20: DD CB 20 CE   bit  0,(ix+$08)
+3E20: DD CB 20 CE   bit  0,(ix+is_moving_08)
 3E24: CA D4 3E      jp   z,$3E5C
 3E27: CD 78 16      call get_div8_ix_coords_3E78
 3E2A: DD 7E 04      ld   a,(ix+facing_direction)
@@ -8162,6 +8166,7 @@ get_div8_iy_coords_3E8F:
 3EA5: C9            ret
 	
 ; < ix: pengo structure
+move_pengo_3ea6:
 3EA6: 3A 91 A0      ld   a,(currently_playing_8819)
 3EA9: A7            and  a
 3EAA: C8            ret  z
@@ -8213,12 +8218,12 @@ get_div8_iy_coords_3E8F:
 3EF8: 28 2D         jr   z,handle_demo_moves_3f27
 3EFA: AF            xor  a
 3EFB: 32 F4 04      ld   (pengo_moving_direction_8CF4),a
-3EFE: DD 36 88 28   ld   (ix+$08),$00
+3EFE: DD 36 88 28   ld   (ix+is_moving_08),$00
 3F02: CD D3 AA      call read_player_inputs_2AFB
 3F05: 2F            cpl
 3F06: E6 27         and  $0F
 3F08: C8            ret  z
-3F09: DD 36 20 7F   ld   (ix+$08),$FF
+3F09: DD 36 20 7F   ld   (ix+is_moving_08),$FF
 3F0D: DD 46 2C      ld   b,(ix+facing_direction)
 3F10: DD 70 10      ld   (ix+path_address_pointer_or_misc_flags),b
 3F13: 06 04         ld   b,$04
@@ -8233,15 +8238,17 @@ get_div8_iy_coords_3E8F:
 3F23: 32 74 04      ld   (pengo_moving_direction_8CF4),a
 3F26: C9            ret
 ; game in demo mode (no human player)
+; pengo moves following a 4-bit move table packed into 8 bits
 handle_demo_moves_3f27:
 3F27: 2A 72 04      ld   hl,(demo_move_table_pointer_8CF2)
-3F2A: 11 DD 0C      ld   de,demo_mode_var_8CF5
+3F2A: 11 DD 0C      ld   de,demo_mode_even_counter_8CF5
 3F2D: EB            ex   de,hl
 3F2E: 1A            ld   a,(de)
 3F2F: CB 46         bit  0,(hl)
-3F31: 28 09         jr   z,$3F3C
+3F31: 28 09         jr   z,$3F3C		; even: use value
+; odd: increment pointer and use shifted value of previous loaded address
 3F33: 13            inc  de
-; update pointer
+; update pointer: next move
 3F34: ED 53 F2 24   ld   (demo_move_table_pointer_8CF2),de
 3F38: 0F            rrca
 3F39: 0F            rrca
@@ -8251,20 +8258,20 @@ handle_demo_moves_3f27:
 3F3D: EB            ex   de,hl
 3F3E: CB 57         bit  2,a
 3F40: F5            push af
-3F41: C4 1B B7      call nz,$3F9B
+3F41: C4 1B B7      call nz,push_block_3f9b
 3F44: F1            pop  af
-3F45: DD 36 20 80   ld   (ix+$08),$00
+3F45: DD 36 20 80   ld   (ix+is_moving_08),$00
 3F49: CB 5F         bit  3,a
 3F4B: C8            ret  z
 3F4C: E6 2B         and  $03
-3F4E: DD 77 04      ld   (ix+$04),a
-3F51: DD 36 A0 FF   ld   (ix+$08),$FF
+3F4E: DD 77 04      ld   (ix+facing_direction),a
+3F51: DD 36 A0 FF   ld   (ix+is_moving_08),$FF
 3F55: C9            ret
 ; seems not reached
 3F56: CD 7A 3E      call $3EFA
 3F59: CD 85 BF      call $3F85
 3F5C: 2A 5A 8C      ld   hl,(demo_move_table_pointer_8CF2)
-3F5F: 11 75 04      ld   de,demo_mode_var_8CF5
+3F5F: 11 75 04      ld   de,demo_mode_even_counter_8CF5
 3F62: EB            ex   de,hl
 3F63: 3A 74 04      ld   a,(pengo_moving_direction_8CF4)
 3F66: CB 46         bit  0,(hl)
@@ -8302,6 +8309,7 @@ handle_demo_moves_3f27:
 3F92: DD 36 0F 7F   ld   (ix+$0f),$FF
 3F96: 21 5C 8C      ld   hl,pengo_moving_direction_8CF4
 3F99: CB D6         set  2,(hl)
+push_block_3f9b:
 3F9B: 3A BF 25      ld   a,(block_moving_flag_8DBF)
 3F9E: A7            and  a
 3F9F: C0            ret  nz
@@ -8357,7 +8365,7 @@ pengo_pushes_block_3FE9:
 
 table_3FF2:     
 	 dc.w	block_pushed_3FFA  
-	 dc.w	block_pushed_start_404E 
+	 dc.w	l_4023 
 	 dc.w	block_pushed_401F  
 	 dc.w	block_pushed_start_404E 
 
@@ -8385,7 +8393,7 @@ block_pushed_401F:
 401F: 06 29         ld   b,$01
 4021: 18 D9         jr   $3FFC
 
-block_pushed_start_404E:
+l_4023:
 4023: DD CB 81 6E   bit  0,(ix+$09)
 4027: CC A6 E0      call z,$402E
 402A: CD 37 68      call $4037
@@ -10066,7 +10074,7 @@ ice_pack_tiles_6000:
      6220  00 00 00 C0 03 D3 01 D0 DA 1D 37 41 00 52 00 00
      6230  00 5C 00 66 69 77 02 02 02 02 02 9B 9D A1 00 00
      6240  00 00 C0 03 03 D2 D1 04 D9 02 36 41 00 51 00 00
-     6250  00 41 00 65 71 76 02 02 02 02 02 9A 9C A0 00 00..
+     6250  00 41 00 65 71 76 02 02 02 02 02 9A 9C A0 00 00
      6260  B4 B0 03 03 BA 01 D0 DC 02 1C 35 41 00 4C 00 00
      6270  00 5F 00 64 00 75 7C 02 02 02 02 99 00 9F 00 00
      6280  03 03 03 BA 01 D1 04 DB 02 1B 34 41 00 4C 00 00
