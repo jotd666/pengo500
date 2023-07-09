@@ -41,6 +41,7 @@ _config
 	dc.b    "C3:X:DSW bonus life at 50000:0;"
 	dc.b    "C3:X:quick maze draw:1;"
 	dc.b    "C3:X:no intermissions:2;"
+	dc.b    "C3:X:alternate music:3;"
 	dc.b    "C4:L:DSW difficulty:easy,medium,hard,hardest;"
 	dc.b    "C5:L:DSW lives:default,2,3,4,5;"  
 	dc.b	0

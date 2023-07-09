@@ -362,6 +362,8 @@ _user:
 	sne.b	quick_maze_draw_flag
 	btst	#2,d1
 	sne.b	no_intermissions_flag
+	btst	#3,d1
+	sne.b	alternate_music_flag
 	
 osd_get_start_level:
 	move.l	start_level_option(pc),d0
@@ -913,7 +915,11 @@ osd_sound_start:
 	
 	
 	lsl.w	#3,d0
-	lea		sound_table,a0
+	lea		sound_table_set_2,a0
+	tst.b	alternate_music_flag
+	bne.b	0f
+	lea		sound_table_set_1,a0	
+0:
 	move.w	(a0,d0.w),d1	| sound type
 	beq.b	0f		| no sound
 
@@ -2012,6 +2018,8 @@ music_playing:
 music_muted:
 	.byte	0
 dynamic_color_mode:
+	.byte	0
+alternate_music_flag:
 	.byte	0
 	
 dosname:

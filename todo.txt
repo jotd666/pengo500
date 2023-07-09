@@ -2,6 +2,5 @@ General:
 
 Amiga:
 
-- faster music to integrate
-- highscore music is too slow
+- level completed music is too slow
 - highscore screen letter flashing too fast (no speed regulation, sounds good on A1260...)
