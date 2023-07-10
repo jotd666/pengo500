@@ -37,11 +37,26 @@ ONE_TICK = 1
 	.ifne	OPT_DISABLE_SPRITES
 	.error	"debug option OPT_DISABLE_SPRITES in release mode"
 	.endif
+	.ifne	OPT_SKIP_THANKS_SCREEN
+	.error	"nonzero OPT_SKIP_THANKS_SCREEN option in release mode"
+	.endif
+	.ifne	OPT_SKIP_TITLE_SCREEN
+	.error	"nonzero OPT_SKIP_TITLE_SCREEN option in release mode"
+	.endif
+	.ifne	OPT_ONLY_ONE_LIFE
+	.error	"nonzero OPT_ONLY_ONE_LIFE option in release mode"
+	.endif
+	.ifne	OPT_SKIP_GAME_DEMO
+	.error	"nonzero OPT_SKIP_GAME_DEMO option in release mode"
+	.endif
+	.ifne	OPT_SKIP_ICE_PACK_SCREEN
+	.error	"nonzero OPT_SKIP_ICE_PACK_SCREEN option in release mode"
+	.endif
 	.ifne	OPT_START_SCORE
-	.error	"nonzero score option in release mode"
+	.error	"nonzero OPT_START_SCORE option in release mode"
 	.endif
 	.ifne	OPT_ONLY_ONE_SNOBEE
-	.error	"one snobee option in release mode"
+	.error	"OPT_ONLY_ONE_SNOBEE option in release mode"
 	.endif
 	.else
 OPT_ENABLE_LOGGING = 0

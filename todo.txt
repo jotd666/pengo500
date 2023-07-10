@@ -1,7 +1,5 @@
 General:
 
-invicible disabled in demo mode!
-
 
 Amiga:
 

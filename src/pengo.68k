@@ -9911,6 +9911,12 @@ snobee_pengo_collision_test_4C1C:
 	rts                                    	| [ret]
 	
 snobee_collides_pengo_4C2E:
+	| invincible flag would crash the demo as the player
+	| would run out of moves and would start reading
+	| in random locations
+	tst.b	game_playing_8817
+	beq.b	0f
+	| we're playing: check flag
 	tst.b	invincible_flag
 	beq.b	0f
 	rts
