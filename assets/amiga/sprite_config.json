@@ -27,7 +27,8 @@
     "cluts": [
       14
     ],
-    "name": "pengo_walk_left_1"
+    "name": "pengo_walk_left_1",
+	"comment": "putting 'left' or 'right' in the name generates the symmetric sprite"
   },
   "5": {
     "cluts": [

@@ -729,9 +729,12 @@ osd_break:
 	
 * speed regulation for game mainloop, the bigger, the faster
 * Slightly depends on PAL/NTSC.
+* tried to calibrated it the best possible by recording
+* the demo game on MAME and on this version and comparing
+* them. 12 makes a slightly slower game, 13 should be all right
 
 osd_get_sync_period:
-	move.w	#12,d0
+	move.w	#13,d0
 	rts
 	
 * this needs tuning. waits roughly 400 micro seconds

@@ -1,18 +1,8 @@
 General:
 
-check speed
-address error when demo: pengo push then crash
+invicible disabled in demo mode!
 
-l_38b4:
-	bclr.b	#7,(0x1b,a2)                    	| [res  7,(ix+$1b)]
-	jbsr	l_38d6                            	| [call $38D6]
-	btst.b	#7,(0x1b,a2)                    	| [bit  7,(ix+$1b)]
-	bne.b	0f
-	rts                  <==================
-0:
 
 Amiga:
 
-- pengo sprite symmetry (facing/back)
-- level completed music is too slow
 - highscore screen letter flashing too fast (no speed regulation, sounds good on A1260...)

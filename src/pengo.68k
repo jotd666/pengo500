@@ -6084,7 +6084,7 @@ l_344b:
  * after 1 minute, accelerate snobees & set A.I. mode to breaking block mode
 	jbsr	compute_snobee_speed_324E         	| [call compute_snobee_speed_324E]
 	subq.b	#0x01,d0                        	| [sub  $01]
-	movem.w	(sp)+,d1/d2                    	| [pop  bc]
+	move.w	(sp)+,d1                    	| [pop  bc] (don't pop d2!!! check push af above!)
 	sub.b	d1,d0                            	| [sub  b]
 	move.b	d0,(move_period,a2)             	| change/adjust speed [ld   (ix+move_period),a]
 	move.b	#0x02,(ai_mode_1E,a2)              	| breaking block mode [ld   (ix+ai_mode_1E),$02]
