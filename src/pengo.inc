@@ -12,9 +12,9 @@
     * score is decimal format
 	* all options must be zeroed for release
     OPT_START_SCORE=0
-	OPT_SKIP_THANKS_SCREEN=0
-	OPT_SKIP_TITLE_SCREEN=0
-	OPT_SKIP_ICE_PACK_SCREEN=0
+	OPT_SKIP_THANKS_SCREEN=1
+	OPT_SKIP_TITLE_SCREEN=1
+	OPT_SKIP_ICE_PACK_SCREEN=1
 	OPT_SKIP_GAME_DEMO=0
 	OPT_ONLY_ONE_LIFE=0
 	* test mode: only first snobee is active
@@ -41,15 +41,16 @@
     .equ  HISCORE_MUSIC_SND,         0x09
     .equ  IN_GAME_MUSIC_FAST_SND,         0x0A
     .equ  IN_GAME_MUSIC_FASTER_SND,         0x0B
-    .equ  SNOBEE_CHICKEN_SND,         0x11
-    .equ  SNOBEE_EATEN_SND,         0x12
-    .equ  SNOBEE_HATCHING_SND,         0x13
-    .equ  SNOBEE_CRUSHED_SND,         0x15
-    .equ  SNOBEE_STUNNED_SND,         0x16
-    .equ  EXTRA_LIFE_SND,         0x19
-    .equ  BLOCK_BROKEN_SND,         0x1A
-    .equ  SHAKE_WALL_SND,         0x1B
-	.equ	BLOCK_HITS_WALL_SND,		0x1C
-	.equ	BLOCK_SLIDES_SND,		0x1D
+    .equ  SNOBEE_EATEN_SND,         0xC
+    .equ  SNOBEE_CHICKEN_SND,         0xD
+    .equ  SNOBEE_HATCHING_SND,         0xE
+    .equ  SNOBEE_CRUSHED_SND,         0xF
+    .equ  SNOBEE_STUNNED_SND,         0x10
+    .equ  DIAMONDS_BONUS_SND,         0x11
+    .equ  EXTRA_LIFE_SND,         0x12
+    .equ  BLOCK_BROKEN_SND,         0x13
+    .equ  SHAKE_WALL_SND,         0x14
+	.equ	BLOCK_HITS_WALL_SND,		0x15
+	.equ	BLOCK_SLIDES_SND,		0x16
 
     

@@ -30,25 +30,25 @@ sound_dict = {
 "PLAYER_DIES_SND"             :{"index":5,"pattern":10,"ticks":150,"loops":False,"volume":32},
 "INTERMISSION_MUSIC_SND"             :{"index":7,"pattern":11,"loops":False,"volume":32},
 "IN_GAME_MUSIC_SND"             :{"index":8,"pattern":2,"loops":True,"volume":32},
+"HISCORE_MUSIC_SND"             :{"index":9,"pattern":15,"loops":True,"volume":32},
 "IN_GAME_MUSIC_FAST_SND"             :{"index":10,"pattern":5,"loops":True,"volume":32},
 "IN_GAME_MUSIC_FASTER_SND"             :{"index":11,"pattern":8,"loops":True,"volume":32},
-"HISCORE_MUSIC_SND"             :{"index":9,"pattern":15,"loops":True,"volume":32},
 
 
 # second channel (called by 18C7)
-"SNOBEE_CHICKEN_SND"               :{"index":0x11,"channel":2,"sample_rate":hq_sample_rate},
-"SNOBEE_EATEN_SND"               :{"index":0x12,"channel":2,"sample_rate":hq_sample_rate},
-"SNOBEE_HATCHING_SND"               :{"index":0x13,"channel":2,"sample_rate":hq_sample_rate},
-"SNOBEE_STUNNED_SND"               :{"index":0x16,"channel":2,"sample_rate":hq_sample_rate},
-"SNOBEE_CRUSHED_SND"               :{"index":0x15,"channel":2,"sample_rate":hq_sample_rate},
-"DIAMONDS_BONUS_SND"               :{"index":0x17,"channel":2,"loops":True,"sample_rate":vhq_sample_rate},
+"SNOBEE_EATEN_SND"               :{"index":12,"channel":2,"sample_rate":hq_sample_rate},
+"SNOBEE_CHICKEN_SND"               :{"index":13,"channel":2,"sample_rate":hq_sample_rate},
+"SNOBEE_HATCHING_SND"               :{"index":14,"channel":2,"sample_rate":hq_sample_rate},
+"SNOBEE_CRUSHED_SND"               :{"index":15,"channel":2,"sample_rate":hq_sample_rate},
+"SNOBEE_STUNNED_SND"               :{"index":16,"channel":2,"sample_rate":hq_sample_rate},
+"DIAMONDS_BONUS_SND"               :{"index":17,"channel":2,"loops":True,"sample_rate":vhq_sample_rate},
 
 # third channel
-"EXTRA_LIFE_SND"               :{"index":0x19,"channel":3,"sample_rate":hq_sample_rate},
-"BLOCK_BROKEN_SND"               :{"index":0x1A,"channel":3,"sample_rate":hq_sample_rate},
-"SHAKE_WALL_SND"               :{"index":0x1B,"channel":3,"sample_rate":hq_sample_rate},
-"BLOCK_HITS_WALL_SND"               :{"index":0x1C,"channel":3,"sample_rate":hq_sample_rate},
-"BLOCK_SLIDES_SND"               :{"index":0x1D,"channel":3,"sample_rate":hq_sample_rate},
+"EXTRA_LIFE_SND"               :{"index":18,"channel":3,"sample_rate":hq_sample_rate},
+"BLOCK_BROKEN_SND"               :{"index":19,"channel":3,"sample_rate":hq_sample_rate},
+"SHAKE_WALL_SND"               :{"index":20,"channel":3,"sample_rate":hq_sample_rate},
+"BLOCK_HITS_WALL_SND"               :{"index":21,"channel":3,"sample_rate":hq_sample_rate},
+"BLOCK_SLIDES_SND"               :{"index":22,"channel":3,"sample_rate":hq_sample_rate},
 
 }
 sound_dict_set_2 = {
@@ -58,7 +58,7 @@ sound_dict_set_2 = {
 
 }
 
-max_sound = 0x30  # max(x["index"] for x in sound_dict.values())+1
+max_sound = 0x20  # max(x["index"] for x in sound_dict.values())+1
 sound_table = [""]*max_sound
 sound_table_set_1 = ["\t.long\t0,0"]*max_sound
 sound_table_set_2 = ["\t.long\t0,0"]*max_sound

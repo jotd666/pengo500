@@ -239,6 +239,9 @@ backup_ai_mode_1D = 0x1D
 ai_mode_1E = 0x1E
 char_state_1F = 0x1F
 
+SECOND_CHANNEL_OFFSET = 10
+THIRD_CHANNEL_OFFSET = 17
+
 HIGH_SCORE = 20000
 
 	.include "pengo.inc"
@@ -1483,7 +1486,7 @@ main_game_loop_09E7:
 	*jbsr		osd_enable_vblank_interrupt    | [ei]
 	tst.b	play_chicken_sfx_flag
 	beq.b	0f
-	move.b	#0x01,d1                        	| [ld   b,$01]
+	move.b	#SNOBEE_CHICKEN_SND-SECOND_CHANNEL_OFFSET,d1    | [ld   b,$01]
 	jbsr	play_sfx_18c7                 	| [call play_sfx_18c7] "chicken" sound
 	clr.b	play_chicken_sfx_flag
 0:
@@ -2370,7 +2373,7 @@ play_sfx_18c7:
 	bmi.b	0f
 	clr		D0
 	move.b	d1,d0
-	add.b	#0x10,d0		| not the same indices
+	add.b	#SECOND_CHANNEL_OFFSET,d0		| not the same indices
 	jbsr		osd_sound_start
 0:
 	move.w	(sp)+,d0
@@ -2392,7 +2395,7 @@ play_sfx_18AF:
 	bmi.b	0f
 	clr		D0
 	move.b	d1,d0
-	add.b	#0x18,d0		| not the same indices
+	add.b	#THIRD_CHANNEL_OFFSET,d0		| not the same indices
 	jbsr		osd_sound_start
 0:
 	move.w	(sp)+,d0
@@ -4656,6 +4659,7 @@ l_2ca5:
 	jne	l_2ca5                             	| [djnz $2CA5]
 	clr.b	d1                               	| [ld   b,$00]
 	jbsr	get_level_number_288F             	| [call get_level_number_288F]
+	* count how many big 5-level penguins we need to draw (max 2)
 l_2cb8:
 	cmp.b	#0x06,d0                         	| [cp   $06]
 	jcs	l_2cc1                             	| [jr   c,$2CC1]

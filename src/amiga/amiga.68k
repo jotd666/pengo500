@@ -731,7 +731,7 @@ osd_break:
 * Slightly depends on PAL/NTSC.
 
 osd_get_sync_period:
-	move.w	#16,d0
+	move.w	#12,d0
 	rts
 	
 * this needs tuning. waits roughly 400 micro seconds
