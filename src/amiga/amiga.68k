@@ -198,7 +198,6 @@ w\@:
 		.global osd_sound_stop
 		.global osd_sound_enable
 		.global osd_sound_disable
-		.global	osd_get_start_level
 
 
 	
@@ -391,11 +390,9 @@ _user:
 	btst	#3,d1
 	sne.b	alternate_music_flag
 	
-osd_get_start_level:
 	move.l	start_level_option(pc),d0
-	and.l	#0x0F,d0
-	addq	#1,d0
-	move.b	d0,start_level
+	and.b	#0x0F,d0
+	move.b	d0,start_level		| 0-15 => 1-16
 	
 	move.l	cheat_flags,d0
 	btst	#0,d0

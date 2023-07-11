@@ -1264,6 +1264,7 @@ play_one_game_087D:
 	move.w	d0,player_1_score_880E          	| [ld   (player_1_score_880E),hl]
 	move.w	d0,player_2_score_8810          	| [ld   (player_2_score_8810),hl]
 	move.b	start_level,d0                        	| [ld   a,$01]
+	addq.b	#1,d0
 	move.b	d0,level_number_player1_8812    	| [ld   (level_number_player1_8812),a]
 	move.b	d0,level_number_player2_8813    	| [ld   (level_number_player2_8813),a]
 	jbsr	osd_read_dipswitches            	|  dip switch [ld   a,(dip_switches_9040)]
