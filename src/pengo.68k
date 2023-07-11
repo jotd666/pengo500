@@ -9013,11 +9013,15 @@ l_4668:
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	movem.w	(sp),d1/d2                    	| [pop  bc]
 											| [push bc]
+	st.b	diamond_color_cycle_flag
+
 	move.b	d1,d0                           	| [ld   a,b]
 	subq.b	#1,d0                           	| [dec  a]
 	and.b	#0x07,d0                         	| [and  $07]
 	addq.b	#1,d0                           	| [inc  a]
-	jbsr	change_ice_block_color_47fe                            	| [call $47FE]
+	jbsr	change_ice_block_color_47fe			| [call $47FE]
+	clr.b	diamond_color_cycle_flag
+
 	movem.w	(sp),d1/d2                    	| [pop  bc]
 											| [push bc]
 	move.b	d1,d2                           	| [ld   c,b]
@@ -9027,6 +9031,7 @@ l_4668:
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_4668                             	| [djnz $4668]
+
 	jbsr	clear_sprites_31B7                	| [call clear_sprites_31B7]
 	jbsr	backup_center_maze_blocks_0f98                            	| [call $0F98]
 	lea	table_476C(pc),a0                  	| [ld   hl,table_476C]
@@ -9096,8 +9101,11 @@ l_46d0:
 	jbsr	delay_28D1                        	| [call delay_28D1]
 	jbsr	restore_center_maze_blocks_0fba                            	| [call $0FBA]
 	st.b	(0x16,a2)                 	| [ld   (ix+$16),$FF]
+	* set color as blue
+	st.b	diamond_color_cycle_flag
 	move.b	#0x09,d0                        	| [ld   a,$09]
 	jbsr	change_ice_block_color_47fe                            	| [call $47FE]
+	clr.b	diamond_color_cycle_flag
 	jbsr	draw_borders_2E6A                 	| [call draw_borders_2E6A]
 
 	move.l	a2,-(sp)                        	| [push ix]

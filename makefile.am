@@ -38,7 +38,7 @@ $(AMIGASRC)/graphics.68k: $(ASSETS)/used_cluts.json $(ASSETS)/convert_graphics.p
 	cmd /c $(ASSETS)\convert_graphics.py
 
 
-$(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py
+$(AMIGASRC)/sounds.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/pengo_conv.mod
 	cmd /c $(ASSETS)\convert_sounds.py
 	
 $(MAIN): $(OBJS)

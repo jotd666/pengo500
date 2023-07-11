@@ -19,6 +19,8 @@ DYNAMIC_COPPER_ROWS = 228
 
 SCREEN_ADDRESS = 0x8000
 
+DYN_COLOR_INDEX = 4
+
 ROW_Y_OFFSET = 2
 
 SCORE_FILE_SIZE = 0x1E
@@ -1405,6 +1407,7 @@ load_palette_in_copperlist:
 	* alternate palette
 	add.w	#32,a0
 0:
+	move.w	(DYN_COLOR_INDEX*2,a0),orig_color_4
 	move.w	#TOTAL_NB_COLORS-1,d0
 	lea		copperlist_colors+2,a1
 1:
@@ -1570,6 +1573,21 @@ osd_w_colorram:
 	add.w	d6,a1
 	cmp.b	(a1),d0
 	beq.b	0f		| already the proper value
+	
+	tst.b	diamond_color_cycle_flag
+	beq.b	2f
+
+	* avoid a full tile refresh, just change color 4
+	* (big hack)
+	lea		normal_cluts(pc),a1
+	moveq	#0,d2
+	move.b	d0,d2
+	lsl.w	#3,d2		| times 8
+	move.w	(2,a1,d2.w),d2	| color from clut that changes ice
+	move.w	d2,copperlist_colors+DYN_COLOR_INDEX*4+2	| change 4th color with color clut
+	cmp.b	#0x09,d0		| blue ice block: force redraw
+	bne.b	0f
+2:
 	move.b	d0,(a1)	| update logical grid
 	move.b	d0,d1
 	lea		bg_videoram,a1
@@ -1581,6 +1599,7 @@ osd_w_colorram:
     .endif | OPT_DISABLE_BG_LAYER
 	rts
 
+	move.w	orig_color_4(pc),copperlist_colors+DYN_COLOR_INDEX*4+2	| change 4th color with color clut
 
 * d6: screen offset
 * d0: tile code
@@ -2117,7 +2136,8 @@ dip_switches:
 system_vbr:
 	.long	0
 	
-
+orig_color_4:
+	.word	0
 	
 high_score_buffer:
 	ds.b	SCORE_FILE_SIZE
