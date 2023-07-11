@@ -251,13 +251,16 @@ _user:
 	move.l	(A0)+,D0	| INVINCIBLE/S
 	beq.b	1f
 	or.l	#1,cheat_flags
+	st.b	cheat_used
 1:
 	move.l	(A0)+,D0	| INFLIVES/S
 	beq.b	2f
 	or.l	#2,cheat_flags
+	st.b	cheat_used
 2:
 	move.l	(A0)+,D0	| CHEATKEYS/S
 	beq.b	2f
+	* cheat isn't used as long as no cheat key is used
 	or.l	#4,cheat_flags
 2:
 	move.l	(A0)+,D0	| STARTLEVEL/S
@@ -1959,7 +1962,7 @@ osd_read_high_scores:
 	
 osd_write_high_scores:
 	movem.l	d0-d7/a0-a6,-(a7)
-	tst.l	cheat_flags		| don't save score if cheat on
+	tst.b	cheat_used		| don't save score if cheat on
 	bne.b	1f
 	move.l	_resload(pc),d0
 	beq.b	0f
@@ -2016,16 +2019,19 @@ handle_keyboard:
 	* cheat keys
 	cmp.b	#0x50,d0	| F1 key
 	bne.b	0f
+	st.b	cheat_used
 	st.b	diamonds_are_aligned_flag
 0:
 	cmp.b	#0x51,d0	| F2 key
 	bne.b	0f
 	* no snobees: level completed
+	st.b	cheat_used
 	clr.b	remaining_alive_snobees_8D98
 0:
 	cmp.b	#0x52,d0	| F3 key
 	bne.b	0f
 	* snobees play chicken
+	st.b	cheat_used
 	st.b	snobee_chicken_flag
 0:
 	tst.l	_resload
@@ -2208,7 +2214,8 @@ dynamic_color_mode:
 	.byte	0
 alternate_music_flag:
 	.byte	0
-	
+cheat_used:
+	.byte	0
 dosname:
 	.ascii	"dos.library"
 	.byte	0
