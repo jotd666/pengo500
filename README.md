@@ -29,6 +29,7 @@ This is a transcode from the original arcade game Z80 to 68K assembly.
 - Mark McDougall (aka tcdev): Neo Geo code and assets (conversion)
 - no9: remade amiga tunes
 - phx: ptplayer sound/music replay Amiga code
+- DamienD: floppy menu
 - K1200RS21: Amiga icon
 - mrv2k: Amiga boxart
 - blastar: NGFX SoundBuilder (Neo Geo sound tool)

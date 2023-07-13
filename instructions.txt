@@ -11,7 +11,7 @@ joystick or joypad in port 1 or keyboard
 - joystick or direction arrows to move
 
 
-Command line arguments (no whdload)
+Command line arguments (no whdload, but 1.3 compatible)
 
 Usage:
 
@@ -36,9 +36,11 @@ SKILL: 0-3 (3: hardest)
 STARTLIVES: 2-5 (default 3)
 
 
-Hiscore save:
+Hiscores save:
 
-* If any cheat is selected, highscores won't be saved (except for startlevel)
+* If any cheat key is pressed (when cheatkeys are on), highscores won't be saved
+* infinite lives & invincibility make game run forever so no hiscore save either!
+* startlevel can be used, highscores will be saved (doesn't make the game easier...)
 * whdload: quit whdload with quitkey to allow highscore save
 * floppy: quit game with "ESC" and unprotect the floppy to allow highscore save
 

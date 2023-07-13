@@ -54,7 +54,7 @@ sound_dict = {
 sound_dict_set_2 = {
 "IN_GAME_MUSIC_SND"             :{"index":8,"pattern":2+15,"loops":True,"volume":32},
 "IN_GAME_MUSIC_FAST_SND"             :{"index":10,"pattern":8+15,"loops":True,"volume":32},
-"IN_GAME_MUSIC_FASTER_SND"             :{"index":11,"pattern":12+15,"loops":True,"volume":32},
+"IN_GAME_MUSIC_FASTER_SND"             :{"index":11,"pattern":14+15,"loops":True,"volume":32},
 
 }
 

@@ -21,7 +21,7 @@ SCREEN_ADDRESS = 0x8000
 
 DYN_COLOR_INDEX = 4
 
-ROW_Y_OFFSET = 2
+ROW_Y_OFFSET = 3
 
 SCORE_FILE_SIZE = 0x1E
 
@@ -1620,6 +1620,7 @@ update_bg_tile:
 	tst.b	alternate_bank_selectors
 	beq.b	0f
 	* tile 0x100->0x1FF
+	clr.b	first_row_standard_bank_selector
 	bset	#8,d0
 0:
 	.ifne	OPT_ENABLE_LOGGING
@@ -1671,12 +1672,14 @@ update_bg_tile:
 1:
 	lea		mulNB_BYTES_PER_ROW_table(pc),a0
 
+	
 	move.l	bg_drawed_screen_ptr(pc),a1
 	* D3 = Y
-	add.w	d3,d3
-	beq.b	3f
 	tst.b	alternate_bank_selectors
 	bne.b	3f
+	tst		d3
+	seq		first_row_standard_bank_selector
+	beq.b	3f
 	* no-first-line hack: first row displayed isn't shifted
 	* but other lines are. We get away with it because what's there
 	* is score then pengo lives which aren't too high (2 first rows are black)
@@ -1684,6 +1687,7 @@ update_bg_tile:
 	* slightly truncated but good enough.
 	lea	(-NB_BYTES_PER_ROW*ROW_Y_OFFSET,a1),a1
 3:
+	add.w	d3,d3
 	move.w	(a0,d3.w),d3
 	lsl.w	#3,d3		| times 8
 	add.w	d3,a1
@@ -1706,7 +1710,9 @@ update_bg_tile:
 	add.w	d1,d1
 	add.w	(a0,d1.w),a0
 	cmp.l	d0,a0
-	jeq		11f		| should not happen
+	jeq		12f		| should not happen
+	tst.b	first_row_standard_bank_selector
+	bne.b	5f
 4:
 	.set	offset,0
 	.rept	8
@@ -1717,17 +1723,40 @@ update_bg_tile:
 	dbf		d3,4b
 0:
 	rts
+5:
+	.set	offset,0
+	.rept	7
+	move.b	(a0)+,(offset,a1)	
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr
+	addq.w	#1,a0		| skip last row
+	add.w	#BG_SCREEN_PLANE_SIZE,a1
+	dbf		d3,5b
+	rts
+	* clear tile
 1:
+	tst.b	first_row_standard_bank_selector
+	bne.b	55f
+11:
 	.set	offset,0
 	.rept	8
 	clr.b	(offset,a1)
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
 	add.w	#BG_SCREEN_PLANE_SIZE,a1
-	dbf		d3,1b
+	dbf		d3,11b
 2:
 	rts
-11:
+55:
+	.set	offset,0
+	.rept	7
+	clr.b	(offset,a1)
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr
+	add.w	#BG_SCREEN_PLANE_SIZE,a1
+	dbf		d3,55b
+	rts
+12:
 	* clut/tile combo not declared as used
 	**blitz
 	rts
@@ -2078,11 +2107,12 @@ beamdelay:
 	MUL_TABLE	NB_BYTES_PER_ROW,288
 
 	.align	4		| leave this long word alignment
-program_args:	ds.l	256,0
+program_args:	ds.l	64,0
 program_args_end:
-	
+	.long	0		| add a longword else it overwrites the read args string in kick 1.3!
+	.align	4
 read_args_string:
-	.byte	read_args_string_end-read_args_string+1
+	.byte	read_args_string_end-read_args_string
 	.ascii	"INVINCIBLE/S,INFLIVES/S,CHEATKEYS/S,STARTLEVEL/K/N,"
 	.ascii	"BAT50000/S,QUICKMAZEDRAW/S,NOINTERMISSIONS/S,ALTMUSIC/S"
 	.ascii	",SKILL/K/N,STARTLIVES/K/N"
@@ -2165,8 +2195,6 @@ keyboard_table:
 pause_flag:
 	dc.w	0
 
-alternate_bank_selectors:
-	.word	0
 	* sound variables
 music_duration:
 	.word	0
@@ -2202,6 +2230,10 @@ bg_displayed_screen_ptr:
 
 	.include	"sound_entries.68k"
 
+alternate_bank_selectors:
+	.byte	0
+first_row_standard_bank_selector:
+	.byte	0
 music_loops:
 	.byte	0
 music_volume:
