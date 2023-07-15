@@ -2,5 +2,5 @@ General:
 
 
 Amiga:
-- 2P conflicts with level 5+ big flag
+
 - highscore screen letter flashing too fast (no speed regulation, sounds good on A1260...)

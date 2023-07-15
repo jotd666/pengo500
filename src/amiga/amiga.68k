@@ -413,24 +413,8 @@ _user:
 	clr.b	controller_joypad_0
 	clr.b	controller_joypad_1
 
+	jra		demo_game
 
-		moveq			#2,d0
-		*move.b		(BIOS_USER_REQUEST),d0
-		lsl.w			#2,d0
-    movea.l   1f(pc,d0.w),a0
-    jmp       (a0)
-    .align 4
-1:	.long			startup_init
-		.long			eye_catcher
-		.long			demo_game
-		.long			title_display
-
-startup_init:
-		rts
-
-eye_catcher:
-* we're not doing things the NeoGeo way
-		rts
 
 * < D0: bcpl string (with leading size byte)
 * < A1: dest C string
@@ -648,17 +632,6 @@ demo_game:
 0:	
 		jmp			pengo_reset					| pass control to the pengo core
 		
-title_display:
-* we're not doing things the NeoGeo way
-    rts
-
-_player_start:
-* we're not doing things the NeoGeo way
-		rts
-				
-_demo_end:
-* we're not doing things the NeoGeo way
-		rts
 	
 				
 _vblank:

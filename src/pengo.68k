@@ -1931,6 +1931,7 @@ erase_life_in_play_0d44:
 
 	rts                                    	| [ret]
 
+
 * position pengo at more or less center
 * unless there are diamonds or hidden eggs there
 
@@ -4710,6 +4711,12 @@ l_2cc4:
 	movem.w	(sp)+,d1/d2                    	| [pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2cc4                             	| draws flags as long as needed [djnz $2CC4]
+
+	.ifdef	__amiga__
+	* hack: since drawing/erasing big flags can destroy 2P score because of screen shift, update score
+	jbsr	update_and_display_p2_score_2C24
+	.endif
+
 	rts                                    	| [ret]
 	.ifdef	__amiga__
 jotd_2023_string_2CF4:
