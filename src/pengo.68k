@@ -293,6 +293,8 @@ HIGH_SCORE = 20000
     .global pengo_irq
     .global pengo_reset
 
+	.global	hide_snobee_sprites
+	
 	.ifdef	__amiga__
 	.include "pengo_ram.68k"
 	.align	2
@@ -4087,6 +4089,11 @@ get_nb_lives_289E:
 l_28ab:
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	and.b	#0x7F,d0                         	| [and  $7F]
+	tst.b	infinite_lives_flag
+	beq.b	0f
+	moveq	#2,d0		| always 2 lives
+0:
+	tst.b	d0
 	rts                        
 
 
@@ -7928,6 +7935,7 @@ l_3fc5:
 	addq.b	#1,(char_state_1F,a2)              	| [inc  (ix+char_state_1F)]
 	rts                                    	| [ret]
 
+hide_snobee_sprites:
 hide_snobee_sprites_3FDA:
 	clr.b	d0                               	| [xor  a]
 * set sprite colors to zero for snobees
@@ -9939,8 +9947,6 @@ snobee_collides_pengo_4C2E:
 	move.b	d0,(animation_frame,a2)         	| [ld   (ix+animation_frame),a]
 	jbsr	set_character_sprite_code_and_color_39AB     	| [call set_character_sprite_code_and_color_39AB]
 	jbsr	get_nb_lives_289E                 	| [call get_nb_lives_289E]
-	tst.b	infinite_lives_flag
-	bne.b	0f
 	subq.b	#1,d0                           	| [dec  a]
 	bne.b	0f
 	rts                                    	| [ret  z]
