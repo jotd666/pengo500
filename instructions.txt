@@ -23,7 +23,11 @@ Cheats:
 
 INVINCIBLE: invincible
 INFLIVES: infinite lives
-CHEATKEYS: function keys cheat: F1: diamond align, F2: complete level, F3: snobee chicken
+CHEATKEYS: function keys cheat: 
+ * F1: diamond align (needs pushing on diamond to enable)
+ * F2: complete level
+ * F3: snobee chicken
+ * F4: toggle invincible
 STARTLEVEL: from 1 to 16
 BAT50000: bonus life at 50000 instead of 30000
 

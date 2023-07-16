@@ -2009,8 +2009,8 @@ handle_keyboard:
 	
     bclr    #7,d0
     seq (a0,d0.w)       | updates keyboard table
-    bne.b   0f     | we don't care about key release
-    
+    jne   2f     | we don't care about key release
+	
     cmp.b   #0x19,d0	| "P" key
     bne.b   0f
 
@@ -2021,13 +2021,17 @@ handle_keyboard:
 	* cheat keys
 	cmp.b	#0x50,d0	| F1 key
 	bne.b	0f
+	move.w	#0x0FF,_custom+color
 	st.b	cheat_used
+	* will be triggered as soon as a diamond is pushed,
+	* not before
 	st.b	diamonds_are_aligned_flag
 0:
 	cmp.b	#0x51,d0	| F2 key
 	bne.b	0f
 	* no snobees: level completed
 	st.b	cheat_used
+	* more "professional" cheat: hide remaining snobees
 	movem.l	d0-a6,-(a7)
 	jbsr	hide_snobee_sprites
 	movem.l	(a7)+,d0-a6
@@ -2038,17 +2042,25 @@ handle_keyboard:
 	* snobees play chicken
 	st.b	cheat_used
 	st.b	snobee_chicken_flag
+0:
+	cmp.b	#0x53,d0	| F4 key
+	bne.b	0f
+
+	st.b	cheat_used
+	move.w	#0x0FF,_custom+color
+	eor.b	#1,invincible_flag
+0:
 10:
 	tst.l	_resload
-	bne.b	0f
+	bne.b	2f
 	cmp.b	#0x45,d0	| "ESC" key
-	bne.b	0f
+	bne.b	2f
 	BSET	#0x06,0x1E01(A5)
 	moveq	#2,d0
 	bsr	beamdelay
 	BCLR	#0x06,0x1E01(A5)	| acknowledge key
 	bra		quit_to_os
-0:
+2:
 	BSET	#0x06,0x1E01(A5)
 	moveq	#2,d0
 	bsr	beamdelay
