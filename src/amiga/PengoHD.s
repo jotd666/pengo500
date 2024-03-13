@@ -114,7 +114,7 @@ start:
     move.b  _keyexit(pc),d1
 	move.l  progstart(pc),-(a7)
     
-    lea  _custom,a1
+    *lea  _custom,a1
     *move.w  #$1200,bplcon0(a1)
     *move.w  #$0024,bplcon2(a1)
     

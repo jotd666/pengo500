@@ -402,7 +402,7 @@ _user:
 	move.l	cheat_flags,d0
 	btst	#0,d0
 	sne		invincible_flag
-	btst	#1,cheat_flags
+	btst	#1,d0
 	sne		infinite_lives_flag
 	
 	* we don't need extra joypad buttons, and that will save a few cycles
@@ -766,8 +766,6 @@ osd_small_wait:
 osd_update_sprites:
 	*lea		test_sprites_xy,a1
 	*lea		test_sprites_code,a0
-	move.l	a0,0x110
-	move.l	a1,0x114
 	* clear host sprites
 	move.w	#NB_HOST_SPRITES-1,d0
 
@@ -1078,7 +1076,7 @@ osd_sound_start:
 	beq.b	3f
 	* looped sound
 	jsr		_mt_loopfx
-	beq.b	1f
+	bra.b	1f
 3:
 	jsr		_mt_playfx
 1:

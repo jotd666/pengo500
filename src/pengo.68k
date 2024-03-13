@@ -4081,6 +4081,9 @@ l_289c:
 	move.b	(a0),d0                         	| [ld   a,(hl)]
 	rts                                    	| [ret]
 
+* > D0: number
+* > A0: pointer on the number
+* > Z flag: set if no lives
 get_nb_lives_289E:
 	lea	lives_counter_p1_8814,a0       	| [ld   hl,lives_counter_p1_8814]
 	move.b	player_number_8816,d0           	| [ld   a,(player_number_8816)]
@@ -4093,6 +4096,7 @@ l_28ab:
 	tst.b	infinite_lives_flag
 	beq.b	0f
 	moveq	#2,d0		| always 2 lives
+	move.b	d0,(a0)		| reload counter (as it's decreased sometimes)
 0:
 	tst.b	d0
 	rts                        
