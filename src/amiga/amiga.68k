@@ -310,6 +310,25 @@ _user:
 	
 	move.l	d7,misc_options
 	
+	bsr		load_highscores
+
+    * check if "floppy" file is here
+    
+    move.l  _dosbase(pc),a6
+    move.l   #floppy_file,d1
+    move.l  #1005,d2   | MODE_OLDFILE
+    jsr     _LVOOpen(a6)
+    move.l  d0,d1
+    beq.b   .no_floppy
+    
+    * "floppy" file found
+    jsr     _LVOClose(a6)
+    * wait 2 seconds for floppy drive to switch off
+    move.l  #100,d1
+    jsr     _LVODelay(a6)
+.no_floppy:
+
+	
 	bsr		store_system
 	
 	lea		_custom,a5
@@ -331,23 +350,6 @@ _user:
 	jsr	_LVOWaitTOF(a6)
 	jsr	_LVOWaitTOF(a6)
 
-	bsr		load_highscores
-
-    * check if "floppy" file is here
-    
-    move.l  _dosbase(pc),a6
-    move.l   #floppy_file,d1
-    move.l  #1005,d2   | MODE_OLDFILE
-    jsr     _LVOOpen(a6)
-    move.l  d0,d1
-    beq.b   .no_floppy
-    
-    * "floppy" file found
-    jsr     _LVOClose(a6)
-    * wait 2 seconds for floppy drive to switch off
-    move.l  #100,d1
-    jsr     _LVODelay(a6)
-.no_floppy:
 
 .startup:
 
@@ -1222,6 +1224,7 @@ store_system:
 	rts
 
 restore_system:
+	move.l	system_vbr(pc),a0
 	lea	_custom,a6
 	jsr		_mt_remove_cia
 
@@ -2298,6 +2301,7 @@ blank_sound:
 	ds.l	4
 	
 debug_copperlist:
+	dc.w	bplcon0,0x200
 	dc.w	color
 debug_color:
 	dc.w	0
