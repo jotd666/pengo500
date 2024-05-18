@@ -1224,7 +1224,6 @@ store_system:
 	rts
 
 restore_system:
-	move.l	system_vbr(pc),a0
 	lea	_custom,a6
 	jsr		_mt_remove_cia
 
