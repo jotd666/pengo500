@@ -1,6 +1,6 @@
 import subprocess,zipfile,os
 
-progdir = os.path.abspath(os.path.dirname(__file__))
+progdir = os.path.join(os.path.abspath(os.path.dirname(__file__)),"..")
 
 # JOTD path for cranker, adapt to wh :)
 os.environ["PATH"] += os.pathsep+r"K:\progs\cli"

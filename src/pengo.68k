@@ -1195,7 +1195,7 @@ l_080e:
 	or.b	d0,d0                             	| [or   a]
 	jne	l_0816                             	| [jr   nz,$0816]
 	addq.b	#1,d2                           	| [inc  c]
-	subq.b	#1,a0                           	| [dec  hl]
+	subq.w	#1,a0                           	| [dec  hl]
 	jra	l_080e                             	| [jr   $080E]
 l_0816:
 	move.l	(sp)+,a0                        	| [pop  hl]
