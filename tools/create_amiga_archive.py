@@ -1,7 +1,8 @@
-import subprocess,zipfile,os
+import subprocess,os,glob,shutil
 
-progdir = os.path.join(os.path.abspath(os.path.dirname(__file__)),"..")
+progdir = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 
+gamename = "pengo"
 # JOTD path for cranker, adapt to wh :)
 os.environ["PATH"] += os.pathsep+r"K:\progs\cli"
 
@@ -15,12 +16,18 @@ for s in ["convert_sounds.py","convert_graphics.py"]:
 
 subprocess.check_call(cmd_prefix+["RELEASE_BUILD=1"],cwd=os.path.join(progdir,"src"))
 # create archive
-with zipfile.ZipFile(os.path.join(progdir,"Pengo500_HD.zip"),"w",compression=zipfile.ZIP_DEFLATED) as zf:
-    for file in ["readme.md","instructions.txt","pengo","pengo.slave"]:
-        zf.write(os.path.join(progdir,file),arcname=file)
 
-    zf.write(os.path.join(progdir,"assets","amiga","Pengo.info"),"Pengo.info")
-    zf.write(os.path.join(progdir,"assets","amiga","boxart.png"),"boxart.png")
+outdir = os.path.join(progdir,f"{gamename}_HD")
+if os.path.exists(outdir):
+    for x in glob.glob(os.path.join(outdir,"*")):
+        os.remove(x)
+else:
+    os.mkdir(outdir)
+for file in ["readme.md","instructions.txt",gamename,f"{gamename}.slave"]:
+    shutil.copy(os.path.join(progdir,file),outdir)
+
+shutil.copy(os.path.join(progdir,"assets","amiga","Pengo.info"),outdir)
+shutil.copy(os.path.join(progdir,"assets","amiga","boxart.png"),outdir)
 
 # pack the file for floppy
-subprocess.check_output(["cranker_windows.exe","-f",os.path.join(progdir,"pengo"),"-o",os.path.join(progdir,"pengo.rnc")])
+subprocess.check_output(["cranker_windows.exe","-f",os.path.join(progdir,gamename),"-o",os.path.join(progdir,f"{gamename}.rnc")])
