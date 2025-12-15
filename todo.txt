@@ -3,4 +3,8 @@ General:
 
 Amiga:
 
+- to avoid having 8 copies of the frames:
+  Set up sprites pairs 0/1 and 2/3 to use DMA and point to the same source sprite data in RAM.
+  In your copper list, wait for the sprite DMA to be read (scanline 20 on NTSC, or 25 on PAL). Then your copper lists writes SprPos/Ctrl for sprites 0,1,2,3.
+
 - highscore screen letter flashing too fast (no speed regulation, sounds good on A1260...)
