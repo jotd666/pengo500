@@ -408,13 +408,7 @@ _user:
 	btst	#1,d0
 	sne		infinite_lives_flag
 	
-	* we don't need extra joypad buttons, and that will save a few cycles
-	* because reading CD32 joypad is (relatively) costly. Usually it doesn't
-	* matter but I've seen issues (Shadow of the beast 3 for instance)
-	*
-	*jsr	 _detect_controller_types 
-	clr.b	controller_joypad_0
-	clr.b	controller_joypad_1
+	jsr	 _detect_controller_types 
 
 	jra		demo_game
 
@@ -649,8 +643,6 @@ _vblank:
 	jsr	_read_joystick
 	move.l	d0,_joypad_state
 	
-	* CD32 "play" is disabled but it's free to read
-	* 3rd button on a Sega 3-button so 3rd button is pause
 	btst	#JPB_BTN_PLAY,d0
 	beq.b	0f
 	btst	#JPB_BTN_PLAY,d1
