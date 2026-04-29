@@ -1,4 +1,4 @@
-import os,re,bitplanelib,ast,json
+import os,re,bitplanelib,ast,json,pathlib
 from PIL import Image,ImageOps
 
 
@@ -25,6 +25,8 @@ else:
 
 
 dump_it = True
+if dump_it:
+    pathlib.Path(dump_dir).mkdir(exist_ok=True,parents=True)
 
 def dump_asm_bytes(*args,**kwargs):
     bitplanelib.dump_asm_bytes(*args,**kwargs,mit_format=True)
